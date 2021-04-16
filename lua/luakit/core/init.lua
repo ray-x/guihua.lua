@@ -1,0 +1,1 @@
+require("luakit.core.object")
