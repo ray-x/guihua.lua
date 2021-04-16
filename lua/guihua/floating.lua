@@ -1,27 +1,29 @@
 local api = vim.api
 local location = require "guihua.location"
 
-local log = require "luakit.utils.log".log
+local log = require "guihua.log".info
 -- Create a simple floating terminal.
-local function floating_buf(win_width, win_height, x, y, loc, prompt, ft)
+local function floating_buf(win_width, win_height, x, y, loc, prompt, enter, ft)
   prompt = prompt or false
+  enter = enter or false
+  log("loc", loc, win_width, win_height, x, y, enter, ft)
   -- win_w, win_h, x, y should be passwd in from view
   loc = loc or location.center
-  local row, col = loc(win_height, win_width, x, y)
+  local row, col = loc(win_height, win_width)
   local opts = {
     style = "minimal",
     relative = "editor",
     width = win_width,
     height = win_height,
-    bufpos = {4, 0},
-    row = row,
-    col = col
+    bufpos = {0, 0},
+    row = row + y,
+    col = col + x
   }
-  log('floating', opts)
+  log("floating", opts)
   local buf = api.nvim_create_buf(false, true)
   api.nvim_buf_set_option(buf, "bufhidden", "wipe")
   -- api.nvim_buf_set_option(buf, 'buftype', 'guihua_input')
-  vim.cmd('setlocal nobuflisted')
+  vim.cmd("setlocal nobuflisted")
   if prompt then
     vim.fn.prompt_setprompt(buf, " ")
     api.nvim_buf_set_option(buf, "buftype", "prompt")
@@ -31,12 +33,14 @@ local function floating_buf(win_width, win_height, x, y, loc, prompt, ft)
       api.nvim_buf_set_option(buf, "filetype", ft)
     end
   end
-  local win = api.nvim_open_win(buf, true, opts)
+  local win = api.nvim_open_win(buf, enter, opts)
   log("creating win", win)
   return buf, win, function()
-    log('floatwin closing ', win)
-    vim.api.nvim_win_close(win, true)
-    win=nil
+    log("floatwin closing ", win)
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_close(win, true)
+      win = nil
+    end
   end
 end
 
@@ -69,7 +73,7 @@ end
 
 local function test(prompt)
   local b, w, c = floating_buf(30, 6, 5, 5, nil, prompt)
-  local data =  {"floating buf", "line1", "line2",  "line3", "line4", "line5"}
+  local data = {"floating buf", "line1", "line2", "line3", "line4", "line5"}
   for i = 1, 10, 1 do
     vim.api.nvim_buf_set_lines(b, i, -1, false, {data[i]})
   end

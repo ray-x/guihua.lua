@@ -208,4 +208,20 @@ function fzy.filter(needle, lines)
   return results
 end
 
+function fzy.filter_table_ordered(needle, items)
+  local results = {}
+
+  for i = 1, #items do
+    local line = items[i].text
+    if fzy.has_match(needle, line) == 1 then
+      local positions, score = fzy.positions(needle, line)
+      items[i].fzy={pos=positions, score = score}
+      table.insert(results,  items[i])
+    end
+  end
+
+  table.sort(results, function(i, j) return i.score < j.score end)
+  return results
+end
+
 return fzy

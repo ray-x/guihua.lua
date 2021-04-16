@@ -1,63 +1,120 @@
-require'luakit.core'
-local vctl = require "guihua.textviewctrl"
-local view = require "guihua.view"
-
-local textview = class(view)
-textview._class_name = "TextView"
-
-
+local class = require "middleclass"
+local View = require "guihua.view"
+local log = require "guihua.log".info
+local util = require "guihua.util"
+local verbose = require "guihua.log".trace
+-- local TextView = {}
+if TextView == nil then
+  TextView = class("TextView", View)
+end
+-- Note, Support only one active view
+-- ActiveView = nil
 --[[
 opts={
   header=true/"headerinfo"
   rect={width, height, pos_x, pos_y}
+  loc='center|up_left|center_right'
   background
   prompt
 }
 
 --]]
-function textview:ctor(...)
-  log("textview ctor")
+function TextView:initialize(...)
+  verbose(debug.traceback())
+  log("ctor TextView start:")
+
+  local opts = select(1, ...) or {}
+  log("TxView", opts)
+
+  vim.cmd([[hi GHTextViewDark guifg=#e0d8f4 guibg=#1f1f5f]])
+
+  opts.bg = opts.bg or "GHTextViewDark"
+  if TextView.ActiveTextView ~= nil then -- seems not working..
+    log("active view ", TextView.ActiveTextView)
+    if TextView.ActiveTextView.win ~= nil and vim.api.nvim_win_is_valid(TextView.ActiveTextView.win) and
+        vim.api.nvim_buf_is_valid(self.buf) then
+      log("active view already existed")
+      TextView.ActiveTextView:on_draw(opts.data)
+      return TextView.ActiveTextView
+    end
+    TextView.ActiveTextView.win = nil
+    TextView.ActiveTextView.buf = nil
+    TextView.static.ActiveView = nil
+  end
+  opts.enter = false
+  View.initialize(self, ...)
+  self.cursor_pos = {1, 1}
+  if opts.syntax then
+    vim.api.nvim_buf_set_option(self.buf, "syntax", opts.syntax)
+    self.syntax = opts.syntax
+  end
+  TextView.static.ActiveView = self
+  log("ctor TextView: end", self.win) --, View.ActiveView)--, self)
 end
 
-
-function textview:bind_ctrl()
-  if self.ctrl then
-    return false
-  else
-    self.ctrl = new(vctl, self)
+function TextView.Active()
+  if TextView.ActiveTextView ~= nil then
     return true
   end
+  return false
 end
 
+function TextView:on_draw(data)
+  if not vim.api.nvim_buf_is_valid(self.buf) then
+    log("buf id invalid", self.buf)
+    return
+  end
 
--- 更新视图
-function textview:on_draw(data)
-  self:set_hl()
+  vim.api.nvim_buf_set_option(self.buf, "readonly", false)
   local content = {}
-  if type(data) == "string" then content = {data}
+  if type(data) == "string" then
+    content = {data}
   else
     content = data
   end
-  vim.api.nvim_buf_set_lines(self.buf, 0, -2, false, content)
 
-  -- api.nvim_win_set_option(self.win, 'winhl', 'Normal:'..self.background)
-  -- if data == nil then return end
-  -- if data.title then
-  --   dump("update title", data.header)
-  --   vim.api.nvim_buf_set_lines(self.buf, 0, -2, false, data.header)
-  -- end
-  -- if data.content then
-  -- -- 更新content
-  -- end
-  -- if data.footer then
-  -- -- 更新other
-  -- end
+  verbose("draw", data)
+  local start = 0
+  if self.header ~= nil then
+    start = 1
+  end
+  end_at = -1
+  -- vim.api.nvim_buf_set_lines(self.buf, start, end_at, true, content)
+  vim.api.nvim_buf_set_lines(self.buf, start, end_at, true, content)
+  vim.api.nvim_buf_set_option(self.buf, "readonly", true)
+  vim.api.nvim_buf_set_option(self.buf, "bufhidden", "wipe")
+
+  -- vim.fn.setpos(".", {0, 1, 1, 0})
 end
 
-
-function textview:dtor(...)
-  dump("unload textView")
-  self:unbind_ctrl()
+function TextView:on_close()
+  verbose(debug.traceback())
+  if TextView.ActiveTextView == nil then
+    log("view onclose nil")
+    return
+  end
+  log("view onclose ", TextView.ActiveTextView.win)
+  TextView.ActiveTextView:close()
+  TextView.static.ActiveView = self
 end
 
-return textview
+function test()
+  package.loaded["guihua"] = nil
+  package.loaded["guihua.view"] = nil
+  --package.loaded.packer_plugins['guihua.lua'].loaded = false
+  vim.cmd("packadd guihua.lua")
+
+  local data = {
+    "local Rect = require 'guihua.rect'",
+    "local class = require'middleclass'",
+    "local a = 32",
+    "local b='abcdef'"
+  }
+  local win = TextView:new({loc = "top_center", syntax = "lua", rect = {height = 5, pos_x = 0, pos_y = 10}, data = data})
+  log("draw data", data)
+  win:on_draw(data)
+  -- vim.cmd("startinsert!")
+end
+
+-- test()
+return TextView

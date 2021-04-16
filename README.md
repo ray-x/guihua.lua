@@ -1,12 +1,11 @@
+![guihua](https://github.com/ray-x/files/blob/master/img/guihua/guihua_800.png)
 Guihua: A Lua Gui and util liberary for nvim plugins
 
-Note:
-Most of the code in luakit folder extracted from https://github.com/iwiniwin/LuaKit
-I like the design, but the code does not provide full test case
+- Provide floating windows
+- fzy
+- TextView, ListView, Preview etc
 
-Some of the code was modified for vim lua
-Most of the code in utils are not used ATM. Only tested memory_monitor.
+* Listview
+  ![listview](https://github.com/ray-x/files/blob/master/img/guihua/listview.png)
 
-note: luadevkit (https://github.com/luadevkit/core/) is a different tool
-
-I will try to update any bug fix in upstream. Hopefuly LuaKit could be in luarocks
+Please refer to test file of how to use it

@@ -1,12 +1,15 @@
-local viewctrl = require "guihua.viewctrl"
-local log = require'luakit.utils.log'.log
-local verbose = require'luakit.utils.log'.verbose
-if listviewctrl == nil then
-listviewctrl = class(viewctrl)
-listviewctrl._class_name = "listviewctrl"
+local class = require "middleclass"
+local ViewController = require "guihua.viewctrl"
+local log = require "guihua.log".info
+local util = require "guihua.util"
+local verbose = require "guihua.log".trace
+if ListViewCtrl == nil then
+  ListViewCtrl = class("ListViewCtrl", ViewController)
 end
 
-function listviewctrl:ctor(delegate, ...)
+function ListViewCtrl:initialize(delegate, ...)
+  verbose(debug.traceback())
+  ViewController:initialize(delegate, ...)
   self.m_delegate = delegate
   self.selected_line = 1
 
@@ -14,14 +17,11 @@ function listviewctrl:ctor(delegate, ...)
   verbose("listview ctrl opts", opts)
   self.data = opts.data or {}
   self.preview = opts.preview or false
-  self.display_height = self.m_delegate.rect.height or 10
+  self.display_height = self.m_delegate.display_height or 10
   self.display_start_at = 1
-  if self.m_delegate.header ~= nil then
-    self.display_height = self.display_height - 1
-  end -- if need header will be - 2
-  if self.m_delegate.prompt ~= nil then
-    self.display_height = self.display_height - 1
-  end -- if need header will be - 2
+  self.on_move = opts.on_move or function(...)
+    end
+  self.on_confirm = opts.on_confirm
   if #self.data <= self.display_height then
     self.display_data = opts.data
   else
@@ -30,106 +30,146 @@ function listviewctrl:ctor(delegate, ...)
       table.insert(self.display_data, self.data[i])
     end
   end
-  log("init display: ", self.display_data, self.display_height, self.selected_line)
+  verbose("init display: ", self.display_data, self.display_height, self.selected_line)
   -- ... is the view
   -- todo location, readonly? and filetype
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-p>", "<cmd> lua listviewctrl:on_prev()<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-n>", "<cmd> lua listviewctrl:on_next()<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<Up>", "<cmd> lua listviewctrl:on_prev()<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<Down>", "<cmd> lua listviewctrl:on_next()<CR>", {})
-  -- vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<esc>", "<cmd> lua require'guihua.listviewctrl':on_close() <CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-c>", "<cmd> lua require'guihua.listviewctrl':on_close() <CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<CR>", "<cmd> lua require'guihua.listviewctrl':on_close() <CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-p>", "<cmd> lua ListViewCtrl:on_prev()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-n>", "<cmd> lua ListViewCtrl:on_next()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<Enter>", "<cmd> lua ListViewCtrl:on_next()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Enter>", "<cmd> lua ListViewCtrl:on_search()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<Up>", "<cmd> lua ListViewCtrl:on_prev()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<Down>", "<cmd> lua ListViewCtrl:on_next()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Up>", "<cmd> lua ListViewCtrl:on_prev()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Down>", "<cmd> lua ListViewCtrl:on_next()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-o>", "<cmd> lua ListViewCtrl:on_confirm()<CR>", {})
 
-  vim.cmd([[ autocmd TextChangedI <buffer> lua  require'guihua.listviewctrl':on_search() ]])
+  util.close_view_event("n", "<C-e>", self.m_delegate.win)
+  util.close_view_event("i", "<C-e>", self.m_delegate.win)
+  -- vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<esc>", "<cmd> lua require'guihua.ListViewCtrl':on_close() <CR>", {})
+  -- vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-c>", "<cmd> lua require'guihua.ListViewCtrl':on_close() <CR>", {})
+  -- vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<CR>", "<cmd> lua require'guihua.ListViewCtrl':on_close() <CR>", {})
 
-  listviewctrl._viewctlobject = self
+  vim.cmd([[ autocmd TextChangedI <buffer> lua  require'guihua.ListViewCtrl':on_search() ]])
+
+  ListViewCtrl._viewctlobject = self
   -- self:on_draw(self.display_data)
   -- self.m_delegate:set_pos(self.selected_line)
-  log("listview ctrl created ")
+  verbose("listview ctrl created ", self)
 end
 
-function listviewctrl:get_ui()
+function ListViewCtrl:get_ui()
   return self.m_delegate
 end
 
-function listviewctrl:previewfile(line)
-  if self.preview ~= nil then
-    -- todo preview
-    return
+function ListViewCtrl:on_next()
+  local listobj = ListViewCtrl._viewctlobject
+
+  if listobj.selected_line == nil then
+    listobj.selected_line = 1
   end
-end
-
-function listviewctrl:on_next()
-  local listobj = listviewctrl._viewctlobject
-
-  log("next: ",  listobj.selected_line, listobj.display_start_at, listobj.display_height)
-  if listobj.selected_line == nil then listobj.selected_line = 1 end
   local l = listobj.selected_line + 1
   local data_collection = listobj.data
-  if listobj.filter_applied then data_collection = listobj.filtered_data end
+  if listobj.filter_applied then
+    data_collection = listobj.filtered_data
+  end
+  local disp_h = listobj.display_height
+  if listobj.m_delegate.prompt == true then
+    disp_h = disp_h - 1
+  end
+
+  log("next: ", listobj.selected_line, listobj.display_start_at, listobj.display_height, l, disp_h)
 
   if l > #data_collection then
-    listobj.m_delegate:set_pos(listobj.display_height)
-    listobj:previewfile(data_collection[#data_collection])
+    listobj.m_delegate:set_pos(disp_h)
+    listobj.on_move(#data_collection)
+    log("next should show at: ", #listobj.data, "set: ", disp_h, listobj.display_height)
     return
   end
-  if l > listobj.display_start_at + listobj.display_height - 1 and l <= #data_collection then
+
+  if l > listobj.display_start_at + disp_h - 1 then
     -- need to scroll next
     listobj.display_start_at = listobj.display_start_at + 1
-    listobj.display_data = {unpack(data_collection, listobj.display_start_at, listobj.display_start_at + listobj.display_height -
-    1)}
-    listobj:on_draw(listobj.display_data)
-    listobj.m_delegate:set_pos(listobj.display_height)
+    listobj.display_data = {unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1)}
+    log("disp", listobj.display_data, disp_h, listobj.display_start_at)
+    listobj.m_delegate:on_draw(listobj.display_data)
+    listobj.m_delegate:set_pos(disp_h)
   else
     -- preview here
-    listobj:on_draw(listobj.display_data)
+    -- listobj.m_delegate:on_draw(listobj.display_data)
     listobj.m_delegate:set_pos(l - listobj.display_start_at + 1)
   end
 
-  log("next should show: ", listobj.display_data )
+  log("next should show: ", listobj.display_data[l].text or listobj.display_data[l], listobj.display_start_at)
   listobj.selected_line = l
-  listobj:previewfile(data_collection[listobj.selected_line])
-  log("next:  ",  listobj.selected_line, listobj.display_start_at )
+  listobj.on_move(l)
   return data_collection[listobj.selected_line]
 end
 
-function listviewctrl:on_prev(data)
-  local listobj = listviewctrl._viewctlobject
+function ListViewCtrl:on_prev()
+  local listobj = ListViewCtrl._viewctlobject
 
-  log("pre: ",  listobj.selected_line, listobj.display_start_at )
+  local disp_h = listobj.display_height
+  if listobj.m_delegate.prompt == true then
+    disp_h = disp_h - 1
+  end
+  log(
+    "pre: ",
+    listobj.selected_line,
+    listobj.display_start_at,
+    disp_h,
+    listobj.display_height,
+    listobj.m_delegate.prompt
+  )
 
   local data_collection = listobj.data
-  if listobj.filter_applied then data_collection = listobj.filtered_data end
+  if listobj.filter_applied then
+    data_collection = listobj.filtered_data
+  end
 
-  if listobj.selected_line == nil then listobj.selected_line = 1 end
+  if listobj.selected_line == nil then
+    listobj.selected_line = 1
+  end
   local l = listobj.selected_line - 1
   if l < 1 then
     listobj.m_delegate:set_pos(1)
-    listobj:previewfile(data_collection[l])
+    listobj.on_move(l)
     return
   end
   if l < listobj.display_start_at and listobj.display_start_at >= 1 then
     -- need to scroll back
     listobj.display_start_at = listobj.display_start_at - 1
-    listobj.display_data = {unpack(data_collection, listobj.display_start_at, listobj.display_start_at + listobj.display_height - 1 )}
-    listobj:on_draw(listobj.display_data)
+    listobj.display_data = {unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1)}
+
+    log("disp", listobj.display_data)
+    log("dispdata", listobj.display_data)
+    listobj.m_delegate:on_draw(listobj.display_data)
     listobj.m_delegate:set_pos(1)
   else
-    listobj:on_draw(listobj.display_data)
+    -- listobj:on_draw(listobj.display_data)
     listobj.m_delegate:set_pos(l - listobj.display_start_at + 1)
   end
 
-  log("prev: ", l, listobj.display_data )
+  log("prev: ", l, listobj.display_data[l].text or listobj.display_data[l])
   listobj.selected_line = l
-  listobj:previewfile(data_collection[l])
+  listobj.on_move(l)
   return listobj.data[listobj.selected_line]
 end
 
-function listviewctrl:on_search()
-  local fzy = require'fzy'.fzy
-  if fzy == nil then return end
-  local listobj = listviewctrl._viewctlobject
+function ListViewCtrl:on_confirm()
+  local listobj = ListViewCtrl._viewctlobject
+
+  log("confirm: ", listobj.selected_line, listobj.display_start_at)
+  listobj.on_confirm(listobj.selected_line)
+  listobj.m_delegate:close()
+end
+
+function ListViewCtrl:on_search()
+  local fzy = require "fzy".fzy
+  if fzy == nil then
+    print("[ERR] fzy not found")
+    return
+  end
+  local listobj = ListViewCtrl._viewctlobject
   local buf = listobj.m_delegate.buf
   if not vim.api.nvim_buf_is_valid(buf) then
     return
@@ -138,30 +178,29 @@ function listviewctrl:on_search()
   -- get string after prompt
 
   filter_input = string.sub(filter_input, 5, #filter_input)
-  log('input', filter_input)
+  log("input", filter_input)
+  if #filter_input == 0 or #listobj.data == nil or #listobj.data == 0 then
+    return
+  end
   listobj.filtered_data = fzy(filter_input, listobj.data)
 
-  log('filtered data', listobj.filtered_data)
+  log("filtered data", listobj.filtered_data)
 
   listobj.filter_applied = true
   listobj.display_data = {unpack(listobj.filtered_data, 1, listobj.display_height)}
+  listobj.display_start_at = 1 -- reset
 
-  log('filtered data', listobj.display_data)
+  log("filtered data", listobj.display_data)
   listobj:on_draw(listobj.display_data)
   listobj.selected_line = 1
   listobj.m_delegate:set_pos(1)
-  log('on search ends')
+  log("on search ends")
 end
 
-
-function listviewctrl:dtor(...)
-  log("listviewctrl dtor ")
-  self.m_delegate = nil
+function ListViewCtrl:on_close()
+  log("closer ", ListViewCtrl._viewctlobject.m_delegate)
+  ListViewCtrl._viewctlobject.m_delegate:on_close()
+  ListViewCtrl._viewctlobject = nil
 end
 
-function listviewctrl:on_close()
-  listviewctrl._viewctlobject.m_delegate:on_close()
-  listviewctrl._viewctlobject = nil
-end
-
-return listviewctrl
+return ListViewCtrl

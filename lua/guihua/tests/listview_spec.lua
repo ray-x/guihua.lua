@@ -2,7 +2,6 @@ local eq = assert.are.same
 
 local busted = require("plenary/busted")
 local cur_dir = vim.fn.expand("%:p:h")
-vim.g.debug_output = true
 
 describe(
   "should create view  ",
@@ -24,7 +23,6 @@ describe(
         listview = require('guihua.listview')
         vim.cmd("packadd guihua.lua")
 
-        vim.g.debug_output = true
         win =
           new(
           listview,
