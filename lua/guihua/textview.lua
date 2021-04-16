@@ -26,7 +26,7 @@ function TextView:initialize(...)
   local opts = select(1, ...) or {}
   log("TxView", opts)
 
-  vim.cmd([[hi GHTextViewDark guifg=#e0d8f4 guibg=#1f1f5f]])
+  vim.cmd([[hi GHTextViewDark guifg=#e0d8f4 guibg=#3e2e4f]])
 
   opts.bg = opts.bg or "GHTextViewDark"
   if TextView.ActiveTextView ~= nil then -- seems not working..
@@ -43,12 +43,15 @@ function TextView:initialize(...)
   end
   opts.enter = false
   View.initialize(self, ...)
+
   self.cursor_pos = {1, 1}
   if opts.syntax then
     vim.api.nvim_buf_set_option(self.buf, "syntax", opts.syntax)
     self.syntax = opts.syntax
   end
   TextView.static.ActiveView = self
+  util.close_view_event("n", "<C-e>", self.win)
+  util.close_view_event("i", "<C-e>", self.win)
   log("ctor TextView: end", self.win) --, View.ActiveView)--, self)
 end
 
@@ -98,23 +101,5 @@ function TextView:on_close()
   TextView.static.ActiveView = self
 end
 
-function test()
-  package.loaded["guihua"] = nil
-  package.loaded["guihua.view"] = nil
-  --package.loaded.packer_plugins['guihua.lua'].loaded = false
-  vim.cmd("packadd guihua.lua")
 
-  local data = {
-    "local Rect = require 'guihua.rect'",
-    "local class = require'middleclass'",
-    "local a = 32",
-    "local b='abcdef'"
-  }
-  local win = TextView:new({loc = "top_center", syntax = "lua", rect = {height = 5, pos_x = 0, pos_y = 10}, data = data})
-  log("draw data", data)
-  win:on_draw(data)
-  -- vim.cmd("startinsert!")
-end
-
--- test()
 return TextView

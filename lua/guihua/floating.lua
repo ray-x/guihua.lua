@@ -3,23 +3,27 @@ local location = require "guihua.location"
 
 local log = require "guihua.log".info
 -- Create a simple floating terminal.
-local function floating_buf(win_width, win_height, x, y, loc, prompt, enter, ft)
-  prompt = prompt or false
-  enter = enter or false
-  log("loc", loc, win_width, win_height, x, y, enter, ft)
+local function floating_buf(opts) --win_width, win_height, x, y, loc, prompt, enter, ft)
+  local prompt = opts.prompt or false
+  local enter = opts.enter or true
+  local x = opts.x or 0
+  local y = opts.y or 0
+  log("loc", opts.loc, opts.win_width, opts.win_height, x, y, enter, opts.ft)
   -- win_w, win_h, x, y should be passwd in from view
-  loc = loc or location.center
-  local row, col = loc(win_height, win_width)
-  local opts = {
+  loc = opts.loc or location.center
+  local row, col = loc(opts.win_height, opts.win_width)
+  local win_opts = {
     style = "minimal",
-    relative = "editor",
-    width = win_width,
-    height = win_height,
-    bufpos = {0, 0},
-    row = row + y,
-    col = col + x
+    relative = opts.relative or "editor",
+    width = opts.win_width or 80,
+    height = opts.win_height or 5,
+    bufpos = {0, 0}
   }
-  log("floating", opts)
+  if win_opts.relative == "editor" then
+    win_opts.row = row + y
+    win_opts.col = col + x
+  end
+  log("floating", win_opts)
   local buf = api.nvim_create_buf(false, true)
   api.nvim_buf_set_option(buf, "bufhidden", "wipe")
   -- api.nvim_buf_set_option(buf, 'buftype', 'guihua_input')
@@ -29,11 +33,11 @@ local function floating_buf(win_width, win_height, x, y, loc, prompt, enter, ft)
     api.nvim_buf_set_option(buf, "buftype", "prompt")
   else
     api.nvim_buf_set_option(buf, "readonly", true)
-    if ft ~= nil then
-      api.nvim_buf_set_option(buf, "filetype", ft)
+    if opts.ft ~= nil then
+      api.nvim_buf_set_option(buf, "syntax", opts.ft)
     end
   end
-  local win = api.nvim_open_win(buf, enter, opts)
+  local win = api.nvim_open_win(buf, enter, win_opts)
   log("creating win", win)
   return buf, win, function()
     log("floatwin closing ", win)
@@ -45,14 +49,26 @@ local function floating_buf(win_width, win_height, x, y, loc, prompt, enter, ft)
 end
 
 -- Create a simple floating terminal.
-local function floating_term(cmd, callback, win_width, win_height, x, y)
+local function floating_term(opts) --cmd, callback, win_width, win_height, x, y)
   local current_window = vim.api.nvim_get_current_win()
-  x = x or 5
-  y = y or 5
-  local buf, win, closer = floating_buf(win_width, win_height, x, y, nil, false, "Floaterm")
+  local enter = opts.enter or true
+  local x = opts.x or 0
+  local y = opts.y or 0
+
   if cmd == "" or cmd == nil then
     cmd = vim.api.nvim_get_option("shell")
   end
+
+  -- get dimensions
+  local width = api.nvim_get_option("columns")
+  local height = api.nvim_get_option("lines")
+
+  -- calculate our floating window size
+  local win_height = opts.win_width or math.ceil(height * 0.88)
+  local win_width = opts.win_width or math.ceil(width * 0.88)
+
+  local buf, win, closer =
+    floating_buf({win_width = win_width, win_height = win_height, x = x, y = y, enter = false, ft = "Floaterm"})
   api.nvim_command("setlocal nobuflisted")
   api.nvim_command("startinsert!")
   vim.fn.termopen(
@@ -62,9 +78,9 @@ local function floating_term(cmd, callback, win_width, win_height, x, y)
         local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
         vim.api.nvim_set_current_win(current_window)
         closer()
-        if callback then
-          callback(lines)
-        end
+        -- if callback then
+        --   callback(lines)
+        -- end
       end
     }
   )

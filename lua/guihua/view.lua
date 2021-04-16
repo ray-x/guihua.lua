@@ -51,15 +51,13 @@ function View:initialize(...)
   local floatbuf = require "guihua.floating".floating_buf
   -- listview should not have ft enabled
   self.buf, self.win, self.buf_closer =
-    floatbuf(self.rect.width, self.rect.height, self.rect.pos_x, self.rect.pos_y, loc, self.prompt, opts.enter)
+    floatbuf({win_width=self.rect.width, win_height = self.rect.height, x = self.rect.pos_x, y=self.rect.pos_y, loc = loc, prompt = self.prompt, enter = opts.enter, ft = opts.ft, relative = opts.relative})
   log("floatbuf created ", self.buf, self.win)
   self:set_bg(opts)
   self:on_draw(self.data)
   if self.prompt then
     vim.cmd("startinsert!")
     log("create prompt view")
-  else
-    vim.cmd("normal! 1gg")
   end
 
   View.static.ActiveView = self
