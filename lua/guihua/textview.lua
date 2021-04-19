@@ -24,34 +24,43 @@ function TextView:initialize(...)
   log("ctor TextView start:")
 
   local opts = select(1, ...) or {}
-  log("TxView", opts)
 
-  vim.cmd([[hi GHTextViewDark guifg=#e0d8f4 guibg=#3e2e4f]])
+  vim.cmd([[hi GHTextViewDark guifg=#e0d8f4 guibg=#3e2e6f]])
 
   opts.bg = opts.bg or "GHTextViewDark"
   if TextView.ActiveTextView ~= nil then -- seems not working..
-    log("active view ", TextView.ActiveTextView)
-    if TextView.ActiveTextView.win ~= nil and vim.api.nvim_win_is_valid(TextView.ActiveTextView.win) and
-        vim.api.nvim_buf_is_valid(self.buf) then
+    log("active view ", TextView.ActiveTextView.buf, TextView.ActiveTextView.win)
+    if
+      TextView.ActiveTextView.win ~= nil and vim.api.nvim_win_is_valid(TextView.ActiveTextView.win) and
+        vim.api.nvim_buf_is_valid(self.buf)
+     then
       log("active view already existed")
+      self = TextView.ActiveTextView
       TextView.ActiveTextView:on_draw(opts.data)
       return TextView.ActiveTextView
     end
     TextView.ActiveTextView.win = nil
     TextView.ActiveTextView.buf = nil
-    TextView.static.ActiveView = nil
+    TextView.static.ActiveTextView = nil
   end
-  opts.enter = false
-  View.initialize(self, ...)
+  opts.enter = opts.enter or false
+  log("TxView", opts)
+  View.initialize(self, opts)
 
   self.cursor_pos = {1, 1}
   if opts.syntax then
     vim.api.nvim_buf_set_option(self.buf, "syntax", opts.syntax)
     self.syntax = opts.syntax
   end
-  TextView.static.ActiveView = self
-  util.close_view_event("n", "<C-e>", self.win)
-  util.close_view_event("i", "<C-e>", self.win)
+  TextView.static.ActiveTextView = self
+  if not opts.enter then
+    -- currsor move will close textview
+    util.close_view_autocmd({"CursorMoved", "CursorMovedI"}, self.win)
+  else
+    -- for definition preview <c-e> close
+    util.close_view_event("n", "<C-e>", self.win, self.buf, opts.enter)
+    util.close_view_event("i", "<C-e>", self.win, self.buf, opts.enter)
+  end
   log("ctor TextView: end", self.win) --, View.ActiveView)--, self)
 end
 
@@ -68,7 +77,6 @@ function TextView:on_draw(data)
     return
   end
 
-  vim.api.nvim_buf_set_option(self.buf, "readonly", false)
   local content = {}
   if type(data) == "string" then
     content = {data}
@@ -76,16 +84,23 @@ function TextView:on_draw(data)
     content = data
   end
 
-  verbose("draw", data)
+  log("draw", data, self.buf, self.win)
   local start = 0
   if self.header ~= nil then
     start = 1
   end
-  end_at = -1
+  local end_at = -1
+  local bufnr = self.buf or TextView.ActiveTextView.buf
+  if bufnr == 0 then
+    print("Error: plugin failure, please submit a issue")
+  end
+  --log("bufnr", bufnr)
+
+  vim.api.nvim_buf_set_option(bufnr, "readonly", false)
   -- vim.api.nvim_buf_set_lines(self.buf, start, end_at, true, content)
-  vim.api.nvim_buf_set_lines(self.buf, start, end_at, true, content)
-  vim.api.nvim_buf_set_option(self.buf, "readonly", true)
-  vim.api.nvim_buf_set_option(self.buf, "bufhidden", "wipe")
+  vim.api.nvim_buf_set_lines(bufnr, start, end_at, true, content)
+  vim.api.nvim_buf_set_option(bufnr, "readonly", true)
+  vim.api.nvim_buf_set_option(bufnr, "bufhidden", "wipe")
 
   -- vim.fn.setpos(".", {0, 1, 1, 0})
 end
@@ -100,6 +115,5 @@ function TextView:on_close()
   TextView.ActiveTextView:close()
   TextView.static.ActiveView = self
 end
-
 
 return TextView

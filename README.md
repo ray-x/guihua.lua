@@ -8,7 +8,9 @@ Guihua: A Lua Gui and util liberary for nvim plugins
 * Listview
   ![listview](https://github.com/ray-x/files/blob/master/img/guihua/listview.png)
 
-Please refer to test file of how to use it
+* Listview with fzy finder
+  ![listview](https://github.com/ray-x/files/blob/master/img/navigator/fzy_reference.jpg?raw=true)
+  Please refer to test file of how to use it
 
 # Install
 

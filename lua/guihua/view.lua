@@ -78,7 +78,6 @@ function View:set_bg(opts)
 
   local cmd = "Normal:" .. bg .. ",NormalNC:" .. bg
   vim.api.nvim_win_set_option(self.win, "winhl", cmd)
-  log("set hl", cmd, self.win)
   --def_icon = opts.finder_definition_icon or ' '
   -- self.prompt = opts.prompt or " "
   -- api.nvim_buf_add_highlight(self.contents_buf,-1,"TargetWord",0,#def_icon,self.param_length+#def_icon+3)
@@ -120,7 +119,8 @@ end
 -- draw line text
 local function draw_lines(buf, start, end_at, data)
   -- the #data should match or < start~end_at
-  log("draw_lines", buf, start, end_at, #data)
+  if #data < 1 then log("empty body") return end
+  log("draw_lines", buf, start, end_at, #data, data)
   if data == nil then
     return
   end
@@ -204,7 +204,7 @@ function View:close(...)
   log("view closed ")
 end
 
-function View:on_close()
+function View.on_close()
   log(debug.traceback())
   if View.ActiveView == nil then
     log("view onclose nil")

@@ -3,6 +3,7 @@ local ViewController = require "guihua.viewctrl"
 local log = require "guihua.log".info
 local util = require "guihua.util"
 local verbose = require "guihua.log".trace
+
 if ListViewCtrl == nil then
   ListViewCtrl = class("ListViewCtrl", ViewController)
 end
@@ -42,9 +43,10 @@ function ListViewCtrl:initialize(delegate, ...)
   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Up>", "<cmd> lua ListViewCtrl:on_prev()<CR>", {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Down>", "<cmd> lua ListViewCtrl:on_next()<CR>", {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-o>", "<cmd> lua ListViewCtrl:on_confirm()<CR>", {})
+  log('bind close', self.m_delegate.win, delegate.buf)
 
-  util.close_view_event("n", "<C-e>", self.m_delegate.win)
-  util.close_view_event("i", "<C-e>", self.m_delegate.win)
+  -- util.close_view_event("n", "<C-e>", self.m_delegate.win, delegate.buf, opts.enter)
+  -- util.close_view_event("i", "<C-e>", self.m_delegate.win,  delegate.buf, opts.enter)
   -- vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<esc>", "<cmd> lua require'guihua.ListViewCtrl':on_close() <CR>", {})
   -- vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-c>", "<cmd> lua require'guihua.ListViewCtrl':on_close() <CR>", {})
   -- vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<CR>", "<cmd> lua require'guihua.ListViewCtrl':on_close() <CR>", {})
@@ -59,6 +61,12 @@ end
 
 function ListViewCtrl:get_ui()
   return self.m_delegate
+end
+
+function ListViewCtrl:wrap_closer(o)
+  if o.class and o.class.name == "TextView" then
+    ListViewCtrl._viewctlobject.textview_winnr = o.winnr
+  end
 end
 
 function ListViewCtrl:on_next()
@@ -99,11 +107,13 @@ function ListViewCtrl:on_next()
     listobj.m_delegate:set_pos(l - listobj.display_start_at + 1)
   end
 
-  log("next should show: ", listobj.display_data[l].text or listobj.display_data[l], listobj.display_start_at)
+  -- log("next should show: ", listobj.display_data[l].text or listobj.display_data[l], listobj.display_start_at)
   listobj.selected_line = l
-  listobj.on_move(l)
+  self:wrap_closer(listobj.on_move(l))
   return data_collection[listobj.selected_line]
 end
+
+
 
 function ListViewCtrl:on_prev()
   local listobj = ListViewCtrl._viewctlobject
@@ -140,7 +150,6 @@ function ListViewCtrl:on_prev()
     listobj.display_start_at = listobj.display_start_at - 1
     listobj.display_data = {unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1)}
 
-    log("disp", listobj.display_data)
     log("dispdata", listobj.display_data)
     listobj.m_delegate:on_draw(listobj.display_data)
     listobj.m_delegate:set_pos(1)
@@ -151,7 +160,7 @@ function ListViewCtrl:on_prev()
 
   log("prev: ", l, listobj.display_data[l].text or listobj.display_data[l])
   listobj.selected_line = l
-  listobj.on_move(l)
+  self:wrap_closer(listobj.on_move(l))
   return listobj.data[listobj.selected_line]
 end
 
@@ -184,13 +193,13 @@ function ListViewCtrl:on_search()
   end
   listobj.filtered_data = fzy(filter_input, listobj.data)
 
-  log("filtered data", listobj.filtered_data)
+  verbose("filtered data", listobj.filtered_data)
 
   listobj.filter_applied = true
   listobj.display_data = {unpack(listobj.filtered_data, 1, listobj.display_height)}
   listobj.display_start_at = 1 -- reset
 
-  log("filtered data", listobj.display_data)
+  verbose("filtered data", listobj.display_data)
   listobj:on_draw(listobj.display_data)
   listobj.selected_line = 1
   listobj.m_delegate:set_pos(1)
@@ -198,7 +207,8 @@ function ListViewCtrl:on_search()
 end
 
 function ListViewCtrl:on_close()
-  log("closer ", ListViewCtrl._viewctlobject.m_delegate)
+  log("closer listview") --, ListViewCtrl._viewctlobject.m_delegate)
+  ListViewCtrl._viewctlobject.m_delegate.close()
   ListViewCtrl._viewctlobject.m_delegate:on_close()
   ListViewCtrl._viewctlobject = nil
 end

@@ -5,7 +5,7 @@ local log = require "guihua.log".info
 -- Create a simple floating terminal.
 local function floating_buf(opts) --win_width, win_height, x, y, loc, prompt, enter, ft)
   local prompt = opts.prompt or false
-  local enter = opts.enter or true
+  local enter = opts.enter or false
   local x = opts.x or 0
   local y = opts.y or 0
   log("loc", opts.loc, opts.win_width, opts.win_height, x, y, enter, opts.ft)
@@ -23,7 +23,7 @@ local function floating_buf(opts) --win_width, win_height, x, y, loc, prompt, en
     win_opts.row = row + y
     win_opts.col = col + x
   end
-  log("floating", win_opts)
+  log("floating", win_opts, opts)
   local buf = api.nvim_create_buf(false, true)
   api.nvim_buf_set_option(buf, "bufhidden", "wipe")
   -- api.nvim_buf_set_option(buf, 'buftype', 'guihua_input')
@@ -51,7 +51,7 @@ end
 -- Create a simple floating terminal.
 local function floating_term(opts) --cmd, callback, win_width, win_height, x, y)
   local current_window = vim.api.nvim_get_current_win()
-  local enter = opts.enter or true
+  local enter = opts.enter or false
   local x = opts.x or 0
   local y = opts.y or 0
 

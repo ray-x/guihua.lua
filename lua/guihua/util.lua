@@ -9,10 +9,21 @@ function M.close_view_autocmd(events, winnr)
   )
 end
 
-function M.close_view_event(mode, key, winnr)
-  api.nvim_command(
-    mode .. "map <buffer> " .. key .. " <Cmd> lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true) <CR>"
-  )
+-- function M.buf_close_view_event(mode, key, bufnr, winnr)
+--   local closer = " <Cmd> lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true) <CR>"
+--   vim.api.nvim_buf_set_keymap(bufnr, "n", key, closer, {})
+-- end
+
+function M.close_view_event(mode, key, winnr, bufnr, enter)
+  local closer = " <Cmd> lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true) <CR>"
+  enter = enter or false
+  bufnr = bufnr or 0
+
+  -- log ("!! closer", winnr, bufnr, enter)
+  if enter then
+    vim.api.nvim_buf_set_keymap(bufnr, "n", key, closer, {})
+  --api.nvim_command( mode .. "map <buffer> " .. key .. " <Cmd> lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true) <CR>" )
+  end
 end
 
 function M.trim_space(s)
@@ -40,28 +51,39 @@ local function extension(url)
   return string.sub(ext, 2)
 end
 
-function M.aggregate_filename(items)
+function M.aggregate_filename(items, opts)
+  opts = opts or {}
+  if #items < 1 then
+    error("empty fields")
+  end
   local item = M.clone(items[1])
   local display_items = {item}
   local last_summary_idx = 1
   local total_ref_in_file = 1
+  local icon = " "
+  local lspapi = opts.api or "∑"
 
+  local ok, devicons = pcall(require, "nvim-web-devicons")
+  if ok then
+    local fn = filename(items[1].filename)
+    local ext = extension(fn)
+    icon = devicons.get_icon(fn, ext) or icon
+  end
   for i = 1, #items do
-    local icon = " "
-    local ok, devicons = pcall(require, "nvim-web-devicons")
-    if ok then
-      local fn = filename(items[i].filename)
-      local ext = extension(fn)
-      icon = devicons.get_icon(fn, ext) or icon
-    end
-
+    log(items[i], items[i].filename, last_summary_idx, display_items[last_summary_idx].filename)
     if items[i].filename == display_items[last_summary_idx].filename then
       display_items[last_summary_idx].text =
-        string.format("%s %s  ∑  %i", icon, display_items[last_summary_idx].display_filename, total_ref_in_file)
+        string.format(
+        "%s  %s  %s %i",
+        icon,
+        display_items[last_summary_idx].display_filename,
+        lspapi,
+        total_ref_in_file
+      )
       total_ref_in_file = total_ref_in_file + 1
     else
       item = M.clone(items[i])
-      item.text = string.format("%s  %s ∑ 1", icon, item.display_filename)
+      item.text = string.format("%s  %s  %s 1", icon, item.display_filename, lspapi)
 
       log(item.text)
       table.insert(display_items, item)
@@ -69,7 +91,7 @@ function M.aggregate_filename(items)
       last_summary_idx = #display_items
     end
     item = M.clone(items[i])
-    item.text = string.format(" %i: %s", item.lnum, item.text)
+    item.text = string.format(" %i:  %s", item.lnum, item.text)
     log(item.text)
     table.insert(display_items, item)
   end
@@ -77,6 +99,16 @@ function M.aggregate_filename(items)
   -- display_items[last_summary_idx].text=string.format("%s [%i]", display_items[last_summary_idx].filename,
   -- total_ref_in_file)
   return display_items
+end
+
+function M.add_escape(s)
+  -- / & ! . ^ * $ \ ?
+  local special = {"&", "!", "*", "?", "/"}
+  local str = s
+  for i = 1, #special do
+    str = string.gsub(str, special[i], "\\"..special[i])
+  end
+  return str
 end
 
 return M

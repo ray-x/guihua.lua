@@ -17,13 +17,17 @@ opts={
 }
 
 --]]
-
 function ListView:initialize(...)
   verbose(debug.traceback())
+
+  if win and vim.api.nvim_win_is_valid(win) then
+    ListView.close()
+  end
+
   log("listview ctor ") --, self)
   local opts = select(1, ...) or {}
 
-  vim.cmd([[hi GHListDark guifg=#e0d8f4 guibg=#372745]])
+  vim.cmd([[hi GHListDark guifg=#e0d8f4 guibg=#272755]])
   opts.bg = opts.bg or "GHListDark"
 
   opts.enter = true
@@ -35,7 +39,18 @@ function ListView:initialize(...)
   vim.api.nvim_buf_set_option(self.buf, "ft", "guihua")
   vim.api.nvim_win_set_option(self.win, "wrap", false)
 
-  vim.cmd("normal! zvzb")
+  if not opts.prompt or opts.enter then
+    vim.cmd("normal! 1gg")
+    vim.fn.setpos('.', {self.win, 1, 1, 0})
+  else
+    vim.cmd("normal! zvzb")
+  end
+
+  ListView.static.Winnr = self.win
+  ListView.static.Bufnr = self.buf
+
+  vim.api.nvim_buf_set_keymap(self.buf, "n", "<C-e>", "<cmd> lua ListView.close() <CR>", {})
+  vim.api.nvim_buf_set_keymap(self.buf, "i", "<C-e>", "<cmd> lua ListView.close() <CR>", {})
   -- vim.fn.setpos('.', {self.win, i, 1, 0})
 end
 
@@ -55,6 +70,22 @@ function ListView:unbind_ctrl(...)
   end
 end
 
+function ListView.close()
+  local buf = ListView.Bufnr
+  local win = ListView.Winnr
+  local preview_win = ListView.textview_winnr
+  if vim.api.nvim_win_is_valid(preview_win) then
+    pcall(vim.api.nvim_win_close, preview_win, true)  -- to avoid warning
+    ListView.static.textview_winnr = nil
+  end
+  if buf and vim.api.nvim_buf_is_valid(buf) and win and vim.api.nvim_win_is_valid(win) then
+    vim.api.nvim_win_close(win, true)
+    ListView.static.Bufnr = nil
+    ListView.static.Winnr = nil
+    ListView.on_close()
+  end
+end
+
 function ListView:set_pos(i)
   if not vim.api.nvim_buf_is_valid(self.buf) then
     return
@@ -68,13 +99,14 @@ function ListView:set_pos(i)
   vim.schedule(
     function()
       -- log("setpos", self.buf)
-      if not vim.api.nvim_buf_is_valid(self.buf) then return end
+      if not vim.api.nvim_buf_is_valid(self.buf) then
+        return
+      end
       vim.api.nvim_buf_clear_namespace(self.buf, selhighlight, 0, -1)
       local ListviewHl = self.hl_group or "PmenuSel"
       vim.api.nvim_buf_add_highlight(self.buf, selhighlight, ListviewHl, self.selected_line - 1, 0, -1)
     end
   )
 end
-
 
 return ListView
