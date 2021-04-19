@@ -2,7 +2,7 @@ local class = require "middleclass"
 local View = require "guihua.view"
 local log = require "guihua.log".info
 local util = require "guihua.util"
-local verbose = require "guihua.log".trace
+local verbose = require "guihua.log".debug
 -- local TextView = {}
 if TextView == nil then
   TextView = class("TextView", View)
@@ -29,12 +29,12 @@ function TextView:initialize(...)
 
   opts.bg = opts.bg or "GHTextViewDark"
   if TextView.ActiveTextView ~= nil then -- seems not working..
-    log("active view ", TextView.ActiveTextView.buf, TextView.ActiveTextView.win)
+    verbose("active view ", TextView.ActiveTextView.buf, TextView.ActiveTextView.win)
     if
       TextView.ActiveTextView.win ~= nil and vim.api.nvim_win_is_valid(TextView.ActiveTextView.win) and
         vim.api.nvim_buf_is_valid(self.buf)
      then
-      log("active view already existed")
+      verbose("active view already existed")
       self = TextView.ActiveTextView
       TextView.ActiveTextView:on_draw(opts.data)
       return TextView.ActiveTextView
@@ -44,7 +44,7 @@ function TextView:initialize(...)
     TextView.static.ActiveTextView = nil
   end
   opts.enter = opts.enter or false
-  log("TxView", opts)
+  verbose("TxView", opts)
   View.initialize(self, opts)
 
   self.cursor_pos = {1, 1}
@@ -84,7 +84,7 @@ function TextView:on_draw(data)
     content = data
   end
 
-  log("draw", data, self.buf, self.win)
+  verbose("draw", data, self.buf, self.win)
   local start = 0
   if self.header ~= nil then
     start = 1

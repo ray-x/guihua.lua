@@ -1,6 +1,7 @@
 local M = {}
 local api = vim.api
 local log = require "guihua.log".info
+local verbose = require "guihua.log".debug
 
 function M.close_view_autocmd(events, winnr)
   api.nvim_command(
@@ -70,7 +71,7 @@ function M.aggregate_filename(items, opts)
     icon = devicons.get_icon(fn, ext) or icon
   end
   for i = 1, #items do
-    log(items[i], items[i].filename, last_summary_idx, display_items[last_summary_idx].filename)
+    -- verbose(items[i], items[i].filename, last_summary_idx, display_items[last_summary_idx].filename)
     if items[i].filename == display_items[last_summary_idx].filename then
       display_items[last_summary_idx].text =
         string.format(
@@ -85,14 +86,14 @@ function M.aggregate_filename(items, opts)
       item = M.clone(items[i])
       item.text = string.format("%s  %s  %s 1", icon, item.display_filename, lspapi)
 
-      log(item.text)
+      verbose(item.text)
       table.insert(display_items, item)
       total_ref_in_file = 1
       last_summary_idx = #display_items
     end
     item = M.clone(items[i])
     item.text = string.format(" %i:  %s", item.lnum, item.text)
-    log(item.text)
+    verbose(item.text)
     table.insert(display_items, item)
   end
 

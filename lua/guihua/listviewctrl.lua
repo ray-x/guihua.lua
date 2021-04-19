@@ -85,7 +85,7 @@ function ListViewCtrl:on_next()
     disp_h = disp_h - 1
   end
 
-  log("next: ", listobj.selected_line, listobj.display_start_at, listobj.display_height, l, disp_h)
+  verbose("next: ", listobj.selected_line, listobj.display_start_at, listobj.display_height, l, disp_h)
 
   if l > #data_collection then
     listobj.m_delegate:set_pos(disp_h)
@@ -98,7 +98,7 @@ function ListViewCtrl:on_next()
     -- need to scroll next
     listobj.display_start_at = listobj.display_start_at + 1
     listobj.display_data = {unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1)}
-    log("disp", listobj.display_data, disp_h, listobj.display_start_at)
+    verbose("disp", listobj.display_data, disp_h, listobj.display_start_at)
     listobj.m_delegate:on_draw(listobj.display_data)
     listobj.m_delegate:set_pos(disp_h)
   else
@@ -122,7 +122,7 @@ function ListViewCtrl:on_prev()
   if listobj.m_delegate.prompt == true then
     disp_h = disp_h - 1
   end
-  log(
+  verbose(
     "pre: ",
     listobj.selected_line,
     listobj.display_start_at,
@@ -158,7 +158,7 @@ function ListViewCtrl:on_prev()
     listobj.m_delegate:set_pos(l - listobj.display_start_at + 1)
   end
 
-  log("prev: ", l, listobj.display_data[l].text or listobj.display_data[l])
+  verbose("prev: ", l, listobj.display_data[l].text or listobj.display_data[l])
   listobj.selected_line = l
   self:wrap_closer(listobj.on_move(l))
   return listobj.data[listobj.selected_line]

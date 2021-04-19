@@ -2,6 +2,7 @@ local api = vim.api
 local location = require "guihua.location"
 
 local log = require "guihua.log".info
+local verbose = require "guihua.log".debug
 -- Create a simple floating terminal.
 local function floating_buf(opts) --win_width, win_height, x, y, loc, prompt, enter, ft)
   local prompt = opts.prompt or false
@@ -23,7 +24,7 @@ local function floating_buf(opts) --win_width, win_height, x, y, loc, prompt, en
     win_opts.row = row + y
     win_opts.col = col + x
   end
-  log("floating", win_opts, opts)
+  verbose("floating", win_opts, opts)
   local buf = api.nvim_create_buf(false, true)
   api.nvim_buf_set_option(buf, "bufhidden", "wipe")
   -- api.nvim_buf_set_option(buf, 'buftype', 'guihua_input')

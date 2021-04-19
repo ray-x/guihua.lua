@@ -6,7 +6,7 @@ local class = require "middleclass"
 local View = class("View", Rect)
 
 local log = require "guihua.log".info
-local verbose = require "guihua.log".trace
+local verbose = require "guihua.log".debug
 
 -- Note, Support only one active view
 -- ActiveView = nil
@@ -98,7 +98,7 @@ end
 
 local function draw_table_item(buf, item, pos)
   -- deal with filtered data
-  log("draw_table", buf, item.text, pos)
+  verbose("draw_table", buf, item.text, pos)
   if item.text == nil then
     return
   end
@@ -120,7 +120,7 @@ end
 local function draw_lines(buf, start, end_at, data)
   -- the #data should match or < start~end_at
   if #data < 1 then log("empty body") return end
-  log("draw_lines", buf, start, end_at, #data, data)
+  verbose("draw_lines", buf, start, end_at, #data, data)
   if data == nil then
     return
   end
