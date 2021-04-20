@@ -45,7 +45,7 @@ local function floating_buf(opts) --win_width, win_height, x, y, loc, prompt, en
     end
   end
   local win = api.nvim_open_win(buf, enter, win_opts)
-  log("creating win", win)
+  log("creating win", win, "buf", buf)
   return buf, win, function()
     log("floatwin closing ", win)
     if vim.api.nvim_win_is_valid(win) then

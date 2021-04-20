@@ -25,7 +25,7 @@ function TextView:initialize(...)
 
   local opts = select(1, ...) or {}
 
-  vim.cmd([[hi GHTextViewDark guifg=#e0d8f4 guibg=#3e2e6f]])
+  vim.cmd([[hi GHTextViewDark guifg=#e0d8f4 guibg=#332e64]])
 
   opts.bg = opts.bg or "GHTextViewDark"
   if TextView.ActiveTextView ~= nil then -- seems not working..
@@ -34,9 +34,19 @@ function TextView:initialize(...)
       TextView.ActiveTextView.win ~= nil and vim.api.nvim_win_is_valid(TextView.ActiveTextView.win) and
         vim.api.nvim_buf_is_valid(self.buf)
      then
+      if TextView.hl_id ~= nil then
+        vim.api.nvim_buf_clear_namespace(0, TextView.hl_id, 0, -1)
+        TextView.static.hl_id = nil
+        TextView.static.hl_line = nil
+      end
       verbose("active view already existed")
       self = TextView.ActiveTextView
       TextView.ActiveTextView:on_draw(opts.data)
+      if opts.hl_line ~= nil then
+        log("hl buf", self.buf, "l ", opts.hl_line)
+        TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "Search", opts.hl_line - 1, 0, -1)
+        TextView.static.hl_line = opts.hl_line
+      end
       return TextView.ActiveTextView
     end
     TextView.ActiveTextView.win = nil
@@ -52,6 +62,7 @@ function TextView:initialize(...)
     vim.api.nvim_buf_set_option(self.buf, "syntax", opts.syntax)
     self.syntax = opts.syntax
   end
+
   TextView.static.ActiveTextView = self
   if not opts.enter then
     -- currsor move will close textview
@@ -62,6 +73,11 @@ function TextView:initialize(...)
     util.close_view_event("i", "<C-e>", self.win, self.buf, opts.enter)
   end
   log("ctor TextView: end", self.win) --, View.ActiveView)--, self)
+  if opts.hl_line ~= nil then
+    log("buf", self.buf, "l: ", opts.hl_line)
+    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "Search", opts.hl_line - 1, 0, -1)
+    TextView.static.hl_line = opts.hl_line
+  end
 end
 
 function TextView.Active()
@@ -101,7 +117,9 @@ function TextView:on_draw(data)
   vim.api.nvim_buf_set_lines(bufnr, start, end_at, true, content)
   vim.api.nvim_buf_set_option(bufnr, "readonly", true)
   vim.api.nvim_buf_set_option(bufnr, "bufhidden", "wipe")
-
+  if TextView.hl_line ~= nil then
+    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "Search", TextView.hl_line - 1, 0, -1)
+  end
   -- vim.fn.setpos(".", {0, 1, 1, 0})
 end
 
