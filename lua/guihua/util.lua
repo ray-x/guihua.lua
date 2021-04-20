@@ -44,17 +44,17 @@ function M.clone(st)
 end
 
 local function filename(url)
-  return url:match("^.+/(.+)$")
+  return url:match("^.+/(.+)$") or url
 end
 
 local function extension(url)
-  local ext = url:match("^.+(%..+)$")
+  local ext = url:match("^.+(%..+)$") or 'txt'
   return string.sub(ext, 2)
 end
 
 function M.aggregate_filename(items, opts)
   opts = opts or {}
-  if #items < 1 then
+  if items== nil or #items < 1 then
     error("empty fields")
   end
   local item = M.clone(items[1])

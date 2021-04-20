@@ -122,7 +122,7 @@ function ListViewCtrl:on_prev()
   if listobj.m_delegate.prompt == true then
     disp_h = disp_h - 1
   end
-  verbose(
+  log(
     "pre: ",
     listobj.selected_line,
     listobj.display_start_at,
@@ -142,7 +142,7 @@ function ListViewCtrl:on_prev()
   local l = listobj.selected_line - 1
   if l < 1 then
     listobj.m_delegate:set_pos(1)
-    listobj.on_move(l)
+    self:wrap_closer(listobj.on_move(1))
     return
   end
   if l < listobj.display_start_at and listobj.display_start_at >= 1 then
@@ -150,7 +150,7 @@ function ListViewCtrl:on_prev()
     listobj.display_start_at = listobj.display_start_at - 1
     listobj.display_data = {unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1)}
 
-    log("dispdata", listobj.display_data)
+    verbose("dispdata", listobj.display_data)
     listobj.m_delegate:on_draw(listobj.display_data)
     listobj.m_delegate:set_pos(1)
   else
@@ -158,7 +158,8 @@ function ListViewCtrl:on_prev()
     listobj.m_delegate:set_pos(l - listobj.display_start_at + 1)
   end
 
-  verbose("prev: ", l, listobj.display_data[l].text or listobj.display_data[l])
+  log("prev: ", l)
+  -- log("prev: ", l, listobj.display_data[l].text or listobj.display_data[l])
   listobj.selected_line = l
   self:wrap_closer(listobj.on_move(l))
   return listobj.data[listobj.selected_line]
@@ -187,7 +188,7 @@ function ListViewCtrl:on_search()
   -- get string after prompt
 
   filter_input = string.sub(filter_input, 5, #filter_input)
-  log("input", filter_input)
+  log("filter input", filter_input)
   if #filter_input == 0 or #listobj.data == nil or #listobj.data == 0 then
     return
   end
