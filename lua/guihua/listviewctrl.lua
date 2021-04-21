@@ -174,6 +174,7 @@ function ListViewCtrl:on_confirm()
 end
 
 function ListViewCtrl:on_search()
+  -- local cursor = vim.api.nvim_win_get_cursor(0)
   local fzy = require "fzy".fzy
   if fzy == nil then
     print("[ERR] fzy not found")
@@ -187,23 +188,29 @@ function ListViewCtrl:on_search()
   local filter_input = vim.api.nvim_buf_get_lines(buf, -2, -1, false)[1]
   -- get string after prompt
 
-  filter_input = string.sub(filter_input, 5, #filter_input)
-  log("filter input", filter_input)
-  if #filter_input == 0 or #listobj.data == nil or #listobj.data == 0 then
+  local filter_input_trim = string.sub(filter_input, 5, #filter_input)
+  log("filter input", filter_input_trim, filter_input)
+  if #filter_input_trim == 0 or #listobj.data == nil or #listobj.data == 0 then
     return
   end
-  listobj.filtered_data = fzy(filter_input, listobj.data)
-
-  verbose("filtered data", listobj.filtered_data)
-
-  listobj.filter_applied = true
+  listobj.filtered_data = fzy(filter_input_trim, listobj.data)
+  --
+  -- verbose("filtered data", listobj.filtered_data)
+  --
   listobj.display_data = {unpack(listobj.filtered_data, 1, listobj.display_height)}
+  listobj.filter_applied = true
   listobj.display_start_at = 1 -- reset
-
+  --
   verbose("filtered data", listobj.display_data)
   listobj:on_draw(listobj.display_data)
   listobj.selected_line = 1
   listobj.m_delegate:set_pos(1)
+
+  vim.api.nvim_buf_set_lines(buf, -2, -1, true, {filter_input})
+  -- log(cursor)
+  -- vim.api.nvim_win_set_cursor(0, cursor)
+  vim.cmd([[normal! A]])
+  vim.cmd('startinsert!')
   log("on search ends")
 end
 
