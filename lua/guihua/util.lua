@@ -92,7 +92,7 @@ function M.aggregate_filename(items, opts)
       last_summary_idx = #display_items
     end
     item = M.clone(items[i])
-    item.text = string.format(" %i:  %s", item.lnum, item.text)
+    item.text = string.format(" %4i:  %s", item.lnum, item.text)
     verbose(item.text)
     table.insert(display_items, item)
   end

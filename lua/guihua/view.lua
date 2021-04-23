@@ -169,7 +169,7 @@ function View:on_draw(data)
     content = data
   end
 
-  verbose("draw", data)
+  verbose("draw", data[1], data[2])
   local start = 0
   if self.header ~= nil then
     start = 1

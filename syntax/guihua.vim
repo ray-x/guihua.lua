@@ -10,7 +10,9 @@ syn region   GuihuaBufferString            start=+"+ skip=+\\\\\|\\"+ end=+"+
 syn region   GuihuaBufferString2            start=+'+ skip=+\\\\\|\\'+ end=+'+
 syntax keyword GuihuaBufferKeyword func function if else break for local begin end or and continue true false let auto struct class interface int long float string enum const default select case defer switch map goto var type import range return catch delete do finally try void while implements long public self this new delete malloc free include import char byte def extends null nil explict as any enum private number module yield
 
-syntax match GuihuaBufferPath '\.\(\/\a\+\)*\.*\a*'
+syntax match GuihuaBufferPath '\(\.\)*\(\/\S\+\)\{1}\.*\S*'
+
+
 
 hi default link GuihuaBufferNumber Number
 hi default link GuihuaBufferColon  SpecialChar
@@ -19,3 +21,7 @@ hi default link GuihuaBufferKeyword Keyword
 hi default link GuihuaBufferString String
 hi default link GuihuaBufferString2 String
 hi default link GuihuaBufferComment Comment
+" path match
+"  /abc/def_m1/gh_a.lua   :3
+" /abc/defm/gha.lua
+" ./abc/def-a/gh.cpp

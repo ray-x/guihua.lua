@@ -2,7 +2,7 @@ local class = require "middleclass"
 local ViewController = require "guihua.viewctrl"
 local log = require "guihua.log".info
 local util = require "guihua.util"
-local verbose = require "guihua.log".trace
+local verbose = require "guihua.log".debug
 
 if ListViewCtrl == nil then
   ListViewCtrl = class("ListViewCtrl", ViewController)
@@ -189,7 +189,7 @@ function ListViewCtrl:on_search()
   -- get string after prompt
 
   local filter_input_trim = string.sub(filter_input, 5, #filter_input)
-  log("filter input", filter_input_trim, filter_input)
+  verbose("filter input", filter_input_trim, filter_input)
   if #filter_input_trim == 0 or #listobj.data == nil or #listobj.data == 0 then
     return
   end
