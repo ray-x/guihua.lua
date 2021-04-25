@@ -167,10 +167,9 @@ end
 
 function ListViewCtrl:on_confirm()
   local listobj = ListViewCtrl._viewctlobject
-
-  log("confirm: ", listobj.selected_line, listobj.display_start_at)
-  listobj.on_confirm(listobj.selected_line)
   listobj.m_delegate:close()
+  -- verbose(listobj.m_delegate)
+  listobj.on_confirm(listobj.selected_line)
 end
 
 function ListViewCtrl:on_search()

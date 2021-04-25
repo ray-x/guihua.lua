@@ -74,6 +74,7 @@ function ListView.close()
   local buf = ListView.Bufnr
   local win = ListView.Winnr
   local preview_win = ListView.textview_winnr
+  verbose("closing: buf", buf, win, preview_win)
   if vim.api.nvim_win_is_valid(preview_win) then
     pcall(vim.api.nvim_win_close, preview_win, true)  -- to avoid warning
     ListView.static.textview_winnr = nil
