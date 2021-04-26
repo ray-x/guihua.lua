@@ -112,4 +112,14 @@ function M.add_escape(s)
   return str
 end
 
+function M.add_pec(s)
+  -- / & ! . ^ * $ \ ?
+  local special = {"%[", "%]", "%-"}
+  local str = s
+  for i = 1, #special do
+    str = string.gsub(str, special[i], "%"..special[i])
+  end
+  return str
+end
+
 return M
