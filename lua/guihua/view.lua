@@ -44,6 +44,7 @@ function View:initialize(...)
   self.prompt = opts.prompt == true and true or false
   self.data = opts.data
   self.ft = opts.ft or "guihua"
+  self.syntax = opts.syntax or "guihua"
   self.display_height = self.rect.height
 
   log("height: ", self.display_height)
@@ -51,7 +52,7 @@ function View:initialize(...)
   local floatbuf = require "guihua.floating".floating_buf
   -- listview should not have ft enabled
   self.buf, self.win, self.buf_closer =
-    floatbuf({win_width=self.rect.width, win_height = self.rect.height, x = self.rect.pos_x, y=self.rect.pos_y, loc = loc, prompt = self.prompt, enter = opts.enter, ft = opts.ft, relative = opts.relative})
+    floatbuf({win_width=self.rect.width, win_height = self.rect.height, x = self.rect.pos_x, y=self.rect.pos_y, loc = loc, prompt = self.prompt, enter = opts.enter, ft = opts.ft, syntax = opts.syntax, relative = opts.relative})
   log("floatbuf created ", self.buf, self.win)
   self:set_bg(opts)
   self:on_draw(self.data)

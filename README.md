@@ -10,9 +10,13 @@ Guihua: A Lua Gui and util liberary for nvim plugins
 
 * Listview with fzy finder
   ![listview](https://github.com/ray-x/files/blob/master/img/navigator/fzy_reference.jpg?raw=true)
-  Please refer to test file of how to use it
 
-fzy was powered by [romgrk fzy-lua-native](https://github.com/romgrk/fzy-lua-native) with modified version of sorter/quicksort to sort list of tables
+More screen shot please refer to [Navigator.lua](https://github.com/ray-x/navigator.lua)
+
+Please refer to test file of how to use it
+
+Lua OOP is powered by [middleclass](https://github.com/kikito/middleclass)
+fzy is powered by [romgrk fzy-lua-native](https://github.com/romgrk/fzy-lua-native) with modified version of sorter/quicksort to sort list of tables
 
 # Install
 
@@ -29,3 +33,5 @@ Plugin has implementation of fzy with both ffi and native lua. If you like to tr
 ```vim
 Plug 'ray-x/guihua.lua', {'do': 'cd lua/fzy && make' }
 ```
+
+Usage: check

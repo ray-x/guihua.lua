@@ -43,7 +43,9 @@ function TextView:initialize(...)
       self = TextView.ActiveTextView
       TextView.ActiveTextView:on_draw(opts.data)
       if opts.hl_line ~= nil then
-        if opts.hl_line == 0 then opts.hl_line = 1 end
+        if opts.hl_line == 0 then
+          opts.hl_line = 1
+        end
         log("hl buf", self.buf, "l ", opts.hl_line)
         TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "Search", opts.hl_line - 1, 0, -1)
         TextView.static.hl_line = opts.hl_line
@@ -60,8 +62,10 @@ function TextView:initialize(...)
 
   self.cursor_pos = {1, 1}
   if opts.syntax then
-    vim.api.nvim_buf_set_option(self.buf, "syntax", opts.syntax)
     self.syntax = opts.syntax
+    log("hl ", self.buf, opts.syntax)
+    require "guihua.util".highlighter(self.buf, opts.syntax, opts.ts)
+    -- vim.api.nvim_buf_set_option(self.buf, "syntax", opts.syntax)
   end
 
   TextView.static.ActiveTextView = self
@@ -75,7 +79,9 @@ function TextView:initialize(...)
   end
   log("ctor TextView: end", self.win) --, View.ActiveView)--, self)
   if opts.hl_line ~= nil then
-    if opts.hl_line == 0 then opts.hl_line = 1 end
+    if opts.hl_line == 0 then
+      opts.hl_line = 1
+    end
     log("buf", self.buf, "l: ", opts.hl_line)
     TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "Search", opts.hl_line - 1, 0, -1)
     TextView.static.hl_line = opts.hl_line

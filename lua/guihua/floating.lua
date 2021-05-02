@@ -24,7 +24,7 @@ local function floating_buf(opts) --win_width, win_height, x, y, loc, prompt, en
     width = opts.win_width or 80,
     height = opts.win_height or 20,
     bufpos = {0, 0},
-    border = opts.border
+    border = opts.border or "shadow"
   }
   if win_opts.relative == "editor" then
     win_opts.row = row + y
@@ -41,7 +41,7 @@ local function floating_buf(opts) --win_width, win_height, x, y, loc, prompt, en
   else
     api.nvim_buf_set_option(buf, "readonly", true)
     if opts.ft ~= nil then
-      api.nvim_buf_set_option(buf, "syntax", opts.ft)
+      vim.api.nvim_buf_set_option(buf, "syntax", opts.ft)
     end
   end
   local win = api.nvim_open_win(buf, enter, win_opts)
@@ -126,7 +126,6 @@ local function floating_term(opts) --cmd, callback, win_width, win_height, x, y)
   vim.cmd("startinsert!")
   return buf, win, closer
 end
-
 
 local function test(prompt)
   local b, w, c = floating_buf({win_width = 30, win_height = 6, x = 5, y = 5, prompt = prompt})

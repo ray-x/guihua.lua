@@ -48,13 +48,13 @@ local function filename(url)
 end
 
 local function extension(url)
-  local ext = url:match("^.+(%..+)$") or 'txt'
+  local ext = url:match("^.+(%..+)$") or "txt"
   return string.sub(ext, 2)
 end
 
 function M.aggregate_filename(items, opts)
   opts = opts or {}
-  if items== nil or #items < 1 then
+  if items == nil or #items < 1 then
     error("empty fields")
   end
   local item = M.clone(items[1])
@@ -107,7 +107,7 @@ function M.add_escape(s)
   local special = {"&", "!", "*", "?", "/"}
   local str = s
   for i = 1, #special do
-    str = string.gsub(str, special[i], "\\"..special[i])
+    str = string.gsub(str, special[i], "\\" .. special[i])
   end
   return str
 end
@@ -117,9 +117,44 @@ function M.add_pec(s)
   local special = {"%[", "%]", "%-"}
   local str = s
   for i = 1, #special do
-    str = string.gsub(str, special[i], "%"..special[i])
+    str = string.gsub(str, special[i], "%" .. special[i])
   end
   return str
+end
+
+local has_ts, _ = pcall(require, "nvim-treesitter")
+local _, ts_highlight = pcall(require, "nvim-treesitter.highlight")
+local _, ts_parsers = pcall(require, "nvim-treesitter.parsers")
+
+-- Attach ts highlighter
+M.highlighter = function(bufnr, ft, ts)
+  ts = ts or false
+  if not ts then
+    vim.api.nvim_buf_set_option(bufnr, "syntax", ft)
+    return
+  end
+
+  if ft == nil or ft == "" then
+    return false
+  end
+  if not has_ts then
+    has_ts, _ = pcall(require, "nvim-treesitter")
+    if has_ts then
+      _, ts_highlight = pcall(require, "nvim-treesitter.highlight")
+      _, ts_parsers = pcall(require, "nvim-treesitter.parsers")
+    end
+  end
+
+  if has_ts then
+    local lang = ts_parsers.ft_to_lang(ft)
+    if ts_parsers.has_parser(lang) then
+      verbose("attach ts")
+      ts_highlight.attach(bufnr, lang)
+      return true
+    end
+  end
+
+  return false
 end
 
 return M
