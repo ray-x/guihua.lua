@@ -44,7 +44,7 @@ function ListViewCtrl:initialize(delegate, ...)
   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Down>", "<cmd> lua ListViewCtrl:on_next()<CR>", {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-o>", "<cmd> lua ListViewCtrl:on_confirm()<CR>", {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<C-o>", "<cmd> lua ListViewCtrl:on_confirm()<CR>", {})
-  log('bind close', self.m_delegate.win, delegate.buf)
+  log("bind close", self.m_delegate.win, delegate.buf)
 
   -- util.close_view_event("n", "<C-e>", self.m_delegate.win, delegate.buf, opts.enter)
   -- util.close_view_event("i", "<C-e>", self.m_delegate.win,  delegate.buf, opts.enter)
@@ -65,8 +65,13 @@ function ListViewCtrl:get_ui()
 end
 
 function ListViewCtrl:wrap_closer(o)
+  if o == nil then
+    log("nil closer", debug.traceback())
+    return
+  end
   if o.class and o.class.name == "TextView" then
-    ListViewCtrl._viewctlobject.textview_winnr = o.winnr
+    ListViewCtrl._viewctlobject.textview_winnr = o.win
+    log("bind closer", o.winner)
   end
 end
 
@@ -113,8 +118,6 @@ function ListViewCtrl:on_next()
   self:wrap_closer(listobj.on_move(l))
   return data_collection[listobj.selected_line]
 end
-
-
 
 function ListViewCtrl:on_prev()
   local listobj = ListViewCtrl._viewctlobject
@@ -210,7 +213,7 @@ function ListViewCtrl:on_search()
   -- log(cursor)
   -- vim.api.nvim_win_set_cursor(0, cursor)
   vim.cmd([[normal! A]])
-  vim.cmd('startinsert!')
+  vim.cmd("startinsert!")
   log("on search ends")
 end
 

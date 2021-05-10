@@ -162,15 +162,19 @@ local on_confirm = function(pos)
   log("confirm open", l.filename, pos, l.uri)
   open_file_at(l.filename, l.lnum)
 end
+
 local on_move = function(pos)
   if pos == 0 then
     pos = 1
   end
-  if pos > #data then print("[ERR] idx", pos, "length ", #data)end
+  if pos > #data then
+    print("[ERR] idx", pos, "length ", #data)
+  end
   local l = data[pos]
   log("pos:", pos, l.text or l, l.uri)
   -- todo fix
   return preview_uri(l.uri, l.lnum, 6)
+  -- test(false)
 end
 
 local function test_preview()
@@ -242,12 +246,10 @@ local function test_list()
         }
       },
       text = "function ListView:initialize(...)",
-      uri =
-      "file:///Users/ray.xu/github/guihua.lua/lua/guihua/listview.lua"
+      uri = "file:///Users/ray.xu/github/guihua.lua/lua/guihua/listview.lua"
     }
-
   }
-  local util=require'guihua.util'
+  local util = require "guihua.util"
   -- vim.g.debug_verbose_output = true
   package.loaded["guihua"] = nil
   package.loaded["guihua.view"] = nil
@@ -263,7 +265,8 @@ local function test_list()
     ListView:new(
     {
       loc = "top_center",
-      prompt = true,
+      border = "none",
+      prompt = false,
       rect = {height = 5, width = 90},
       data = d,
       on_confirm = on_confirm,
@@ -274,9 +277,11 @@ local function test_list()
   -- vim.cmd("startinsert!")
   -- vim.cmd("normal! zvzb")
   -- win:on_draw({})
-  win:set_pos(1)
+  -- win:set_pos(1)
 end
 
 test_list()
+-- test_textview()
+
 -- test_plaintext()
 -- test_preview()

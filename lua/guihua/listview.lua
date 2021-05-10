@@ -41,7 +41,7 @@ function ListView:initialize(...)
 
   if not opts.prompt or opts.enter then
     vim.cmd("normal! 1gg")
-    vim.fn.setpos('.', {self.win, 1, 1, 0})
+    vim.fn.setpos(".", {self.win, 1, 1, 0})
   else
     vim.cmd("normal! zvzb")
   end
@@ -55,7 +55,7 @@ function ListView:initialize(...)
 end
 
 function ListView:bind_ctrl(opts)
-  if self.ctrl and self.ctrl.class_name == "ListView" then
+  if self.ctrl and self.ctrl.class_name == "ListViewCtrl" then
     log("already binded", self.ctrl)
     return false
   else
@@ -73,18 +73,16 @@ end
 function ListView.close()
   local buf = ListView.Bufnr
   local win = ListView.Winnr
-  local preview_win = ListView.textview_winnr
-  verbose("closing: buf", buf, win, preview_win)
-  if vim.api.nvim_win_is_valid(preview_win) then
-    pcall(vim.api.nvim_win_close, preview_win, true)  -- to avoid warning
-    ListView.static.textview_winnr = nil
-  end
   if buf and vim.api.nvim_buf_is_valid(buf) and win and vim.api.nvim_win_is_valid(win) then
     vim.api.nvim_win_close(win, true)
     ListView.static.Bufnr = nil
     ListView.static.Winnr = nil
     ListView.on_close()
   end
+  if ListView.ActiveView then
+    ListView.ActiveView.on_close()
+  end
+  ListView:unbind_ctrl()
 end
 
 function ListView:set_pos(i)

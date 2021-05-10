@@ -65,7 +65,7 @@ function TextView:initialize(...)
     self.syntax = opts.syntax
     log("hl ", self.buf, opts.syntax)
     require "guihua.util".highlighter(self.buf, opts.syntax, opts.ts)
-    -- vim.api.nvim_buf_set_option(self.buf, "syntax", opts.syntax)
+  -- vim.api.nvim_buf_set_option(self.buf, "syntax", opts.syntax)
   end
 
   TextView.static.ActiveTextView = self
@@ -131,13 +131,13 @@ function TextView:on_draw(data)
   -- vim.fn.setpos(".", {0, 1, 1, 0})
 end
 
-function TextView:on_close()
+function TextView.on_close()
   verbose(debug.traceback())
   if TextView.ActiveTextView == nil then
     log("view onclose nil")
     return
   end
-  log("view onclose ", TextView.ActiveTextView.win)
+  log("TextView onclose ", TextView.ActiveTextView.win)
   TextView.ActiveTextView:close()
   TextView.static.ActiveView = self
 end
