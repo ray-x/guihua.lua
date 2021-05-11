@@ -79,7 +79,7 @@ function ListView.close()
     ListView.static.Winnr = nil
     ListView.on_close()
   end
-  if ListView.ActiveView then
+  if ListView.ActiveView and ListView.ActiveView.win then
     ListView.ActiveView.on_close()
   end
   ListView:unbind_ctrl()

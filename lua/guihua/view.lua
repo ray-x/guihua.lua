@@ -52,7 +52,20 @@ function View:initialize(...)
   local floatbuf = require "guihua.floating".floating_buf
   -- listview should not have ft enabled
   self.buf, self.win, self.buf_closer =
-    floatbuf({win_width=self.rect.width, win_height = self.rect.height, x = self.rect.pos_x, y=self.rect.pos_y, loc = loc, prompt = self.prompt, enter = opts.enter, ft = opts.ft, syntax = opts.syntax, relative = opts.relative})
+    floatbuf(
+    {
+      win_width = self.rect.width,
+      win_height = self.rect.height,
+      x = self.rect.pos_x,
+      y = self.rect.pos_y,
+      loc = loc,
+      prompt = self.prompt,
+      enter = opts.enter,
+      ft = opts.ft,
+      syntax = opts.syntax,
+      relative = opts.relative
+    }
+  )
   log("floatbuf created ", self.buf, self.win)
   self:set_bg(opts)
   self:on_draw(self.data)
@@ -120,7 +133,10 @@ end
 -- draw line text
 local function draw_lines(buf, start, end_at, data)
   -- the #data should match or < start~end_at
-  if #data < 1 then log("empty body") return end
+  if #data < 1 then
+    log("empty body")
+    return
+  end
   verbose("draw_lines", buf, start, end_at, #data, data)
   if data == nil then
     return
@@ -198,6 +214,7 @@ function View:close(...)
   -- vim.api.nvim_win_close(self.win, true)
   if self.buf_closer ~= nil then
     self:buf_closer()
+    self.buf_closer = nil
   -- vim.api.nvim_win_close
   end
   self:unbind_ctrl()
@@ -213,6 +230,7 @@ function View.on_close()
   end
   log("view onclose ", View.ActiveView.win)
   View.ActiveView:close()
+  View.ActiveView.win = nil
 end
 
 function test()
