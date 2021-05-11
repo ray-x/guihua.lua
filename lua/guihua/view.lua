@@ -213,9 +213,13 @@ function View:close(...)
   log("close View ", self.win)
   -- vim.api.nvim_win_close(self.win, true)
   if self.buf_closer ~= nil then
+    -- vim.api.nvim_win_close
     self:buf_closer()
     self.buf_closer = nil
-  -- vim.api.nvim_win_close
+    self.win = nil
+  else
+    vim.api.nvim_win_close(self.win, true)
+    self.win = nil
   end
   self:unbind_ctrl()
   -- View.ActiveView = nil
@@ -230,7 +234,7 @@ function View.on_close()
   end
   log("view onclose ", View.ActiveView.win)
   View.ActiveView:close()
-  View.ActiveView.win = nil
+  View.ActiveView = nil
 end
 
 function test()
