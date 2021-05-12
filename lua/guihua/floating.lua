@@ -67,7 +67,7 @@ local function floatterm(opts)
 
   local width = opts.win_width or math.floor(columns * 0.9)
   local height = opts.win_height or math.floor(lines * 0.9)
-  local opts = {
+  local win_opts = {
     relative = "editor",
     style = "minimal",
     row = math.floor((lines - height) * 0.5),
@@ -77,8 +77,8 @@ local function floatterm(opts)
     border = opts.border
   }
 
-  local win = api.nvim_open_win(buf, true, opts)
-  return win, buf, opts
+  local win = api.nvim_open_win(buf, true, win_opts)
+  return win, buf, win_opts
 end
 
 -- Create a simple floating terminal.
