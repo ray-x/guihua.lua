@@ -56,9 +56,6 @@ function TextView:initialize(...)
       end
       return TextView.ActiveTextView
     end
-    -- TextView.ActiveTextView.win = nil
-    -- TextView.ActiveTextView.buf = nil
-    -- TextView.static.ActiveTextView = nil
   end
   opts.enter = opts.enter or false
   View.initialize(self, opts)
@@ -69,7 +66,6 @@ function TextView:initialize(...)
     self.syntax = opts.syntax
     log("hl ", self.buf, opts.syntax)
     require"guihua.util".highlighter(self.buf, opts.syntax, opts.ts)
-    -- vim.api.nvim_buf_set_option(self.buf, "syntax", opts.syntax)
   end
 
   TextView.static.ActiveTextView = self
