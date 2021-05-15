@@ -48,19 +48,18 @@ function View:initialize(...)
 
   local floatbuf = require"guihua.floating".floating_buf
   -- listview should not have ft enabled
-  self.buf, self.win, self.buf_closer = floatbuf(
-                                            {
-        win_width = self.rect.width,
-        win_height = self.rect.height,
-        x = self.rect.pos_x,
-        y = self.rect.pos_y,
-        loc = loc,
-        prompt = self.prompt,
-        enter = opts.enter,
-        ft = opts.ft,
-        syntax = opts.syntax,
-        relative = opts.relative
-      })
+  self.buf, self.win, self.buf_closer = floatbuf({
+    win_width = self.rect.width,
+    win_height = self.rect.height,
+    x = self.rect.pos_x,
+    y = self.rect.pos_y,
+    loc = loc,
+    prompt = self.prompt,
+    enter = opts.enter,
+    ft = opts.ft,
+    syntax = opts.syntax,
+    relative = opts.relative
+  })
   log("floatbuf created ", self.buf, self.win)
   self:set_bg(opts)
   if opts.data ~= nil and #opts.data > 1 then self:on_draw(opts.data) end
@@ -108,18 +107,14 @@ local function draw_table_item(buf, item, pos)
   vim.api.nvim_buf_set_lines(buf, pos, pos, true, {item.text})
   -- vim.api.nvim_buf_set_lines(buf, 0, 1, true, '{item.text}')
   if item.pos ~= nil then
-    for _, v in pairs(item.pos) do
-      vim.fn.matchaddpos("IncSearch", {{pos + 1, v}})
-    end
+    for _, v in pairs(item.pos) do vim.fn.matchaddpos("IncSearch", {{pos + 1, v}}) end
   end
   if item.fzy ~= nil then
-    for _, v in pairs(item.fzy.pos) do
-      vim.fn.matchaddpos("IncSearch", {{pos + 1, v}})
-    end
+    for _, v in pairs(item.fzy.pos) do vim.fn.matchaddpos("IncSearch", {{pos + 1, v}}) end
   end
 end
 
--- draw line text
+-- draw text line by line
 local function draw_lines(buf, start, end_at, data)
   -- the #data should match or < start~end_at
   if #data < 1 then
@@ -141,9 +136,7 @@ local function draw_lines(buf, start, end_at, data)
       local line = l[1]
       vim.api.nvim_buf_set_lines(buf, i, i, true, {line})
       local pos = l[2]
-      for _, v in pairs(pos) do
-        vim.fn.matchaddpos("IncSearch", {{i + 1, v}})
-      end
+      for _, v in pairs(pos) do vim.fn.matchaddpos("IncSearch", {{i + 1, v}}) end
     else
       draw_table_item(buf, l, i)
     end
@@ -157,9 +150,7 @@ function View:on_draw(data)
   end
   if data == nil then
     log("on_draw data nil")
-    if self.display_data == nil or #self.display_data == 0 then
-      log("on_draw nothing to be draw")
-    end
+    if self.display_data == nil or #self.display_data == 0 then log("on_draw nothing to be draw") end
     data = self.display_data
   end
 
@@ -178,9 +169,7 @@ function View:on_draw(data)
   if self.prompt == true then end_at = end_at - 1 end
   -- vim.api.nvim_buf_set_lines(self.buf, start, end_at, true, content)
   draw_lines(self.buf, start, end_at, content)
-  if self.prompt ~= true then
-    vim.api.nvim_buf_set_option(self.buf, "readonly", true)
-  end
+  if self.prompt ~= true then vim.api.nvim_buf_set_option(self.buf, "readonly", true) end
   -- vim.fn.setpos(".", {0, 1, 1, 0})
 end
 
@@ -210,14 +199,14 @@ function View:close(...)
 end
 
 function View.on_close()
-  log(debug.traceback())
+  verbose(debug.traceback())
   if View.ActiveView == nil then
     log("view onclose nil")
     return
   end
   log("view onclose ", View.ActiveView.win)
   View.ActiveView:close()
-  log(View)
+  verbose(View)
 end
 
 function test()
@@ -226,9 +215,7 @@ function test()
   -- package.loaded.packer_plugins['guihua.lua'].loaded = false
   vim.cmd("packadd guihua.lua")
 
-  local data = {
-    "View: test line should show", "view line2", "view line3", "view line4"
-  }
+  local data = {"View: test line should show", "view line2", "view line3", "view line4"}
   local win = View:new({
     loc = "up_left",
     rect = {height = 5, pos_x = 120},

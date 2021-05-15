@@ -21,22 +21,20 @@ function TextViewCtrl:initialize(delegate, ...)
   self.display_height = self.m_delegate.display_height or 10
   self.file_info.lines = self.display_height
   if opts.data == nil or opts.data == {} or #opts.data < 1 and opts.uri ~= nil then
-    log("opts", opts)
+    log("data not provided opts", opts)
     -- local data = self:on_load(opts)
     -- log("will displaying", data)
     -- self.m_delegate:on_draw(data)
   end
 
-  verbose("init display: ", self.display_data, self.display_height,
-          self.selected_line)
+  verbose("init display: ", self.display_data, self.display_height, self.selected_line)
   -- ... is the view
   -- todo location, readonly? and filetype
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-s>",
-                              "<cmd> lua TextViewCtrl:on_save()<CR>", {})
+  vim.api
+      .nvim_buf_set_keymap(delegate.buf, "n", "<C-s>", "<cmd> lua TextViewCtrl:on_save()<CR>", {})
   log("bind close", self.m_delegate.win, delegate.buf)
 
-  vim.cmd(
-      [[ autocmd TextChangedI <buffer> lua  require'guihua.ListViewCtrl':on_search() ]])
+  vim.cmd([[ autocmd TextChangedI <buffer> lua  require'guihua.ListViewCtrl':on_search() ]])
 
   TextViewCtrl._viewctlobject = self
   -- self:on_draw(self.display_data)
@@ -74,13 +72,11 @@ function TextViewCtrl.on_load(opts) -- location, width, pos_x, pos_y
     opts.lnum = range.start.line + 1
   end
   log(bufnr, range, opts.lines)
-  local contents = api.nvim_buf_get_lines(bufnr, range.start.line,
-                                          range.start.line + opts.lines, false)
+  local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range.start.line + opts.lines,
+                                          false)
 
   local syntax = api.nvim_buf_get_option(bufnr, "syntax")
-  if syntax == nil or #syntax < 1 then
-    syntax = api.nvim_buf_get_option(bufnr, "ft")
-  end
+  if syntax == nil or #syntax < 1 then syntax = api.nvim_buf_get_option(bufnr, "ft") end
 
   -- TODO should we create a float win based on opened buffer?
   log(syntax, contents)
@@ -110,8 +106,8 @@ function TextViewCtrl:on_save()
   if range == nil then log("incorrect file info, can not save") end
 
   log(bufnr, range, file_info.lines, contents)
-  vim.api.nvim_buf_set_lines(bufnr, range.start.line,
-                             range.start.line + file_info.lines, true, contents)
+  vim.api.nvim_buf_set_lines(bufnr, range.start.line, range.start.line + file_info.lines, true,
+                             contents)
 end
 
 return TextViewCtrl

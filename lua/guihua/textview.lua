@@ -98,7 +98,8 @@ function TextView:initialize(...)
     self:on_draw(content)
   end
 
-  log("ctor TextView: end", self) -- , View.ActiveView)--, self)
+  log("ctor TextView: end") -- , View.ActiveView)--, self)
+  verbose(self)
 end
 
 function TextView.Active()

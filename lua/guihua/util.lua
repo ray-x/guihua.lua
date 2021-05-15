@@ -1,13 +1,11 @@
 local M = {}
 local api = vim.api
-local log = require "guihua.log".info
-local verbose = require "guihua.log".debug
+local log = require"guihua.log".info
+local verbose = require"guihua.log".debug
 
 function M.close_view_autocmd(events, winnr)
-  api.nvim_command(
-    "autocmd " ..
-      table.concat(events, ",") .. " <buffer> ++once lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true)"
-  )
+  api.nvim_command("autocmd " .. table.concat(events, ",") ..
+                       " <buffer> ++once lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true)")
 end
 
 -- function M.buf_close_view_event(mode, key, bufnr, winnr)
@@ -23,13 +21,11 @@ function M.close_view_event(mode, key, winnr, bufnr, enter)
   -- log ("!! closer", winnr, bufnr, enter)
   if enter then
     vim.api.nvim_buf_set_keymap(bufnr, "n", key, closer, {})
-  --api.nvim_command( mode .. "map <buffer> " .. key .. " <Cmd> lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true) <CR>" )
+    -- api.nvim_command( mode .. "map <buffer> " .. key .. " <Cmd> lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true) <CR>" )
   end
 end
 
-function M.trim_space(s)
-  return s:match("^%s*(.-)%s*$")
-end
+function M.trim_space(s) return s:match("^%s*(.-)%s*$") end
 
 function M.clone(st)
   local tab = {}
@@ -43,20 +39,16 @@ function M.clone(st)
   return tab
 end
 
-local function filename(url)
-  return url:match("^.+/(.+)$") or url
-end
+local function filename(url) return url:match("^.+/(.+)$") or url end
 
 local function extension(url)
   local ext = url:match("^.+(%..+)$") or "txt"
   return string.sub(ext, 2)
 end
 
-function M.aggregate_filename(items, opts)
+function M.prepare_for_render(items, opts)
   opts = opts or {}
-  if items == nil or #items < 1 then
-    error("empty fields")
-  end
+  if items == nil or #items < 1 then error("empty fields") end
   local item = M.clone(items[1])
   local display_items = {item}
   local last_summary_idx = 1
@@ -73,14 +65,10 @@ function M.aggregate_filename(items, opts)
   for i = 1, #items do
     -- verbose(items[i], items[i].filename, last_summary_idx, display_items[last_summary_idx].filename)
     if items[i].filename == display_items[last_summary_idx].filename then
-      display_items[last_summary_idx].text =
-        string.format(
-        "%s  %s  %s %i",
-        icon,
-        display_items[last_summary_idx].display_filename,
-        lspapi,
-        total_ref_in_file
-      )
+      display_items[last_summary_idx].text = string.format("%s  %s  %s %i", icon,
+                                                           display_items[last_summary_idx]
+                                                               .display_filename, lspapi,
+                                                           total_ref_in_file)
       total_ref_in_file = total_ref_in_file + 1
     else
       item = M.clone(items[i])
@@ -93,6 +81,18 @@ function M.aggregate_filename(items, opts)
     end
     item = M.clone(items[i])
     item.text = string.format(" %4i:  %s", item.lnum, item.text)
+    if item.call_by ~= nil and #item.call_by > 0 then
+      local call_by = '   '
+      opts.width = opts.width or 100
+      if opts.width > 80 and #item.text > opts.width - 20 then
+        item.text = string.sub(item.text, 1, opts.width - 20)
+      end
+      for _, value in pairs(item.call_by) do
+        if #call_by > 6 then call_by = call_by .. '  ' end
+        call_by = call_by .. ' ' .. value.kind .. value.node_text .. '()'
+      end
+      item.text = item.text .. call_by
+    end
     verbose(item.text)
     table.insert(display_items, item)
   end
@@ -106,9 +106,7 @@ function M.add_escape(s)
   -- / & ! . ^ * $ \ ?
   local special = {"&", "!", "*", "?", "/"}
   local str = s
-  for i = 1, #special do
-    str = string.gsub(str, special[i], "\\" .. special[i])
-  end
+  for i = 1, #special do str = string.gsub(str, special[i], "\\" .. special[i]) end
   return str
 end
 
@@ -116,9 +114,7 @@ function M.add_pec(s)
   -- / & ! . ^ * $ \ ?
   local special = {"%[", "%]", "%-"}
   local str = s
-  for i = 1, #special do
-    str = string.gsub(str, special[i], "%" .. special[i])
-  end
+  for i = 1, #special do str = string.gsub(str, special[i], "%" .. special[i]) end
   return str
 end
 
@@ -134,9 +130,7 @@ M.highlighter = function(bufnr, ft, ts)
     return
   end
 
-  if ft == nil or ft == "" then
-    return false
-  end
+  if ft == nil or ft == "" then return false end
   if not has_ts then
     has_ts, _ = pcall(require, "nvim-treesitter")
     if has_ts then
