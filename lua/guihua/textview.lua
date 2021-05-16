@@ -20,22 +20,31 @@ opts={
 }
 opts= {uri = l.uri, width = width, height=height, lnum = l.lnum, col = l.col, offset_x = 0, offset_y = offset_y}
 
+with file uri {
+    syntax = syntax,
+    width = opts.width,
+    pos_x = opts.offset_x or 0,
+    pos_y = opts.offset_y or 10,
+    range = range,
+    uri = uri,
+    allow_edit = true
+  }
+
 --]]
 function TextView:initialize(...)
   verbose(debug.traceback())
-  log("ctor TextView start:")
 
   local opts = select(1, ...) or {}
 
+  log("ctor TextView start:", opts)
   vim.cmd([[hi GHTextViewDark guifg=#e0d8f4 guibg=#332e64]])
 
   opts.bg = opts.bg or "GHTextViewDark"
-  if TextView.ActiveTextView ~= nil then -- seems not working..
-    verbose("active view ", TextView.ActiveTextView.buf,
-            TextView.ActiveTextView.win)
-    if TextView.ActiveTextView.win ~= nil and
-        vim.api.nvim_win_is_valid(TextView.ActiveTextView.win) and
+
+  if TextView.ActiveTextView ~= nil then
+    if TextView.ActiveTextView.win ~= nil and vim.api.nvim_win_is_valid(TextView.ActiveTextView.win) and
         vim.api.nvim_buf_is_valid(self.buf) then
+      log("active view ", TextView.ActiveTextView.buf, TextView.ActiveTextView.win)
       if TextView.hl_id ~= nil then
         vim.api.nvim_buf_clear_namespace(0, TextView.hl_id, 0, -1)
         TextView.static.hl_id = nil
@@ -44,16 +53,19 @@ function TextView:initialize(...)
       verbose("active view already existed")
       self = TextView.ActiveTextView
       -- TODO: delegate, on_load
-      TextView.ActiveTextView:on_draw(opts.data)
+      if opts.data then
+        TextView.ActiveTextView:on_draw(opts.data)
+      else
+        TextView.ActiveTextView:on_draw(opts)
+      end
       if opts.hl_line ~= nil then
         if opts.hl_line == 0 then opts.hl_line = 1 end
         log("hl buf", self.buf, "l ", opts.hl_line)
-        TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1,
-                                                               "Search",
-                                                               opts.hl_line - 1,
-                                                               0, -1)
+        TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "Search",
+                                                               opts.hl_line - 1, 0, -1)
         TextView.static.hl_line = opts.hl_line
       end
+      log("ctor TextView: end, already existed") -- , View.ActiveView)--, self)
       return TextView.ActiveTextView
     end
   end
@@ -79,23 +91,21 @@ function TextView:initialize(...)
     util.close_view_event("i", "<C-e>", self.win, self.buf, opts.enter)
   end
 
-  if opts.hl_line ~= nil then
-    if opts.hl_line == 0 then opts.hl_line = 1 end
-    log("buf", self.buf, "l: ", opts.hl_line)
-    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1,
-                                                           "Search",
-                                                           opts.hl_line - 1, 0,
-                                                           -1)
-    TextView.static.hl_line = opts.hl_line
-  end
-
   -- controller and data
-  if opts.edit then -- well this is a feature flag for early phase dev
+  if opts.uri then -- well this is a feature flag for early phase dev
     log("ctor TextView: ctrl") -- , View.ActiveView)--, self)
     self:bind_ctrl(opts)
 
-    local content = self.ctrl.on_load(opts)
+    local content = self.ctrl:on_load(opts)
     self:on_draw(content)
+  end
+
+  if opts.hl_line ~= nil then
+    if opts.hl_line == 0 then opts.hl_line = 1 end
+    log("buf", self.buf, "l: ", opts.hl_line)
+    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "Search", opts.hl_line - 1,
+                                                           0, -1)
+    TextView.static.hl_line = opts.hl_line
   end
 
   log("ctor TextView: end") -- , View.ActiveView)--, self)
@@ -108,27 +118,31 @@ function TextView.Active()
 end
 
 function TextView:on_draw(opts)
+  if opts == nil then
+    log(debug.traceback())
+    return
+  end
   local data = {}
   if not self or not vim.api.nvim_buf_is_valid(self.buf) then
     log("buf id invalid", self)
     return
   end
   if opts.uri ~= nil then
-    data = self.ctrl.on_load(opts)
+    data = self.ctrl:on_load(opts)
   else
     data = opts
   end
-
   local content = {}
   if type(data) == "string" then
     content = {data}
   elseif type(data) == "table" then
     content = data
   else
+    log("invalid draw data", data, self.buf, self.win)
     return
   end
 
-  verbose("draw", data, self.buf, self.win)
+  log("draw data: ", data[1], " size: ", #data, self.buf, self.win)
   if #data < 1 then
     log("nothing to redraw")
     return
@@ -146,12 +160,12 @@ function TextView:on_draw(opts)
   vim.api.nvim_buf_set_option(bufnr, "readonly", true)
   vim.api.nvim_buf_set_option(bufnr, "bufhidden", "wipe")
   if TextView.hl_line ~= nil then
-    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1,
-                                                           "Search",
-                                                           TextView.hl_line - 1,
-                                                           0, -1)
+    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "Search",
+                                                           TextView.hl_line - 1, 0, -1)
   end
   -- vim.fn.setpos(".", {0, 1, 1, 0})
+
+  log("textview draw finished")
 end
 
 function TextView.on_close()

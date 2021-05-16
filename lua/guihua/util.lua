@@ -82,6 +82,7 @@ function M.prepare_for_render(items, opts)
     item = M.clone(items[i])
     item.text = string.format(" %4i:  %s", item.lnum, item.text)
     if item.call_by ~= nil and #item.call_by > 0 then
+      log(item.call_by)
       local call_by = '   '
       opts.width = opts.width or 100
       if opts.width > 80 and #item.text > opts.width - 20 then
@@ -94,6 +95,7 @@ function M.prepare_for_render(items, opts)
       item.text = item.text .. call_by
     end
     verbose(item.text)
+    verbose(item.call_by)
     table.insert(display_items, item)
   end
 

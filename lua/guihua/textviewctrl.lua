@@ -22,6 +22,7 @@ function TextViewCtrl:initialize(delegate, ...)
   self.file_info.lines = self.display_height
   if opts.data == nil or opts.data == {} or #opts.data < 1 and opts.uri ~= nil then
     log("data not provided opts", opts)
+    -- self.on_load(opts)
     -- local data = self:on_load(opts)
     -- log("will displaying", data)
     -- self.m_delegate:on_draw(data)
@@ -44,11 +45,11 @@ end
 
 -- load file uri if data is nil
 -- need to call after floatwind is created or caller need pass the winnr
-function TextViewCtrl.on_load(opts) -- location, width, pos_x, pos_y
-  local opts = opts or {}
+function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
+  opts = opts or {}
   local uri = opts.uri
   if opts.uri == nil then
-    log("invalid/nil uri ")
+    log("invalid/nil uri ", opts)
     return
   end
   local bufnr = vim.uri_to_bufnr(uri)
@@ -58,29 +59,31 @@ function TextViewCtrl.on_load(opts) -- location, width, pos_x, pos_y
   end
   --
 
-  local range = opts.range
+  local range = opts.display_range or opts.range
   if range.start == nil then
     print("error invalid range")
     return
   end
-  if range.start.line == nil then
-    range.start.line = range["end"].line - 1
-    opts.lnum = range["end"].line + 1
-  end
-  if range["end"].line == nil then
-    range["end"].line = range.start.line + 1
-    opts.lnum = range.start.line + 1
-  end
-  log(bufnr, range, opts.lines)
-  local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range.start.line + opts.lines,
-                                          false)
-
-  local syntax = api.nvim_buf_get_option(bufnr, "syntax")
+  -- if range.start.line == nil then
+  --   range.start.line = range["end"].line - 1
+  --   opts.lnum = range["end"].line + 1
+  -- end
+  -- if range["end"].line == nil then
+  --   range["end"].line = range.start.line + 1
+  --   opts.lnum = range.start.line + 1
+  -- end
+  -- local lines = range['end'].line - range.start.line + 1
+  log(bufnr, range)
+  local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range['end'].line, false)
+  local lines = #contents
+  local syntax = opts.syntax
   if syntax == nil or #syntax < 1 then syntax = api.nvim_buf_get_option(bufnr, "ft") end
 
+  -- TODO: for saving, need update file_info based on data loaded, e.g. if we only load 1 line, but display_height is 10
+  self.file_info.lines = lines
   -- TODO should we create a float win based on opened buffer?
-  log(syntax, contents)
-  return contents -- allow contents be handled by caller
+  log(syntax, contents, self.file_info)
+  return contents, syntax -- allow contents be handled by caller
 end
 
 -- call from event
@@ -102,7 +105,7 @@ function TextViewCtrl:on_save()
   log("save file info", file_info)
   local bufnr = vim.uri_to_bufnr(file_info.uri)
   if not api.nvim_buf_is_loaded(bufnr) then vim.fn.bufload(bufnr) end
-  local range = file_info.range
+  local range = file_info.display_range
   if range == nil then log("incorrect file info, can not save") end
 
   log(bufnr, range, file_info.lines, contents)

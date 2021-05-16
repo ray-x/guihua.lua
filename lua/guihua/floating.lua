@@ -1,15 +1,15 @@
 local api = vim.api
 local location = require "guihua.location"
 
-local log = require "guihua.log".info
-local verbose = require "guihua.log".debug
+local log = require"guihua.log".info
+local verbose = require"guihua.log".debug
 local columns = api.nvim_get_option("columns")
 local lines = api.nvim_get_option("lines")
 local shell = api.nvim_get_option("shell")
 local shellcmdflag = api.nvim_get_option("shellcmdflag")
 
 -- Create a simple floating terminal.
-local function floating_buf(opts) --win_width, win_height, x, y, loc, prompt, enter, ft)
+local function floating_buf(opts) -- win_width, win_height, x, y, loc, prompt, enter, ft)
   local prompt = opts.prompt or false
   local enter = opts.enter or false
   local x = opts.x or 0
@@ -24,7 +24,7 @@ local function floating_buf(opts) --win_width, win_height, x, y, loc, prompt, en
     width = opts.win_width or 80,
     height = opts.win_height or 20,
     bufpos = {0, 0},
-    border = opts.border or "shadow"
+    border = opts.border or "none" -- "shadow"
   }
   if win_opts.relative == "editor" then
     win_opts.row = row + y
@@ -40,9 +40,7 @@ local function floating_buf(opts) --win_width, win_height, x, y, loc, prompt, en
     api.nvim_buf_set_option(buf, "buftype", "prompt")
   else
     api.nvim_buf_set_option(buf, "readonly", true)
-    if opts.ft ~= nil then
-      vim.api.nvim_buf_set_option(buf, "syntax", opts.ft)
-    end
+    if opts.ft ~= nil then vim.api.nvim_buf_set_option(buf, "syntax", opts.ft) end
   end
   local win = api.nvim_open_win(buf, enter, win_opts)
   log("creating win", win, "buf", buf)
@@ -82,15 +80,13 @@ local function floatterm(opts)
 end
 
 -- Create a simple floating terminal.
-local function floating_term(opts) --cmd, callback, win_width, win_height, x, y)
+local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y)
   local current_window = vim.api.nvim_get_current_win()
   opts.enter = opts.enter or true
   opts.x = opts.x or 1
   opts.y = opts.y or 1
 
-  if opts.cmd == "" or opts.cmd == nil then
-    opts.cmd = vim.api.nvim_get_option("shell")
-  end
+  if opts.cmd == "" or opts.cmd == nil then opts.cmd = vim.api.nvim_get_option("shell") end
 
   -- get dimensions
   -- local width = api.nvim_get_option("columns")
@@ -113,19 +109,16 @@ local function floating_term(opts) --cmd, callback, win_width, win_height, x, y)
 
   local args = {shell, shellcmdflag, opts.cmd}
 
-  vim.fn.termopen(
-    args,
-    {
-      on_exit = function(_, _, _)
-        -- local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-        vim.api.nvim_set_current_win(current_window)
-        closer()
-        -- if callback then
-        --   callback(lines)
-        -- end
-      end
-    }
-  )
+  vim.fn.termopen(args, {
+    on_exit = function(_, _, _)
+      -- local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+      vim.api.nvim_set_current_win(current_window)
+      closer()
+      -- if callback then
+      --   callback(lines)
+      -- end
+    end
+  })
 
   vim.cmd("startinsert!")
   return buf, win, closer
@@ -134,23 +127,15 @@ end
 local function test(prompt)
   local b, w, c = floating_buf({win_width = 30, win_height = 6, x = 5, y = 5, prompt = prompt})
   local data = {"floating buf", "line1", "line2", "line3", "line4", "line5"}
-  for i = 1, 10, 1 do
-    vim.api.nvim_buf_set_lines(b, i, -1, false, {data[i]})
-  end
-  if prompt == true then
-    vim.cmd("startinsert!")
-  end
+  for i = 1, 10, 1 do vim.api.nvim_buf_set_lines(b, i, -1, false, {data[i]}) end
+  if prompt == true then vim.cmd("startinsert!") end
 end
 
 local function test2(prompt)
   local b, w, c = floating_buf({win_width = 30, win_height = 8, x = 25, y = 25, prompt = prompt})
   local data = {"floating buf", "linea", "lineb", "linec", "lined", "linee"}
-  for i = 1, 10, 1 do
-    vim.api.nvim_buf_set_lines(b, i, -1, false, {data[i]})
-  end
-  if prompt == true then
-    vim.cmd("startinsert!")
-  end
+  for i = 1, 10, 1 do vim.api.nvim_buf_set_lines(b, i, -1, false, {data[i]}) end
+  if prompt == true then vim.cmd("startinsert!") end
 end
 
 -- test(true)
