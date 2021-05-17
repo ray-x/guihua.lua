@@ -31,7 +31,7 @@ function ListView:initialize(...)
   self:bind_ctrl(opts)
   -- ListView.static.active_view = self
   log("listview created", self.win) -- , self)
-  local ft = opts.ft or "guihua"
+  local ft = "guihua"
   vim.api.nvim_buf_set_option(self.buf, "ft", ft)
   vim.api.nvim_win_set_option(self.win, "wrap", false)
 

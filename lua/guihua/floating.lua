@@ -40,7 +40,8 @@ local function floating_buf(opts) -- win_width, win_height, x, y, loc, prompt, e
     api.nvim_buf_set_option(buf, "buftype", "prompt")
   else
     api.nvim_buf_set_option(buf, "readonly", true)
-    if opts.ft ~= nil then vim.api.nvim_buf_set_option(buf, "syntax", opts.ft) end
+    vim.api.nvim_buf_set_option(buf, "filetype", "guihua") -- default ft for all buffers. do not use specific ft e.g
+    -- javascript as it may cause lsp loading
   end
   local win = api.nvim_open_win(buf, enter, win_opts)
   log("creating win", win, "buf", buf)

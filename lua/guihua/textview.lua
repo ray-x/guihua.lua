@@ -77,7 +77,7 @@ function TextView:initialize(...)
   if opts.syntax then
     self.syntax = opts.syntax
     log("hl ", self.buf, opts.syntax)
-    require"guihua.util".highlighter(self.buf, opts.syntax, opts.ts)
+    require"guihua.util".highlighter(self.buf, opts.syntax.opts.lnum)
   end
 
   TextView.static.ActiveTextView = self
