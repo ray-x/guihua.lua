@@ -82,7 +82,7 @@ function M.prepare_for_render(items, opts)
     item = M.clone(items[i])
     item.text = string.format(" %4i:  %s", item.lnum, item.text)
     if item.call_by ~= nil and #item.call_by > 0 then
-      log(item.call_by)
+      log("call_by:", #item.call_by)
       local call_by = '   '
       opts.width = opts.width or 100
       if opts.width > 80 and #item.text > opts.width - 20 then

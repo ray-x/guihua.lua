@@ -21,7 +21,7 @@ function TextViewCtrl:initialize(delegate, ...)
   self.file_info = opts
   self.display_height = self.m_delegate.display_height or 10
   self.file_info.lines = self.display_height
-  if opts.data == nil or opts.data == {} or #opts.data < 1 and opts.uri ~= nil then
+  if opts.data == nil or opts.data == {} or #opts.data < 1 and opts.uri == nil then
     log("data not provided opts", opts)
     -- self.on_load(opts)
     -- local data = self:on_load(opts)
