@@ -152,7 +152,7 @@ local on_move = function(pos)
 end
 
 local function test_preview()
-  -- vim.g.debug_verbose_output = true
+  -- vim.g.debug_trace_output = true
   package.loaded["guihua"] = nil
   package.loaded["guihua.view"] = nil
   package.loaded["guihua.viewctrl"] = nil
@@ -204,7 +204,7 @@ local function test_list()
     }
   }
   local util = require "guihua.util"
-  -- vim.g.debug_verbose_output = true
+  -- vim.g.debug_trace_output = true
   package.loaded["guihua"] = nil
   package.loaded["guihua.view"] = nil
   package.loaded["guihua.viewctrl"] = nil

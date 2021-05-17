@@ -6,7 +6,7 @@ local class = require "middleclass"
 local View = class("View", Rect)
 
 local log = require"guihua.log".info
-local verbose = require"guihua.log".debug
+local trace = require"guihua.log".trace
 
 -- Note, Support only one active view
 -- ActiveView = nil
@@ -21,11 +21,11 @@ opts={
 
 --]]
 function View:initialize(...)
-  verbose(debug.traceback())
+  trace(debug.traceback())
   local opts = select(1, ...) or {}
   opts.data = opts.data or {}
   log("ctor View start with #items", #opts.data)
-  verbose("view start opts", opts)
+  trace("view start opts", opts)
 
   Rect.initialize(self, opts)
   if opts.prompt == true then self.rect.height = self.rect.height + 1 end
@@ -102,7 +102,7 @@ function View:get_ctrl(...) return self.ctrl end
 
 local function draw_table_item(buf, item, pos)
   -- deal with filtered data
-  verbose("draw_table", buf, item.text, pos)
+  trace("draw_table", buf, item.text, pos)
   if item.text == nil then return end
   vim.api.nvim_buf_set_lines(buf, pos, pos, true, {item.text})
   -- vim.api.nvim_buf_set_lines(buf, 0, 1, true, '{item.text}')
@@ -121,7 +121,7 @@ local function draw_lines(buf, start, end_at, data)
     log("empty body")
     return
   end
-  verbose("draw_lines", buf, start, end_at, #data, data)
+  trace("draw_lines", buf, start, end_at, #data, data)
   if data == nil then return end
   vim.fn.clearmatches()
   vim.api.nvim_buf_set_lines(buf, start, end_at, false, {})
@@ -162,7 +162,7 @@ function View:on_draw(data)
     content = data
   end
 
-  verbose("draw", data[1], data[2])
+  trace("draw", data[1], data[2])
   local start = 0
   if self.header ~= nil then start = 1 end
   local end_at = self.display_height -- C index
@@ -195,18 +195,18 @@ function View:close(...)
 
   View.static.ActiveView = nil
   log("view closed ")
-  verbose("Viewobj after close", View)
+  trace("Viewobj after close", View)
 end
 
 function View.on_close()
-  verbose(debug.traceback())
+  trace(debug.traceback())
   if View.ActiveView == nil then
     log("view onclose nil")
     return
   end
   log("view onclose ", View.ActiveView.win)
   View.ActiveView:close()
-  verbose(View)
+  trace(View)
 end
 
 function test()

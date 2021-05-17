@@ -2,7 +2,7 @@ local api = vim.api
 local location = require "guihua.location"
 
 local log = require"guihua.log".info
-local verbose = require"guihua.log".debug
+local trace = require"guihua.log".trace
 local columns = api.nvim_get_option("columns")
 local lines = api.nvim_get_option("lines")
 local shell = api.nvim_get_option("shell")
@@ -30,7 +30,7 @@ local function floating_buf(opts) -- win_width, win_height, x, y, loc, prompt, e
     win_opts.row = row + y
     win_opts.col = col + x
   end
-  verbose("floating", win_opts, opts)
+  trace("floating", win_opts, opts)
   local buf = api.nvim_create_buf(false, true)
   api.nvim_buf_set_option(buf, "bufhidden", "wipe")
   -- api.nvim_buf_set_option(buf, 'buftype', 'guihua_input')

@@ -1,7 +1,7 @@
 local M = {}
 local api = vim.api
 local log = require"guihua.log".info
-local verbose = require"guihua.log".debug
+local trace = require"guihua.log".trace
 
 function M.close_view_autocmd(events, winnr)
   api.nvim_command("autocmd " .. table.concat(events, ",") ..
@@ -63,7 +63,7 @@ function M.prepare_for_render(items, opts)
     icon = devicons.get_icon(fn, ext) or icon
   end
   for i = 1, #items do
-    -- verbose(items[i], items[i].filename, last_summary_idx, display_items[last_summary_idx].filename)
+    -- trace(items[i], items[i].filename, last_summary_idx, display_items[last_summary_idx].filename)
     if items[i].filename == display_items[last_summary_idx].filename then
       display_items[last_summary_idx].text = string.format("%s  %s  %s %i", icon,
                                                            display_items[last_summary_idx]
@@ -74,7 +74,7 @@ function M.prepare_for_render(items, opts)
       item = M.clone(items[i])
       item.text = string.format("%s  %s  %s 1", icon, item.display_filename, lspapi)
 
-      verbose(item.text)
+      trace(item.text)
       table.insert(display_items, item)
       total_ref_in_file = 1
       last_summary_idx = #display_items
@@ -96,8 +96,8 @@ function M.prepare_for_render(items, opts)
       end
       item.text = item.text .. call_by
     end
-    verbose(item.text)
-    verbose(item.call_by)
+    trace(item.text)
+    trace(item.call_by)
     table.insert(display_items, item)
   end
 
@@ -160,7 +160,7 @@ M.highlighter = function(bufnr, ft, lines)
   if has_ts then
     local lang = ts_parsers.ft_to_lang(ft)
     if ts_parsers.has_parser(lang) then
-      verbose("attach ts")
+      trace("attach ts")
       ts_highlight.attach(bufnr, lang)
       return true
     end

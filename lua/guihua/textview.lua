@@ -2,7 +2,7 @@ local class = require "middleclass"
 local View = require "guihua.view"
 local log = require"guihua.log".info
 local util = require "guihua.util"
-local verbose = require"guihua.log".debug
+local trace = require"guihua.log".trace
 
 local TextViewCtrl = require "guihua.textviewctrl"
 -- local TextView = {}
@@ -32,12 +32,12 @@ with file uri {
 
 --]]
 function TextView:initialize(...)
-  verbose(debug.traceback())
+  trace(debug.traceback())
 
   local opts = select(1, ...) or {}
 
   log("ctor TextView start:")
-  verbose(opts)
+  trace(opts)
   vim.cmd([[hi GHTextViewDark guifg=#e0d8f4 guibg=#332e64]])
 
   opts.bg = opts.bg or "GHTextViewDark"
@@ -51,7 +51,7 @@ function TextView:initialize(...)
         TextView.static.hl_id = nil
         TextView.static.hl_line = nil
       end
-      verbose("active view already existed")
+      trace("active view already existed")
       self = TextView.ActiveTextView
       -- TODO: delegate, on_load
       if opts.data then
@@ -73,7 +73,7 @@ function TextView:initialize(...)
   opts.enter = opts.enter or false
   View.initialize(self, opts)
 
-  verbose("textview after super", self)
+  trace("textview after super", self)
   self.cursor_pos = {1, 1}
   if opts.syntax then
     self.syntax = opts.syntax
@@ -110,7 +110,7 @@ function TextView:initialize(...)
   end
 
   log("ctor TextView: end") -- , View.ActiveView)--, self)
-  verbose(self)
+  trace(self)
 end
 
 function TextView.Active()
@@ -170,7 +170,7 @@ function TextView:on_draw(opts)
 end
 
 function TextView.on_close()
-  verbose(debug.traceback())
+  trace(debug.traceback())
   if TextView.ActiveTextView == nil then
     log("view onclose nil")
     return
@@ -185,7 +185,7 @@ function TextView:bind_ctrl(opts)
     return false
   else
     self.ctrl = TextViewCtrl:new(self, opts)
-    verbose("textview ctrl", self.ctrl)
+    trace("textview ctrl", self.ctrl)
     return true
   end
 end

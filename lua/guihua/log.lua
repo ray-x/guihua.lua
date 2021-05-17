@@ -16,7 +16,7 @@ local default_config = {
   -- Should write to a file
   use_file = true,
   -- Any messages above this level will be logged.
-  level = "error",
+  level = "info",
   -- Level configuration
   modes = {
     {name = "trace", hl = "Comment"}, {name = "debug", hl = "Comment"},
@@ -149,8 +149,8 @@ log.new(default_config, true)
 --   end
 -- end
 --
--- function log.verbose(...)
---   if vim.g.debug_verbose_output == true then
+-- function log.trace(...)
+--   if vim.g.debug_trace_output == true then
 --     M.log(...)
 --   end
 -- end

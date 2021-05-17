@@ -2,18 +2,18 @@ local class = require "middleclass"
 local ViewController = require "guihua.viewctrl"
 local log = require"guihua.log".info
 local util = require "guihua.util"
-local verbose = require"guihua.log".debug
+local trace = require"guihua.log".trace
 
 if ListViewCtrl == nil then ListViewCtrl = class("ListViewCtrl", ViewController) end
 
 function ListViewCtrl:initialize(delegate, ...)
-  verbose(debug.traceback())
+  trace(debug.traceback())
   ViewController:initialize(delegate, ...)
   self.m_delegate = delegate
   self.selected_line = 1
 
   local opts = select(1, ...) or {}
-  verbose("listview ctrl opts", opts)
+  trace("listview ctrl opts", opts)
   self.data = opts.data or {}
   self.preview = opts.preview or false
   self.display_height = self.m_delegate.display_height or 10
@@ -26,7 +26,7 @@ function ListViewCtrl:initialize(delegate, ...)
     self.display_data = {}
     for i = 1, self.display_height, 1 do table.insert(self.display_data, self.data[i]) end
   end
-  verbose("init display: ", self.display_data, self.display_height, self.selected_line)
+  trace("init display: ", self.display_data, self.display_height, self.selected_line)
   -- ... is the view
   -- todo location, readonly? and filetype
   if delegate.buf == nil or delegate.buf == 0 then log("should not bind to current buffer") end
@@ -60,7 +60,7 @@ function ListViewCtrl:initialize(delegate, ...)
   ListViewCtrl._viewctlobject = self
   -- self:on_draw(self.display_data)
   -- self.m_delegate:set_pos(self.selected_line)
-  verbose("listview ctrl created ", self)
+  trace("listview ctrl created ", self)
 end
 
 function ListViewCtrl:get_ui() return self.m_delegate end
@@ -87,7 +87,7 @@ function ListViewCtrl:on_next()
   local disp_h = listobj.display_height
   if listobj.m_delegate.prompt == true then disp_h = disp_h - 1 end
 
-  verbose("next: ", listobj.selected_line, listobj.display_start_at, listobj.display_height, l,
+  trace("next: ", listobj.selected_line, listobj.display_start_at, listobj.display_height, l,
           disp_h)
 
   if l > #data_collection then
@@ -103,7 +103,7 @@ function ListViewCtrl:on_next()
     listobj.display_data = {
       unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1)
     }
-    verbose("disp", listobj.display_data, disp_h, listobj.display_start_at)
+    trace("disp", listobj.display_data, disp_h, listobj.display_start_at)
     listobj.m_delegate:on_draw(listobj.display_data)
     listobj.m_delegate:set_pos(disp_h)
   else
@@ -147,7 +147,7 @@ function ListViewCtrl:on_prev()
       unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1)
     }
 
-    verbose("dispdata", listobj.display_data)
+    trace("dispdata", listobj.display_data)
     listobj.m_delegate:on_draw(listobj.display_data)
     listobj.m_delegate:set_pos(1)
   else
@@ -165,7 +165,7 @@ end
 function ListViewCtrl:on_confirm()
   local listobj = ListViewCtrl._viewctlobject
   listobj.m_delegate:close()
-  -- verbose(listobj.m_delegate)
+  -- trace(listobj.m_delegate)
   listobj.on_confirm(listobj.selected_line)
 end
 
@@ -188,17 +188,17 @@ function ListViewCtrl:on_search()
   -- get string after prompt
 
   local filter_input_trim = string.sub(filter_input, 5, #filter_input)
-  verbose("filter input", filter_input_trim, filter_input)
+  trace("filter input", filter_input_trim, filter_input)
   if #filter_input_trim == 0 or #listobj.data == nil or #listobj.data == 0 then return end
   listobj.filtered_data = fzy(filter_input_trim, listobj.data)
   --
-  -- verbose("filtered data", listobj.filtered_data)
+  -- trace("filtered data", listobj.filtered_data)
   --
   listobj.display_data = {unpack(listobj.filtered_data, 1, listobj.display_height)}
   listobj.filter_applied = true
   listobj.display_start_at = 1 -- reset
   --
-  verbose("filtered data", listobj.display_data)
+  trace("filtered data", listobj.display_data)
   listobj:on_draw(listobj.display_data)
   listobj.selected_line = 1
   listobj.m_delegate:set_pos(1)

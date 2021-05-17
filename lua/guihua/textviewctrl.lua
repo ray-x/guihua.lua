@@ -5,18 +5,18 @@ local util = require "guihua.util"
 local api = vim.api
 local log = require"guihua.log".info
 
-local verbose = require"guihua.log".debug
+local trace = require"guihua.log".trace
 
 if TextViewCtrl == nil then TextViewCtrl = class("TextViewCtrl") end -- no need to subclass from viewctrl
 
 function TextViewCtrl:initialize(delegate, ...)
-  verbose(debug.traceback())
+  trace(debug.traceback())
   ViewController:initialize(delegate, ...)
   self.m_delegate = delegate
 
   local opts = select(1, ...) or {}
   log("textview ctrl opts")
-  verbose(opts)
+  trace(opts)
 
   self.file_info = opts
   self.display_height = self.m_delegate.display_height or 10
@@ -29,7 +29,7 @@ function TextViewCtrl:initialize(delegate, ...)
     -- self.m_delegate:on_draw(data)
   end
 
-  verbose("init display: ", self.display_data, self.display_height, self.selected_line)
+  trace("init display: ", self.display_data, self.display_height, self.selected_line)
   -- ... is the view
   -- todo location, readonly? and filetype
   vim.api
@@ -74,7 +74,7 @@ function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
   --   opts.lnum = range.start.line + 1
   -- end
   -- local lines = range['end'].line - range.start.line + 1
-  verbose(bufnr, range)
+  trace(bufnr, range)
   local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range['end'].line, false)
   local lines = #contents
   local syntax = opts.syntax
@@ -83,7 +83,7 @@ function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
   -- TODO: for saving, need update file_info based on data loaded, e.g. if we only load 1 line, but display_height is 10
   self.file_info.lines = lines
   -- TODO should we create a float win based on opened buffer?
-  verbose(syntax, contents, self.file_info)
+  trace(syntax, contents, self.file_info)
   return contents, syntax -- allow contents be handled by caller
 end
 

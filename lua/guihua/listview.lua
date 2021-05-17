@@ -2,7 +2,7 @@ local class = require "middleclass"
 local ListViewCtrl = require "guihua.listviewctrl"
 local View = require "guihua.view"
 local log = require"guihua.log".info
-local verbose = require"guihua.log".trace
+local trace = require"guihua.log".trace
 
 if ListView == nil then ListView = class("ListView", View) end
 
@@ -16,7 +16,7 @@ opts={
 
 --]]
 function ListView:initialize(...)
-  verbose(debug.traceback())
+  trace(debug.traceback())
 
   if win and vim.api.nvim_win_is_valid(win) then ListView.close() end
 
