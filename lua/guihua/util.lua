@@ -89,8 +89,10 @@ function M.prepare_for_render(items, opts)
         item.text = string.sub(item.text, 1, opts.width - 20)
       end
       for _, value in pairs(item.call_by) do
-        if #call_by > 6 then call_by = call_by .. '  ' end
-        call_by = call_by .. ' ' .. value.kind .. value.node_text .. '()'
+        if value.node_text then
+          if #call_by > 6 then call_by = call_by .. '  ' end
+          call_by = call_by .. ' ' .. value.kind .. value.node_text .. '()'
+        end
       end
       item.text = item.text .. call_by
     end
@@ -124,20 +126,34 @@ local has_ts, _ = pcall(require, "nvim-treesitter")
 local _, ts_highlight = pcall(require, "nvim-treesitter.highlight")
 local _, ts_parsers = pcall(require, "nvim-treesitter.parsers")
 
--- Attach ts highlighter
-M.highlighter = function(bufnr, ft, ts)
-  ts = ts or false
-  if not ts then
-    vim.api.nvim_buf_set_option(bufnr, "syntax", ft)
-    return
-  end
+-- lspsaga is using ft
+local function apply_syntax_to_region(ft, start, finish)
+  if ft == '' then return end
+  local name = ft .. 'guihua'
+  local lang = "@" .. ft:upper()
+  if not pcall(vim.cmd, string.format("syntax include %s syntax/%s.vim", lang, ft)) then return end
+  vim.cmd(string.format("syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s", name, start,
+                        finish + 1, lang))
+end
 
+-- Attach ts highlighter
+M.highlighter = function(bufnr, ft, lines)
   if ft == nil or ft == "" then return false end
+
+  has_ts, _ = pcall(require, "nvim-treesitter")
   if not has_ts then
-    has_ts, _ = pcall(require, "nvim-treesitter")
     if has_ts then
       _, ts_highlight = pcall(require, "nvim-treesitter.highlight")
       _, ts_parsers = pcall(require, "nvim-treesitter.parsers")
+    else
+      -- apply_syntax_to_region ?
+      if not lines then
+        log("ts not enable, need spcific lines!")
+        -- TODO: did not verify this part of code yet
+        lines = 12
+      end
+      apply_syntax_to_region(ft, 1, lines)
+      return
     end
   end
 
