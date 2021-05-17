@@ -15,7 +15,8 @@ function TextViewCtrl:initialize(delegate, ...)
   self.m_delegate = delegate
 
   local opts = select(1, ...) or {}
-  log("textview ctrl opts", opts)
+  log("textview ctrl opts")
+  verbose(opts)
 
   self.file_info = opts
   self.display_height = self.m_delegate.display_height or 10
@@ -73,7 +74,7 @@ function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
   --   opts.lnum = range.start.line + 1
   -- end
   -- local lines = range['end'].line - range.start.line + 1
-  log(bufnr, range)
+  verbose(bufnr, range)
   local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range['end'].line, false)
   local lines = #contents
   local syntax = opts.syntax
@@ -82,7 +83,7 @@ function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
   -- TODO: for saving, need update file_info based on data loaded, e.g. if we only load 1 line, but display_height is 10
   self.file_info.lines = lines
   -- TODO should we create a float win based on opened buffer?
-  log(syntax, contents, self.file_info)
+  verbose(syntax, contents, self.file_info)
   return contents, syntax -- allow contents be handled by caller
 end
 

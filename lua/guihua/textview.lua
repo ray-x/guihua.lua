@@ -36,7 +36,8 @@ function TextView:initialize(...)
 
   local opts = select(1, ...) or {}
 
-  log("ctor TextView start:", opts)
+  log("ctor TextView start:")
+  verbose(opts)
   vim.cmd([[hi GHTextViewDark guifg=#e0d8f4 guibg=#332e64]])
 
   opts.bg = opts.bg or "GHTextViewDark"
