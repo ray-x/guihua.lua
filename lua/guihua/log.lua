@@ -16,7 +16,7 @@ local default_config = {
   -- Should write to a file
   use_file = true,
   -- Any messages above this level will be logged.
-  level = "error",
+  level = "info",
   -- Level configuration
   modes = {
     {name = "trace", hl = "Comment"}, {name = "debug", hl = "Comment"},

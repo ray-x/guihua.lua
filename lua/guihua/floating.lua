@@ -24,13 +24,13 @@ local function floating_buf(opts) -- win_width, win_height, x, y, loc, prompt, e
     width = opts.win_width or 80,
     height = opts.win_height or 20,
     bufpos = {0, 0},
-    border = opts.border or "none" -- "shadow"
+    border = opts.border or "shadow" -- "shadow"
   }
   if win_opts.relative == "editor" then
     win_opts.row = row + y
     win_opts.col = col + x
   end
-  trace("floating", win_opts, opts)
+  log("floating", win_opts, opts)
   local buf = api.nvim_create_buf(false, true)
   api.nvim_buf_set_option(buf, "bufhidden", "wipe")
   -- api.nvim_buf_set_option(buf, 'buftype', 'guihua_input')

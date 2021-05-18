@@ -9,15 +9,14 @@ return {
   top_center = function(win_height, win_width)
     local width = vim.api.nvim_get_option("columns")
     local height = vim.api.nvim_get_option("lines")
-    local row = math.ceil((8))
-    local col = math.ceil((width - win_width) / 2)
+    local row = math.ceil((height * 0.6 - win_height) / 2 - 1)
+    local col = math.ceil((width - win_width) / 2 - 1)
     return row, col
   end,
-  head_to_head = function(win_height, win_width)
+  offset_center = function(win_height, win_width)
     local width = vim.api.nvim_get_option("columns")
-    local height = vim.api.nvim_get_option("lines")
-    local row = math.ceil((3))
-    local col = math.ceil((width - win_width) / 2)
+    local row = 1
+    local col = math.ceil((width - win_width) / 2 - 1)
     return row, col
   end,
   bottom_center = function(win_height, win_width)

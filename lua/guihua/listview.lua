@@ -4,7 +4,9 @@ local View = require "guihua.view"
 local log = require"guihua.log".info
 local trace = require"guihua.log".trace
 
-if ListView == nil then ListView = class("ListView", View) end
+if ListView == nil then
+  ListView = class("ListView", View)
+end
 
 --[[
 opts={
@@ -18,7 +20,9 @@ opts={
 function ListView:initialize(...)
   trace(debug.traceback())
 
-  if win and vim.api.nvim_win_is_valid(win) then ListView.close() end
+  if win and vim.api.nvim_win_is_valid(win) then
+    ListView.close()
+  end
 
   log("listview ctor ") -- , self)
   local opts = select(1, ...) or {}
@@ -44,10 +48,8 @@ function ListView:initialize(...)
 
   ListView.static.Winnr = self.win
   ListView.static.Bufnr = self.buf
-  vim.api.nvim_buf_set_keymap(self.buf, "n", "<C-e>",
-                              "<cmd> lua ListView.close() <CR>", {})
-  vim.api.nvim_buf_set_keymap(self.buf, "i", "<C-e>",
-                              "<cmd> lua ListView.close() <CR>", {})
+  vim.api.nvim_buf_set_keymap(self.buf, "n", "<C-e>", "<cmd> lua ListView.close() <CR>", {})
+  vim.api.nvim_buf_set_keymap(self.buf, "i", "<C-e>", "<cmd> lua ListView.close() <CR>", {})
   -- vim.fn.setpos('.', {self.win, i, 1, 0})
 end
 
@@ -62,7 +64,9 @@ function ListView:bind_ctrl(opts)
 end
 
 function ListView:unbind_ctrl(...)
-  if self.ctrl then self.ctrl = nil end
+  if self.ctrl then
+    self.ctrl = nil
+  end
   ListViewCtrl._viewctlobject = nil
 end
 
@@ -72,9 +76,10 @@ function ListView.close()
   log("closing listview", ListView.name)
   local buf = ListView.Bufnr
   local win = ListView.Winnr
-  if buf == nil and win == nil then return end
-  if buf and vim.api.nvim_buf_is_valid(buf) and win and
-      vim.api.nvim_win_is_valid(win) then
+  if buf == nil and win == nil then
+    return
+  end
+  if buf and vim.api.nvim_buf_is_valid(buf) and win and vim.api.nvim_win_is_valid(win) then
     vim.api.nvim_win_close(win, true)
     -- ListView.on_close() -- parent view closer
     ListView.static.Bufnr = nil
@@ -87,26 +92,35 @@ function ListView.close()
   end
 
   ListView:unbind_ctrl()
-  if ListView.ActiveView ~= nil then ListView.ActiveView.data = nil end
+  if ListView.ActiveView ~= nil then
+    ListView.ActiveView.data = nil
+  end
   ListView.data = nil
   View.data = nil
+  vim.cmd([[stopinsert]])
   -- ListView = class("ListView", View)
   log("listview destroied", win)
 end
 
 function ListView:set_pos(i)
-  if not vim.api.nvim_buf_is_valid(self.buf) then return end
-  if #vim.api.nvim_buf_get_lines(self.buf, 0, -1, false) < 2 then return end
+  if not vim.api.nvim_buf_is_valid(self.buf) then
+    return
+  end
+  if #vim.api.nvim_buf_get_lines(self.buf, 0, -1, false) < 2 then
+    return
+  end
   self.selected_line = i
   local selhighlight = vim.api.nvim_create_namespace("selhighlight")
 
   vim.schedule(function()
     -- log("setpos", self.buf)
-    if not vim.api.nvim_buf_is_valid(self.buf) then return end
+    if not vim.api.nvim_buf_is_valid(self.buf) then
+      return
+    end
     vim.api.nvim_buf_clear_namespace(self.buf, selhighlight, 0, -1)
     local ListviewHl = self.hl_group or "PmenuSel"
-    vim.api.nvim_buf_add_highlight(self.buf, selhighlight, ListviewHl,
-                                   self.selected_line - 1, 0, -1)
+    vim.api
+        .nvim_buf_add_highlight(self.buf, selhighlight, ListviewHl, self.selected_line - 1, 0, -1)
   end)
 end
 
