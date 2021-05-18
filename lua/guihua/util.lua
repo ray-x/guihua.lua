@@ -54,7 +54,9 @@ end
 
 function M.prepare_for_render(items, opts)
   opts = opts or {}
-  if items == nil or #items < 1 then error("empty fields") end
+  if items == nil or #items < 1 then
+    error("empty fields")
+  end
   local item = M.clone(items[1])
   local display_items = {item}
   local last_summary_idx = 1
@@ -103,16 +105,21 @@ function M.prepare_for_render(items, opts)
             endwise = '()'
             call_by = '   '
           end
-          if #call_by > 6 then call_by = call_by .. '  ' end
+          if #call_by > 6 then
+            call_by = call_by .. '  '
+          end
           call_by = call_by .. ' ' .. value.kind .. txt .. endwise
           log(item)
         end
       end
       item.text = item.text:gsub('%s*[%[%(%{]*%s*$', '') .. call_by
     end
-    trace(item.text)
-    trace(item.call_by)
-    table.insert(display_items, item)
+    local tail = display_items[#display_items].text
+    if tail ~= item.text then -- deduplicate
+      trace(item.text)
+      trace(item.call_by)
+      table.insert(display_items, item)
+    end
   end
 
   -- display_items[last_summary_idx].text=string.format("%s [%i]", display_items[last_summary_idx].filename,
@@ -124,7 +131,9 @@ function M.add_escape(s)
   -- / & ! . ^ * $ \ ?
   local special = {"&", "!", "*", "?", "/"}
   local str = s
-  for i = 1, #special do str = string.gsub(str, special[i], "\\" .. special[i]) end
+  for i = 1, #special do
+    str = string.gsub(str, special[i], "\\" .. special[i])
+  end
   return str
 end
 
@@ -132,7 +141,9 @@ function M.add_pec(s)
   -- / & ! . ^ * $ \ ?
   local special = {"%[", "%]", "%-"}
   local str = s
-  for i = 1, #special do str = string.gsub(str, special[i], "%" .. special[i]) end
+  for i = 1, #special do
+    str = string.gsub(str, special[i], "%" .. special[i])
+  end
   return str
 end
 
@@ -142,7 +153,9 @@ local _, ts_parsers = pcall(require, "nvim-treesitter.parsers")
 
 -- lspsaga is using ft
 local function apply_syntax_to_region(ft, start, finish)
-  if ft == '' then return end
+  if ft == '' then
+    return
+  end
   local name = ft .. 'guihua'
   local lang = "@" .. ft:upper()
   if not pcall(vim.cmd,
@@ -156,7 +169,9 @@ end
 
 -- Attach ts highlighter
 M.highlighter = function(bufnr, ft, lines)
-  if ft == nil or ft == "" then return false end
+  if ft == nil or ft == "" then
+    return false
+  end
 
   has_ts, _ = pcall(require, "nvim-treesitter")
   if not has_ts then
