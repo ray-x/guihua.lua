@@ -44,9 +44,10 @@ function ListView:initialize(...)
 
   ListView.static.Winnr = self.win
   ListView.static.Bufnr = self.buf
-
-  vim.api.nvim_buf_set_keymap(self.buf, "n", "<C-e>", "<cmd> lua ListView.close() <CR>", {})
-  vim.api.nvim_buf_set_keymap(self.buf, "i", "<C-e>", "<cmd> lua ListView.close() <CR>", {})
+  vim.api.nvim_buf_set_keymap(self.buf, "n", "<C-e>",
+                              "<cmd> lua ListView.close() <CR>", {})
+  vim.api.nvim_buf_set_keymap(self.buf, "i", "<C-e>",
+                              "<cmd> lua ListView.close() <CR>", {})
   -- vim.fn.setpos('.', {self.win, i, 1, 0})
 end
 
@@ -72,7 +73,8 @@ function ListView.close()
   local buf = ListView.Bufnr
   local win = ListView.Winnr
   if buf == nil and win == nil then return end
-  if buf and vim.api.nvim_buf_is_valid(buf) and win and vim.api.nvim_win_is_valid(win) then
+  if buf and vim.api.nvim_buf_is_valid(buf) and win and
+      vim.api.nvim_win_is_valid(win) then
     vim.api.nvim_win_close(win, true)
     -- ListView.on_close() -- parent view closer
     ListView.static.Bufnr = nil
@@ -103,8 +105,8 @@ function ListView:set_pos(i)
     if not vim.api.nvim_buf_is_valid(self.buf) then return end
     vim.api.nvim_buf_clear_namespace(self.buf, selhighlight, 0, -1)
     local ListviewHl = self.hl_group or "PmenuSel"
-    vim.api
-        .nvim_buf_add_highlight(self.buf, selhighlight, ListviewHl, self.selected_line - 1, 0, -1)
+    vim.api.nvim_buf_add_highlight(self.buf, selhighlight, ListviewHl,
+                                   self.selected_line - 1, 0, -1)
   end)
 end
 

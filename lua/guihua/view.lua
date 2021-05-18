@@ -28,7 +28,9 @@ function View:initialize(...)
   trace("view start opts", opts)
 
   Rect.initialize(self, opts)
-  if opts.prompt == true then self.rect.height = self.rect.height + 1 end
+  if opts.prompt == true then
+    self.rect.height = self.rect.height + 1
+  end
   self.cursor_pos = {1, 1}
   local loc = nil
   if opts.loc ~= nil then
@@ -48,21 +50,24 @@ function View:initialize(...)
 
   local floatbuf = require"guihua.floating".floating_buf
   -- listview should not have ft enabled
-  self.buf, self.win, self.buf_closer = floatbuf({
-    win_width = self.rect.width,
-    win_height = self.rect.height,
-    x = self.rect.pos_x,
-    y = self.rect.pos_y,
-    loc = loc,
-    prompt = self.prompt,
-    enter = opts.enter,
-    ft = opts.ft,
-    syntax = opts.syntax,
-    relative = opts.relative
-  })
+  self.buf, self.win, self.buf_closer = floatbuf(
+                                            {
+        win_width = self.rect.width,
+        win_height = self.rect.height,
+        x = self.rect.pos_x,
+        y = self.rect.pos_y,
+        loc = loc,
+        prompt = self.prompt,
+        enter = opts.enter,
+        ft = opts.ft,
+        syntax = opts.syntax,
+        relative = opts.relative
+      })
   log("floatbuf created ", self.buf, self.win)
   self:set_bg(opts)
-  if opts.data ~= nil and #opts.data > 1 then self:on_draw(opts.data) end
+  if opts.data ~= nil and #opts.data > 1 then
+    self:on_draw(opts.data)
+  end
   if self.prompt then
     vim.cmd("startinsert!")
     log("create prompt view")
@@ -70,11 +75,14 @@ function View:initialize(...)
 
   View.static.ActiveView = self
   self:bind_ctrl(opts)
+
   log("ctor View: end") -- , View.ActiveView)--, self)
 end
 
 function View.Active()
-  if View.ActiveView ~= nil then return true end
+  if View.ActiveView ~= nil then
+    return true
+  end
   return false
 end
 
@@ -98,19 +106,27 @@ function View:bind_ctrl(opts)
   end
 end
 
-function View:get_ctrl(...) return self.ctrl end
+function View:get_ctrl(...)
+  return self.ctrl
+end
 
 local function draw_table_item(buf, item, pos)
   -- deal with filtered data
   trace("draw_table", buf, item.text, pos)
-  if item.text == nil then return end
+  if item.text == nil then
+    return
+  end
   vim.api.nvim_buf_set_lines(buf, pos, pos, true, {item.text})
   -- vim.api.nvim_buf_set_lines(buf, 0, 1, true, '{item.text}')
   if item.pos ~= nil then
-    for _, v in pairs(item.pos) do vim.fn.matchaddpos("IncSearch", {{pos + 1, v}}) end
+    for _, v in pairs(item.pos) do
+      vim.fn.matchaddpos("IncSearch", {{pos + 1, v}})
+    end
   end
   if item.fzy ~= nil then
-    for _, v in pairs(item.fzy.pos) do vim.fn.matchaddpos("IncSearch", {{pos + 1, v}}) end
+    for _, v in pairs(item.fzy.pos) do
+      vim.fn.matchaddpos("IncSearch", {{pos + 1, v}})
+    end
   end
 end
 
@@ -122,21 +138,27 @@ local function draw_lines(buf, start, end_at, data)
     return
   end
   trace("draw_lines", buf, start, end_at, #data, data)
-  if data == nil then return end
+  if data == nil then
+    return
+  end
   vim.fn.clearmatches()
   vim.api.nvim_buf_set_lines(buf, start, end_at, false, {})
   -- vim.api.nvim_buf_set_lines(buf, start, end_at, true, data)
   local draw_end = math.min(end_at - 1, #data - 1)
   for i = start, draw_end, 1 do
     local l = data[i + 1]
-    if l == nil then log("draw at failed ", i, data) end
+    if l == nil then
+      log("draw at failed ", i, data)
+    end
     if type(l) == "string" then -- plain text display
       vim.api.nvim_buf_set_lines(buf, i, i, true, {l})
     elseif type(l) == "table" and l.text == nil then -- filtered text
       local line = l[1]
       vim.api.nvim_buf_set_lines(buf, i, i, true, {line})
       local pos = l[2]
-      for _, v in pairs(pos) do vim.fn.matchaddpos("IncSearch", {{i + 1, v}}) end
+      for _, v in pairs(pos) do
+        vim.fn.matchaddpos("IncSearch", {{i + 1, v}})
+      end
     else
       draw_table_item(buf, l, i)
     end
@@ -150,7 +172,9 @@ function View:on_draw(data)
   end
   if data == nil then
     log("on_draw data nil")
-    if self.display_data == nil or #self.display_data == 0 then log("on_draw nothing to be draw") end
+    if self.display_data == nil or #self.display_data == 0 then
+      log("on_draw nothing to be draw")
+    end
     data = self.display_data
   end
 
@@ -164,20 +188,32 @@ function View:on_draw(data)
 
   trace("draw", data[1], data[2])
   local start = 0
-  if self.header ~= nil then start = 1 end
+  if self.header ~= nil then
+    start = 1
+  end
   local end_at = self.display_height -- C index
-  if self.prompt == true then end_at = end_at - 1 end
+  if self.prompt == true then
+    end_at = end_at - 1
+  end
   -- vim.api.nvim_buf_set_lines(self.buf, start, end_at, true, content)
   draw_lines(self.buf, start, end_at, content)
-  if self.prompt ~= true then vim.api.nvim_buf_set_option(self.buf, "readonly", true) end
+  if self.prompt ~= true then
+    vim.api.nvim_buf_set_option(self.buf, "readonly", true)
+  end
   -- vim.fn.setpos(".", {0, 1, 1, 0})
 end
 
-function View:unbind_ctrl(...) if self.ctrl then self.ctrl = nil end end
+function View:unbind_ctrl(...)
+  if self.ctrl then
+    self.ctrl = nil
+  end
+end
 
 function View:close(...)
   log("close View ", self.class.name)
-  if self == nil then return end
+  if self == nil then
+    return
+  end
   -- vim.api.nvim_win_close(self.win, true)
   if self.buf_closer ~= nil then
     -- vim.api.nvim_win_close
@@ -215,7 +251,9 @@ function test()
   -- package.loaded.packer_plugins['guihua.lua'].loaded = false
   vim.cmd("packadd guihua.lua")
 
-  local data = {"View: test line should show", "view line2", "view line3", "view line4"}
+  local data = {
+    "View: test line should show", "view line2", "view line3", "view line4"
+  }
   local win = View:new({
     loc = "up_left",
     rect = {height = 5, pos_x = 120},

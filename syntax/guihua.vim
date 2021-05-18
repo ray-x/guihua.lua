@@ -4,23 +4,44 @@ endif
 let b:current_syntax = "guihua"
 
 syntax match GuihuaBufferNumber '\W\d\+'
+syntax match GuihuaBufferField '\.\h\+'
+syntax match GuihuaBufferField2 '->\h\+'
 syn region      GuihuaBufferComment           start="//" end="$"
-syntax match GuihuaBufferColon '[:|"|'|{|}|.|\||&|%|\*|(|)|\[|\]|\+|\-|\/]'
+syntax match GuihuaBufferColon '[:|:=|<|>|"|'|{|}|\||&|%|\*|(|)|\[|\]|\+|\-|\/]'
 syn region   GuihuaBufferString            start=+"+ skip=+\\\\\|\\"+ end=+"+
 syn region   GuihuaBufferString2            start=+'+ skip=+\\\\\|\\'+ end=+'+
-syntax keyword GuihuaBufferKeyword func function if else break for local begin end or and continue true false let auto struct class interface int long float string enum const default select case defer switch map goto var type import range return catch delete do finally try void while implements long public self this new delete malloc free include import char byte def extends null nil explict as any enum private number module yield
+syntax keyword GuihuaBufferKeyword func function fn local begin end  let const defer map goto type range delete self this new delete malloc free include  def null nil as any private number module yield go typedef asm static register volatile extern const assert await with async global lambda pass import all any bytes tuple type filter format print box pub unsafe where mod trait move mut ref crate
+
+
+syntax keyword GuihuaBufferCondition if else break switch throw try catch return finally default case select match in
+syntax keyword GuihuaBufferLoop while for do loop continue
+syntax keyword GuihuaBufferClass union enum class struct interface constexpr decltype thread thread_local friend using namespace std inline virtual export explicit class typename template instanceof extends implements public protected private abstract package super
+
+syntax keyword GuihuaBufferType  auto int long float string var void long auto bool int8_t int16_t int32_t int64_t uint8_t uint16_t uint32_t uint64_t char byte double boolean Array Boolean Date Function Number Object String RegExp
+
+syntax keyword GuihuaBufferLogic and bitor or xor compl bitand and_eq or_eq xor_eq not not_eq true false True False None del
 
 syntax match GuihuaBufferPath '\(\.\)*\(\/\S\+\)\{1}\.*\S*'
 
-
+syntax keyword GuihuaNerdfont     𝔉 ⓕ    ﴲ    ﰮ     𝕰   ﬌             ﳅ     ∑  
+syntax keyword GuihuaNerdfont2  ƒ  
 
 hi default link GuihuaBufferNumber Number
 hi default link GuihuaBufferColon  SpecialChar
 hi default link GuihuaBufferPath   Title
 hi default link GuihuaBufferKeyword Keyword
 hi default link GuihuaBufferString String
+hi default link GuihuaNerdfont Constant
 hi default link GuihuaBufferString2 String
 hi default link GuihuaBufferComment Comment
+hi default link GuihuaBufferCondition Conditional
+hi default link GuihuaBufferType Struct
+hi default link GuihuaBufferLoop Repeat
+hi default link GuihuaBufferClass Type
+hi default link GuihuaBufferField Function
+hi default link GuihuaNerdfont2 Function
+hi default link GuihuaBufferField2 Function
+hi default link GuihuaBufferLogic Boolean
 " path match
 "  /abc/def_m1/gh_a.lua   :3
 " /abc/defm/gha.lua

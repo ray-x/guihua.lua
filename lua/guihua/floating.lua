@@ -87,7 +87,9 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
   opts.x = opts.x or 1
   opts.y = opts.y or 1
 
-  if opts.cmd == "" or opts.cmd == nil then opts.cmd = vim.api.nvim_get_option("shell") end
+  if opts.cmd == "" or opts.cmd == nil then
+    opts.cmd = vim.api.nvim_get_option("shell")
+  end
 
   -- get dimensions
   -- local width = api.nvim_get_option("columns")
@@ -126,17 +128,37 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
 end
 
 local function test(prompt)
-  local b, w, c = floating_buf({win_width = 30, win_height = 6, x = 5, y = 5, prompt = prompt})
+  local b, w, c = floating_buf({
+    win_width = 30,
+    win_height = 6,
+    x = 5,
+    y = 5,
+    prompt = prompt
+  })
   local data = {"floating buf", "line1", "line2", "line3", "line4", "line5"}
-  for i = 1, 10, 1 do vim.api.nvim_buf_set_lines(b, i, -1, false, {data[i]}) end
-  if prompt == true then vim.cmd("startinsert!") end
+  for i = 1, 10, 1 do
+    vim.api.nvim_buf_set_lines(b, i, -1, false, {data[i]})
+  end
+  if prompt == true then
+    vim.cmd("startinsert!")
+  end
 end
 
 local function test2(prompt)
-  local b, w, c = floating_buf({win_width = 30, win_height = 8, x = 25, y = 25, prompt = prompt})
+  local b, w, c = floating_buf({
+    win_width = 30,
+    win_height = 8,
+    x = 25,
+    y = 25,
+    prompt = prompt
+  })
   local data = {"floating buf", "linea", "lineb", "linec", "lined", "linee"}
-  for i = 1, 10, 1 do vim.api.nvim_buf_set_lines(b, i, -1, false, {data[i]}) end
-  if prompt == true then vim.cmd("startinsert!") end
+  for i = 1, 10, 1 do
+    vim.api.nvim_buf_set_lines(b, i, -1, false, {data[i]})
+  end
+  if prompt == true then
+    vim.cmd("startinsert!")
+  end
 end
 
 -- test(true)
