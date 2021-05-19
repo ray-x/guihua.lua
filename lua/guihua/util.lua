@@ -5,8 +5,7 @@ local trace = require"guihua.log".trace
 
 function M.close_view_autocmd(events, winnr)
   api.nvim_command("autocmd " .. table.concat(events, ",") ..
-                       " <buffer> ++once lua pcall(vim.api.nvim_win_close, " .. winnr ..
-                       ", true)")
+                       " <buffer> ++once lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true)")
 end
 
 -- function M.buf_close_view_event(mode, key, bufnr, winnr)
@@ -51,10 +50,31 @@ local function extension(url)
   return string.sub(ext, 2)
 end
 
+local function get_pads(win_width, text, call_by)
+  local margin = win_width - #text - #call_by
+  if margin < 0 then
+    if #call_by > 1 then
+      text = text:sub(1, #text - 20)
+    end
+  end
+  local sz = #text
+  if sz < 30 then
+    sz = 30
+  end
+  local pad = 0
+  local space = ''
+  local i = math.floor((sz + 10) / 10)
+  i = i * 10 - #text
+
+  space = string.rep(' ', i)
+  return space
+end
+
 function M.prepare_for_render(items, opts)
   opts = opts or {}
   if items == nil or #items < 1 then
-    error("empty fields")
+    print("no item found or empty fields")
+    return
   end
   local item = M.clone(items[1])
   local display_items = {item}
@@ -69,17 +89,34 @@ function M.prepare_for_render(items, opts)
     local ext = extension(fn)
     icon = devicons.get_icon(fn, ext) or icon
   end
+  local maxLen = 4
+  local call_by_presented = false
+
+  opts.width = opts.width or 100
+  local win_width = opts.width - 2 -- buf
   for i = 1, #items do
+    maxLen = math.max(maxLen, #items[i].text + 7, #items[i].display_filename + #lspapi)
+    maxLen = math.min(maxLen, 100)
+    if #items[i].call_by and #items[i].call_by > 0 then
+      call_by_presented = true
+    end
+  end
+
+  for i = 1, #items do
+    local space = ''
     -- trace(items[i], items[i].filename, last_summary_idx, display_items[last_summary_idx].filename)
     if items[i].filename == display_items[last_summary_idx].filename then
-      display_items[last_summary_idx].text = string.format("%s  %s  %s %i", icon,
+      space = get_pads(opts.width, display_items[last_summary_idx].display_filename, lspapi)
+      display_items[last_summary_idx].text = string.format("%s  %s%s%s %i", icon,
                                                            display_items[last_summary_idx]
-                                                               .display_filename, lspapi,
+                                                               .display_filename, space, lspapi,
                                                            total_ref_in_file)
       total_ref_in_file = total_ref_in_file + 1
     else
       item = M.clone(items[i])
-      item.text = string.format("%s  %s  %s 1", icon, item.display_filename, lspapi)
+
+      space = get_pads(opts.width, item.display_filename, lspapi)
+      item.text = string.format("%s  %s%s%s 1", icon, item.display_filename, space, lspapi)
 
       trace(item.text)
       table.insert(display_items, item)
@@ -87,21 +124,19 @@ function M.prepare_for_render(items, opts)
       last_summary_idx = #display_items
     end
     item = M.clone(items[i])
-    item.text = string.format(" %4i:  %s", item.lnum, item.text)
+    item.text = string.format("%4i:  %s", item.lnum, item.text)
+    local call_by = ""
     if item.call_by ~= nil and #item.call_by > 0 then
       log("call_by:", #item.call_by)
-      local call_by = '   '
-      opts.width = opts.width or 100
-      if opts.width > 80 and #item.text > opts.width - 20 then
-        item.text = string.sub(item.text, 1, opts.width - 20)
-      end
+      call_by = ' '
+
       for _, value in pairs(item.call_by) do
         if value.node_text then
           local txt = value.node_text:gsub('%s*[%[%(%{]*%s*$', '')
           local endwise = '{}'
           if value.type == 'method' or value.type == 'function' then
             endwise = '()'
-            call_by = '   '
+            call_by = ' '
           end
           if #call_by > 6 then
             call_by = call_by .. '  '
@@ -110,7 +145,14 @@ function M.prepare_for_render(items, opts)
           trace(item)
         end
       end
-      item.text = item.text:gsub('%s*[%[%(%{]*%s*$', '') .. call_by
+      item.text = item.text:gsub('%s*[%[%(%{]*%s*$', '')
+
+      -- lets show call-by at 64/72/80
+
+      if call_by_presented and #call_by > 1 then
+        local space = get_pads(win_width, item.text, call_by)
+        item.text = item.text .. space .. call_by
+      end
     end
     local tail = display_items[#display_items].text
     if tail ~= item.text then -- deduplicate
@@ -159,8 +201,8 @@ local function apply_syntax_to_region(ft, start, finish)
   if not pcall(vim.cmd, string.format("syntax include %s syntax/%s.vim", lang, ft)) then
     return
   end
-  vim.cmd(string.format("syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s",
-                        name, start, finish + 1, lang))
+  vim.cmd(string.format("syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s", name, start,
+                        finish + 1, lang))
 end
 
 -- Attach ts highlighter
