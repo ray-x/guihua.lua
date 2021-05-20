@@ -65,7 +65,6 @@ local function get_pads(win_width, text, call_by)
   local space = ''
   local i = math.floor((sz + 10) / 10)
   i = i * 10 - #text
-
   space = string.rep(' ', i)
   return space
 end
@@ -97,7 +96,7 @@ function M.prepare_for_render(items, opts)
   for i = 1, #items do
     maxLen = math.max(maxLen, #items[i].text + 7, #items[i].display_filename + #lspapi)
     maxLen = math.min(maxLen, 100)
-    if #items[i].call_by and #items[i].call_by > 0 then
+    if items[i].call_by and #items[i].call_by > 0 then
       call_by_presented = true
     end
   end
@@ -141,7 +140,7 @@ function M.prepare_for_render(items, opts)
           if #call_by > 6 then
             call_by = call_by .. '  '
           end
-          call_by = call_by .. ' ' .. value.kind .. txt .. endwise
+          call_by = call_by .. value.kind .. txt .. endwise
           trace(item)
         end
       end
@@ -150,7 +149,17 @@ function M.prepare_for_render(items, opts)
       -- lets show call-by at 64/72/80
 
       if call_by_presented and #call_by > 1 then
-        local space = get_pads(win_width, item.text, call_by)
+        space = get_pads(win_width, item.text, call_by)
+        if #space + #item.text + #call_by >= win_width then
+          if #item.text + #call_by > win_width then
+            log("exceeding", #item.text, #call_by, win_width)
+            space = '   '
+          else
+            local remain = win_width - #item.text - #call_by
+            log("remain", remain)
+            space = string.rep(' ', remain)
+          end
+        end
         item.text = item.text .. space .. call_by
       end
     end
