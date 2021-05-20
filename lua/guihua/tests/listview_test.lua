@@ -8,6 +8,8 @@ package.loaded["guihua.listviewctrl"] = nil
 local ListView = require("guihua.listview")
 local TextView = require("guihua.textview")
 local log = require"guihua.log".info
+
+local prepare_for_render = require('navigator.render').prepare_for_render
 local function test_plaintext()
   -- vim.cmd("packadd guihua.lua")
 
@@ -16,7 +18,9 @@ local function test_plaintext()
 
   local sorter = require "fzy"
   log("sorter", sorter)
-  if sorter == nil then return end
+  if sorter == nil then
+    return
+  end
   local filter_input = "tes" -- get string after prompt
   local testdata = {"abc", "test", "teas", "blabal", "testcase"}
   local filtered_data = sorter.filter(filter_input, testdata)
@@ -135,15 +139,21 @@ local function preview_uri(uri, line, offset_y)
 end
 
 local on_confirm = function(pos)
-  if pos == 0 then pos = 1 end
+  if pos == 0 then
+    pos = 1
+  end
   local l = data[pos]
   log("confirm open", l.filename, pos, l.uri)
   open_file_at(l.filename, l.lnum)
 end
 
 local on_move = function(pos)
-  if pos == 0 then pos = 1 end
-  if pos > #data then print("[ERR] idx", pos, "length ", #data) end
+  if pos == 0 then
+    pos = 1
+  end
+  if pos > #data then
+    print("[ERR] idx", pos, "length ", #data)
+  end
   local l = data[pos]
   log("pos:", pos, l.text or l, l.uri)
   -- todo fix
@@ -203,7 +213,6 @@ local function test_list()
       uri = "file:///Users/ray.xu/github/guihua.lua/lua/guihua/listview.lua"
     }
   }
-  local util = require "guihua.util"
   -- vim.g.debug_trace_output = true
   package.loaded["guihua"] = nil
   package.loaded["guihua.view"] = nil
@@ -213,7 +222,7 @@ local function test_list()
   -- package.loaded.packer_plugins['guihua.lua'].loaded = false
   vim.cmd("packadd guihua.lua")
 
-  local d = util.prepare_for_render(data)
+  local d = prepare_for_render(data)
   data = d
   local win = ListView:new({
     loc = "top_center",
