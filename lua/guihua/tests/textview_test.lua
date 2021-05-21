@@ -111,11 +111,41 @@ local function test_signature()
   -- vim.cmd("startinsert!")
 end
 
-test_signature()
+local function test_filepreview()
+  local fname = vim.fn.expand("%:p:h") .. "/test_preview_golden.lua"
+  local uri = vim.uri_from_fname(fname)
+  local range = {
+    ["end"] = {
+      character = 46,
+      line = 16
+    },
+    start = {
+      character = 40,
+      line = 4
+    }
+  }
+  local opts =     {
+      relative = "cursor",
+      syntax = "lua",
+      rect = {height = 5, pos_x = 0, pos_y = 10},
+      uri = uri,
+      range = range,
+      edit = true
+    }
+
+  local win = TextView:new( opts )
+  log("draw data", opts)
+  win:on_draw(opts)
+  -- vim.cmd("startinsert!")
+end
+
+-- test_signature()
 -- test_fixed(false)
 -- test_relative()
 
 -- test_multi()
+
+test_filepreview()
 
 -- signature
 -- [[ --]]

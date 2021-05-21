@@ -3,11 +3,13 @@ package.loaded["guihua.view"] = nil
 package.loaded["guihua.viewctrl"] = nil
 package.loaded["guihua.listview"] = nil
 package.loaded["guihua.listviewctrl"] = nil
---vim.cmd("packadd guihua.lua")
+-- vim.cmd("packadd guihua.lua")
 
 local ListView = require("guihua.listview")
 local TextView = require("guihua.textview")
-local log = require "guihua.log".info
+local log = require"guihua.log".info
+
+local prepare_for_render = require('navigator.render').prepare_for_render
 local function test_plaintext()
   -- vim.cmd("packadd guihua.lua")
 
@@ -31,21 +33,15 @@ local function test_plaintext()
   -- display_data = {unpack(listobj.filtered_data, 1, listobj.display_height)}
   -- log("filter: ", display_data)
 
-  local win =
-    ListView:new(
-    {
-      loc = "up_left",
-      prompt = true,
-      rect = {height = 5},
-      -- data = display_data,
-      data = {
-        "Listview: test line should show",
-        "list line2 tes",
-        "list line3 tesssst ",
-        "list line4 tast"
-      }
+  local win = ListView:new({
+    loc = "up_left",
+    prompt = true,
+    rect = {height = 5},
+    -- data = display_data,
+    data = {
+      "Listview: test line should show", "list line2 tes", "list line3 tesssst ", "list line4 tast"
     }
-  )
+  })
 
   vim.cmd("normal! zb")
   vim.cmd("startinsert!")
@@ -93,36 +89,31 @@ local data = {
     uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     lnum = 3,
     text = "local function tprint(tbl, indent)"
-  },
-  {
+  }, {
     col = 11,
     filename = "/Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     lnum = 7,
     text = "  for k, v in pairs(tbl) do"
-  },
-  {
+  }, {
     col = 22,
     filename = "/Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     lnum = 4,
     text = "if not indent then"
-  },
-  {
+  }, {
     col = 20,
     filename = "/Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     lnum = 20,
     text = "local function partition(arr, low, high) "
-  },
-  {
+  }, {
     col = 31,
     filename = "/Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     lnum = 15,
     text = "print(formatting .. v) "
-  },
-  {
+  }, {
     col = 31,
     filename = "/Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
@@ -138,20 +129,13 @@ local function preview_uri(uri, line, offset_y)
   loc.targetRange["end"] = {line = line + 4}
   local n = tostring(os.time())
   local contents = {"local abc = 12", "local winid = " .. n, "print(winid)"}
-  return TextView:new(
-    {
-      loc = "top_center",
-      rect = {
-        height = #contents + 1,
-        width = 90,
-        pos_x = 0,
-        pos_y = 7
-      },
-      -- data = display_data,
-      data = contents,
-      syntax = "lua"
-    }
-  )
+  return TextView:new({
+    loc = "top_center",
+    rect = {height = #contents + 1, width = 90, pos_x = 0, pos_y = 7},
+    -- data = display_data,
+    data = contents,
+    syntax = "lua"
+  })
 end
 
 local on_confirm = function(pos)
@@ -162,37 +146,38 @@ local on_confirm = function(pos)
   log("confirm open", l.filename, pos, l.uri)
   open_file_at(l.filename, l.lnum)
 end
+
 local on_move = function(pos)
   if pos == 0 then
     pos = 1
   end
-  if pos > #data then print("[ERR] idx", pos, "length ", #data)end
+  if pos > #data then
+    print("[ERR] idx", pos, "length ", #data)
+  end
   local l = data[pos]
   log("pos:", pos, l.text or l, l.uri)
   -- todo fix
   return preview_uri(l.uri, l.lnum, 6)
+  -- test(false)
 end
 
 local function test_preview()
-  -- vim.g.debug_verbose_output = true
+  -- vim.g.debug_trace_output = true
   package.loaded["guihua"] = nil
   package.loaded["guihua.view"] = nil
   package.loaded["guihua.viewctrl"] = nil
   package.loaded["guihua.listview"] = nil
   package.loaded["guihua.listviewctrl"] = nil
-  --package.loaded.packer_plugins['guihua.lua'].loaded = false
+  -- package.loaded.packer_plugins['guihua.lua'].loaded = false
   vim.cmd("packadd guihua.lua")
-  local win =
-    ListView:new(
-    {
-      loc = "top_center",
-      prompt = true,
-      rect = {height = 4, width = 90},
-      data = lines,
-      on_confirm = on_confirm,
-      on_move = on_move
-    }
-  )
+  local win = ListView:new({
+    loc = "top_center",
+    prompt = true,
+    rect = {height = 4, width = 90},
+    data = lines,
+    on_confirm = on_confirm,
+    on_move = on_move
+  })
   -- log("test", win)
   -- vim.cmd("startinsert!")
   -- vim.cmd("normal! zvzb")
@@ -207,76 +192,56 @@ local function test_list()
       filename = "/Users/ray.xu/github/guihua.lua/lua/guihua/view.lua",
       display_filename = "./lua/guihua/view.lua",
       lnum = 30,
-      range = {
-        start = {
-          character = 5,
-          line = 29
-        }
-      },
+      range = {start = {character = 5, line = 29}},
       text = "if opts.prompt == true then",
       uri = "file:///Users/ray.xu/github/guihua.lua/lua/guihua/view.lua"
-    },
-    {
+    }, {
       col = 6,
       filename = "/Users/ray.xu/github/guihua.lua/lua/guihua/view.lua",
       display_filename = "./lua/guihua/view.lua",
       lnum = 35,
-      range = {
-        start = {
-          character = 5,
-          line = 34
-        }
-      },
+      range = {start = {character = 5, line = 34}},
       text = "if opts.loc ~= nil then",
       uri = "file:///Users/ray.xu/github/guihua.lua/lua/guihua/view.lua"
-    },
-    {
+    }, {
       col = 6,
       filename = "/Users/ray.xu/github/guihua.lua/lua/guihua/listview.lua",
       display_filename = "./lua/guihua/listview.lua",
       lnum = 21,
-      range = {
-        start = {
-          character = 5,
-          line = 34
-        }
-      },
+      range = {start = {character = 5, line = 34}},
       text = "function ListView:initialize(...)",
-      uri =
-      "file:///Users/ray.xu/github/guihua.lua/lua/guihua/listview.lua"
+      uri = "file:///Users/ray.xu/github/guihua.lua/lua/guihua/listview.lua"
     }
-
   }
-  local util=require'guihua.util'
-  -- vim.g.debug_verbose_output = true
+  -- vim.g.debug_trace_output = true
   package.loaded["guihua"] = nil
   package.loaded["guihua.view"] = nil
   package.loaded["guihua.viewctrl"] = nil
   package.loaded["guihua.listview"] = nil
   package.loaded["guihua.listviewctrl"] = nil
-  --package.loaded.packer_plugins['guihua.lua'].loaded = false
+  -- package.loaded.packer_plugins['guihua.lua'].loaded = false
   vim.cmd("packadd guihua.lua")
 
-  local d = util.aggregate_filename(data)
+  local d = prepare_for_render(data)
   data = d
-  local win =
-    ListView:new(
-    {
-      loc = "top_center",
-      prompt = true,
-      rect = {height = 5, width = 90},
-      data = d,
-      on_confirm = on_confirm,
-      on_move = on_move
-    }
-  )
+  local win = ListView:new({
+    loc = "top_center",
+    border = "none",
+    prompt = false,
+    rect = {height = 5, width = 90},
+    data = d,
+    on_confirm = on_confirm,
+    on_move = on_move
+  })
   -- log("test", win)
   -- vim.cmd("startinsert!")
   -- vim.cmd("normal! zvzb")
   -- win:on_draw({})
-  win:set_pos(1)
+  -- win:set_pos(1)
 end
 
 test_list()
+-- test_textview()
+
 -- test_plaintext()
 -- test_preview()
