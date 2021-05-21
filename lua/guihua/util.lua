@@ -102,4 +102,12 @@ M.highlighter = function(bufnr, ft, lines)
   return false
 end
 
+-- find whole word
+function M.word_find(input, word)
+  if input == nil or word == nil then
+    return nil
+  end
+  return string.find(input, "%f[%a]" .. word .. "%f[%A]")
+end
+
 return M

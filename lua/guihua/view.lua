@@ -8,6 +8,7 @@ local View = class("View", Rect)
 local log = require"guihua.log".info
 local trace = require"guihua.log".trace
 
+local word_find = require'guihua.util'.word_find
 -- Note, Support only one active view
 -- ActiveView = nil
 --[[
@@ -50,19 +51,18 @@ function View:initialize(...)
 
   local floatbuf = require"guihua.floating".floating_buf
   -- listview should not have ft enabled
-  self.buf, self.win, self.buf_closer = floatbuf(
-                                            {
-        win_width = self.rect.width,
-        win_height = self.rect.height,
-        x = self.rect.pos_x,
-        y = self.rect.pos_y,
-        loc = loc,
-        prompt = self.prompt,
-        enter = opts.enter,
-        ft = opts.ft,
-        syntax = opts.syntax,
-        relative = opts.relative
-      })
+  self.buf, self.win, self.buf_closer = floatbuf({
+    win_width = self.rect.width,
+    win_height = self.rect.height,
+    x = self.rect.pos_x,
+    y = self.rect.pos_y,
+    loc = loc,
+    prompt = self.prompt,
+    enter = opts.enter,
+    ft = opts.ft,
+    syntax = opts.syntax,
+    relative = opts.relative
+  })
   log("floatbuf created ", self.buf, self.win)
   self:set_bg(opts)
   if opts.data ~= nil and #opts.data > 1 then
@@ -114,7 +114,18 @@ local function draw_table_item(buf, item, pos)
   -- deal with filtered data
   trace("draw_table", buf, item.text, pos)
   if item.text == nil then
+    log("draw nil lines", buf, item.text, pos)
     return
+  end
+  -- if item.symbol_name is not nil highlight it
+  if item.symbol_name and #item.symbol_name > 0 then
+    -- lets find all
+    local s, e = word_find(item.text, item.symbol_name)
+    trace('hl', s, e)
+    while s ~= nil do
+      vim.fn.matchaddpos("Error", {{pos + 1, s, e - s + 1}})
+      s, e = word_find(item.text, item.sybol_name)
+    end
   end
   vim.api.nvim_buf_set_lines(buf, pos, pos, true, {item.text})
   -- vim.api.nvim_buf_set_lines(buf, 0, 1, true, '{item.text}')
@@ -186,7 +197,7 @@ function View:on_draw(data)
     content = data
   end
 
-  trace("draw", data[1], data[2])
+  log("draw", data[1])
   local start = 0
   if self.header ~= nil then
     start = 1
@@ -226,9 +237,7 @@ function View:close(...)
   end
   self:unbind_ctrl()
   -- View = class("View", Rect)
-
   -- View.ActiveView = nil
-
   View.static.ActiveView = nil
   log("view closed ")
   trace("Viewobj after close", View)
@@ -251,9 +260,7 @@ function test()
   -- package.loaded.packer_plugins['guihua.lua'].loaded = false
   vim.cmd("packadd guihua.lua")
 
-  local data = {
-    "View: test line should show", "view line2", "view line3", "view line4"
-  }
+  local data = {"View: test line should show", "view line2", "view line3", "view line4"}
   local win = View:new({
     loc = "up_left",
     rect = {height = 5, pos_x = 120},

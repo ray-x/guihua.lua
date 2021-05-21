@@ -7,7 +7,7 @@ syntax match GuihuaBufferNumber '\W\d\+'
 syntax match GuihuaBufferField '\.\h\+'
 syntax match GuihuaBufferField2 '->\h\+'
 syn region      GuihuaBufferComment           start="//" end="$"
-syntax match GuihuaBufferColon '[:|:=|<|>|"|'|{|}|\||&|%|\*|(|)|\[|\]|\+|\-|\/]'
+syntax match GuihuaBufferColon '[:|:=|<|>|"|'|{|}|\||=|&|%|\*|(|)|\[|\]|\+|\-|\/]'
 syn region   GuihuaBufferString            start=+"+ skip=+\\\\\|\\"+ end=+"+
 syn region   GuihuaBufferString2            start=+'+ skip=+\\\\\|\\'+ end=+'+
 syntax keyword GuihuaBufferKeyword func function fn local begin end  let const defer map goto type range delete self this new delete malloc free include  def null nil as any private number module yield go typedef asm static register volatile extern const assert await with async global lambda pass import all any bytes tuple type filter format print box pub unsafe where mod trait move mut ref crate
@@ -27,7 +27,7 @@ syntax keyword GuihuaNerdfont     𝔉 ⓕ    ﴲ    ﰮ   
 syntax keyword GuihuaNerdfont2  ƒ  
 
 hi default link GuihuaBufferNumber Number
-hi default link GuihuaBufferColon  SpecialChar
+hi default link GuihuaBufferColon  Operator
 hi default link GuihuaBufferPath   Title
 hi default link GuihuaBufferKeyword Keyword
 hi default link GuihuaBufferString String
@@ -35,7 +35,7 @@ hi default link GuihuaNerdfont Constant
 hi default link GuihuaBufferString2 String
 hi default link GuihuaBufferComment Comment
 hi default link GuihuaBufferCondition Conditional
-hi default link GuihuaBufferType Struct
+hi default link GuihuaBufferType Structure
 hi default link GuihuaBufferLoop Repeat
 hi default link GuihuaBufferClass Type
 hi default link GuihuaBufferField Function
