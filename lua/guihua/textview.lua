@@ -7,7 +7,9 @@ local trace = require"guihua.log".trace
 local TextViewCtrl = require "guihua.textviewctrl"
 -- local TextView = {}
 
-if TextView == nil then TextView = class("TextView", View) end
+if TextView == nil then
+  TextView = class("TextView", View)
+end
 -- Note, Support only one active view
 -- ActiveView = nil
 --[[
@@ -38,13 +40,15 @@ function TextView:initialize(...)
 
   log("ctor TextView start:")
   trace(opts)
-  vim.cmd([[hi GHTextViewDark guifg=#e0d8f4 guibg=#332e64]])
+  -- vim.cmd([[hi default GHTextViewDark guifg=#e0d8f4 guibg=#332e55]])
+  local bg = util.bgcolor(0x050812)
+  vim.cmd([[hi default GHTextViewDark guifg=#e0d8f4  guibg=]] .. bg)
 
   opts.bg = opts.bg or "GHTextViewDark"
 
   if TextView.ActiveTextView ~= nil then
-    if TextView.ActiveTextView.win ~= nil and vim.api.nvim_win_is_valid(TextView.ActiveTextView.win) and
-        vim.api.nvim_buf_is_valid(self.buf) then
+    if TextView.ActiveTextView.win ~= nil and vim.api.nvim_win_is_valid(TextView.ActiveTextView.win)
+        and vim.api.nvim_buf_is_valid(self.buf) then
       log("active view ", TextView.ActiveTextView.buf, TextView.ActiveTextView.win)
       if TextView.hl_id ~= nil then
         vim.api.nvim_buf_clear_namespace(0, TextView.hl_id, 0, -1)
@@ -60,7 +64,9 @@ function TextView:initialize(...)
         TextView.ActiveTextView:on_draw(opts)
       end
       if opts.hl_line ~= nil then
-        if opts.hl_line == 0 then opts.hl_line = 1 end
+        if opts.hl_line == 0 then
+          opts.hl_line = 1
+        end
         log("hl buf", self.buf, "l ", opts.hl_line)
         TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "Search",
                                                                opts.hl_line - 1, 0, -1)
@@ -102,7 +108,9 @@ function TextView:initialize(...)
   end
 
   if opts.hl_line ~= nil then
-    if opts.hl_line == 0 then opts.hl_line = 1 end
+    if opts.hl_line == 0 then
+      opts.hl_line = 1
+    end
     log("buf", self.buf, "l: ", opts.hl_line)
     TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "Search", opts.hl_line - 1,
                                                            0, -1)
@@ -114,7 +122,9 @@ function TextView:initialize(...)
 end
 
 function TextView.Active()
-  if TextView.ActiveTextView ~= nil then return true end
+  if TextView.ActiveTextView ~= nil then
+    return true
+  end
   return false
 end
 
@@ -149,10 +159,14 @@ function TextView:on_draw(opts)
     return
   end
   local start = 0
-  if self.header ~= nil then start = 1 end
+  if self.header ~= nil then
+    start = 1
+  end
   local end_at = -1
   local bufnr = self.buf or TextView.ActiveTextView.buf
-  if bufnr == 0 then print("Error: plugin failure, please submit a issue") end
+  if bufnr == 0 then
+    print("Error: plugin failure, please submit a issue")
+  end
   -- log("bufnr", bufnr)
 
   vim.api.nvim_buf_set_option(bufnr, "readonly", false)

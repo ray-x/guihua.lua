@@ -88,7 +88,7 @@ end
 
 function View:set_bg(opts)
   local bg = opts.bg or "GHBgDark"
-  vim.cmd([[hi GHBgDark guifg=#d0c8e4 guibg=#1a101f]])
+  vim.cmd([[hi default GHBgDark guifg=#d0c8e4 guibg=#1a101f]])
 
   local cmd = "Normal:" .. bg .. ",NormalNC:" .. bg
   vim.api.nvim_win_set_option(self.win, "winhl", cmd)
@@ -197,7 +197,7 @@ function View:on_draw(data)
     content = data
   end
 
-  log("draw", data[1])
+  trace("draw", data[1])
   local start = 0
   if self.header ~= nil then
     start = 1

@@ -4,14 +4,32 @@ local log = require"guihua.log".info
 local trace = require"guihua.log".trace
 
 function M.close_view_autocmd(events, winnr)
-  api.nvim_command("autocmd " .. table.concat(events, ",") ..
-                       " <buffer> ++once lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true)")
+  api.nvim_command("autocmd " .. table.concat(events, ",")
+                       .. " <buffer> ++once lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true)")
 end
 
 -- function M.buf_close_view_event(mode, key, bufnr, winnr)
 --   local closer = " <Cmd> lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true) <CR>"
 --   vim.api.nvim_buf_set_keymap(bufnr, "n", key, closer, {})
 -- end
+
+function M.bgcolor(delta, d2, d3)
+  local bg = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("Normal")), "bg#")
+  bg = string.sub(bg, 2)
+  local bgi = tonumber(bg, 16)
+  if bgi == nil then
+    return "#101b3f"
+  end
+  if d2 == nil then
+    bgi = bgi + delta
+
+  else
+    bgi = bgi + delta * 10000 + d2 * 100 + d3
+  end
+
+  return string.format("#%6x", bgi)
+
+end
 
 function M.close_view_event(mode, key, winnr, bufnr, enter)
   local closer = " <Cmd> lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true) <CR>"

@@ -3,6 +3,7 @@ local ListViewCtrl = require "guihua.listviewctrl"
 local View = require "guihua.view"
 local log = require"guihua.log".info
 local trace = require"guihua.log".trace
+local util = require "guihua.util"
 
 if ListView == nil then
   ListView = class("ListView", View)
@@ -27,7 +28,10 @@ function ListView:initialize(...)
   log("listview ctor ") -- , self)
   local opts = select(1, ...) or {}
 
-  vim.cmd([[hi GHListDark guifg=#e0d8f4 guibg=#272755]])
+  -- vim.cmd([[hi default GHListDark guifg=#e0d8f4 guibg=#272755]])
+  -- vim.cmd([[hi default GHListDark guifg=#e0d8f4 guibg=#103234]])
+  local bg = util.bgcolor(0x051012)
+  vim.cmd([[hi default GHListDark guifg=#e0d8f4  guibg=]] .. bg)
   opts.bg = opts.bg or "GHListDark"
 
   opts.enter = true
@@ -99,7 +103,7 @@ function ListView.close()
   View.data = nil
   vim.cmd([[stopinsert]])
   -- ListView = class("ListView", View)
-  log("listview destroied", win)
+  log("listview destroyed", win)
 end
 
 function ListView:set_pos(i)
