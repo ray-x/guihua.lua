@@ -5,6 +5,8 @@ local log = require"guihua.log".info
 local trace = require"guihua.log".trace
 local util = require "guihua.util"
 
+-- _VT_GHLIST = vim.api.nvim_create_namespace("guihua_listview")
+
 if ListView == nil then
   ListView = class("ListView", View)
 end
@@ -115,7 +117,13 @@ function ListView:set_pos(i)
   end
   self.selected_line = i
   local selhighlight = vim.api.nvim_create_namespace("selhighlight")
+  local cursor = vim.api.nvim_win_get_cursor(self.win)
+  cursor[1] = i
+  -- vim.api.nvim_win_set_cursor(self.win, cursor)
 
+  -- vim.api.nvim_buf_clear_namespace(self.buf, _VT_GHLIST, 0, -1)
+  -- _VT_GHLIST = vim.api.nvim_buf_set_virtual_text(self.buf, _VT_GHLIST, i - 1, {{"<-", "Sting"}}, {})
+  -- log("set virtual text on ", i, "buf", self.buf, _VT_GHLIST)
   vim.schedule(function()
     -- log("setpos", self.buf)
     if not vim.api.nvim_buf_is_valid(self.buf) then
@@ -123,6 +131,7 @@ function ListView:set_pos(i)
     end
     vim.api.nvim_buf_clear_namespace(self.buf, selhighlight, 0, -1)
     local ListviewHl = self.hl_group or "PmenuSel"
+    ListviewHl = util.selcolor(ListviewHl)
     vim.api
         .nvim_buf_add_highlight(self.buf, selhighlight, ListviewHl, self.selected_line - 1, 0, -1)
   end)

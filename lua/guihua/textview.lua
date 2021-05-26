@@ -68,7 +68,7 @@ function TextView:initialize(...)
           opts.hl_line = 1
         end
         log("hl buf", self.buf, "l ", opts.hl_line)
-        TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "Search",
+        TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "GHListHl",
                                                                opts.hl_line - 1, 0, -1)
         TextView.static.hl_line = opts.hl_line
       end
@@ -112,8 +112,8 @@ function TextView:initialize(...)
       opts.hl_line = 1
     end
     log("buf", self.buf, "l: ", opts.hl_line)
-    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "Search", opts.hl_line - 1,
-                                                           0, -1)
+    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "GHListHl",
+                                                           opts.hl_line - 1, 0, -1)
     TextView.static.hl_line = opts.hl_line
   end
 
@@ -175,7 +175,7 @@ function TextView:on_draw(opts)
   vim.api.nvim_buf_set_option(bufnr, "readonly", true)
   vim.api.nvim_buf_set_option(bufnr, "bufhidden", "wipe")
   if TextView.hl_line ~= nil then
-    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "Search",
+    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "GHListHl",
                                                            TextView.hl_line - 1, 0, -1)
   end
   -- vim.fn.setpos(".", {0, 1, 1, 0})

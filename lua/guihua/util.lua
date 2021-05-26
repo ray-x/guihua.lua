@@ -8,6 +8,13 @@ function M.close_view_autocmd(events, winnr)
                        .. " <buffer> ++once lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true)")
 end
 
+local function lshift(x, by)
+  return x * 2 ^ by
+end
+
+local function rshift(x, by)
+  return math.floor(x / 2 ^ by)
+end
 -- function M.buf_close_view_event(mode, key, bufnr, winnr)
 --   local closer = " <Cmd> lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true) <CR>"
 --   vim.api.nvim_buf_set_keymap(bufnr, "n", key, closer, {})
@@ -15,6 +22,8 @@ end
 
 function M.bgcolor(delta, d2, d3)
   local bg = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("Normal")), "bg#")
+  local sel = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("PmenuSel")), "bg#")
+
   bg = string.sub(bg, 2)
   local bgi = tonumber(bg, 16)
   if bgi == nil then
@@ -24,11 +33,55 @@ function M.bgcolor(delta, d2, d3)
     bgi = bgi + delta
 
   else
-    bgi = bgi + delta * 10000 + d2 * 100 + d3
+    bgi = bgi + delta * 65536 + d2 * 256 + d3
   end
 
   return string.format("#%6x", bgi)
+end
 
+-- offset the GHListHl based on GHListDark
+function M.selcolor(Hl)
+  local bgcolor = tonumber(string.sub(
+                               vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("GHListDark")), "bg#"),
+                               2), 16)
+  local sel = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID(Hl)), "bg#")
+
+  sel = tonumber(string.sub(sel, 2), 16)
+  if sel == nil then
+    return "#403b4f"
+  end
+
+  local b1, b2 = bgcolor, sel
+  local diff = math.abs(bit.band(b1, 255) - bit.band(b2, 255))
+  local t = math.abs(bit.band(b1, 255))
+  log(t)
+  b1 = bit.rshift(b1, 8)
+  b2 = bit.rshift(b2, 8)
+  diff = diff + math.abs(bit.band(b1, 255) - bit.band(b2, 255))
+  t = t + math.abs(bit.band(b1, 255))
+  log(t)
+  b1 = bit.rshift(b1, 8)
+  b2 = bit.rshift(b2, 8)
+  diff = diff + math.abs(bit.band(b1, 255) - bit.band(b2, 255))
+  t = t + math.abs(bit.band(b1, 255))
+  log(t)
+  if diff > 20 * 3 then -- 0x1B + 3 then
+    local fg = string.format("#%6x", sel)
+    log(diff, sel, bgcolor, Hl)
+    vim.cmd("hi! default GHListHl guibg = " .. fg)
+  else
+
+    log(diff, t, sel, bgcolor, fg, Hl)
+    if t > 216 then
+      sel = 0x120103
+    else
+      sel = sel + 0x171320
+    end
+    local fg = string.format("#%6x", sel)
+    vim.cmd("hi default GHListHl cterm=bold gui=Bold guibg=" .. fg)
+  end
+
+  return "GHListHl"
 end
 
 function M.close_view_event(mode, key, winnr, bufnr, enter)
