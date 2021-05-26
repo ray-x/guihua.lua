@@ -48,37 +48,35 @@ function M.selcolor(Hl)
 
   sel = tonumber(string.sub(sel, 2), 16)
   if sel == nil then
-    return "#403b4f"
+    sel = "#403b4f"
   end
 
   local b1, b2 = bgcolor, sel
   local diff = math.abs(bit.band(b1, 255) - bit.band(b2, 255))
   local t = math.abs(bit.band(b1, 255))
-  log(t)
   b1 = bit.rshift(b1, 8)
   b2 = bit.rshift(b2, 8)
   diff = diff + math.abs(bit.band(b1, 255) - bit.band(b2, 255))
   t = t + math.abs(bit.band(b1, 255))
-  log(t)
   b1 = bit.rshift(b1, 8)
   b2 = bit.rshift(b2, 8)
   diff = diff + math.abs(bit.band(b1, 255) - bit.band(b2, 255))
   t = t + math.abs(bit.band(b1, 255))
-  log(t)
-  if diff > 20 * 3 then -- 0x1B + 3 then
+  if diff > 24 * 3 then
     local fg = string.format("#%6x", sel)
     log(diff, sel, bgcolor, Hl)
-    vim.cmd("hi! default GHListHl guibg = " .. fg)
+    vim.cmd("hi default GHListHl cterm=Bold gui=Bold guibg = " .. fg)
   else
-
-    log(diff, t, sel, bgcolor, fg, Hl)
-    if t > 216 then
+    log(diff, t, sel, bgcolor, Hl)
+    if t > 360 then -- not sure how this plugin works for light schema
+      sel = bgcolor - 0x161810
+    elseif t > 216 then
       sel = 0x120103
     else
-      sel = sel + 0x171320
+      sel = bgcolor + 0x171320
     end
     local fg = string.format("#%6x", sel)
-    vim.cmd("hi default GHListHl cterm=bold gui=Bold guibg=" .. fg)
+    vim.cmd("hi default GHListHl cterm=Bold gui=Bold guibg=" .. fg)
   end
 
   return "GHListHl"
