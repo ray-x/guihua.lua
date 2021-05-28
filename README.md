@@ -34,4 +34,4 @@ Plugin has implementation of fzy with both ffi and native lua. If you like to tr
 Plug 'ray-x/guihua.lua', {'do': 'cd lua/fzy && make' }
 ```
 
-Usage: check
+Usage: check the test files on how the api is used.

@@ -7,7 +7,9 @@ local log = require"guihua.log".info
 
 local trace = require"guihua.log".trace
 
-if TextViewCtrl == nil then TextViewCtrl = class("TextViewCtrl") end -- no need to subclass from viewctrl
+if TextViewCtrl == nil then
+  TextViewCtrl = class("TextViewCtrl")
+end -- no need to subclass from viewctrl
 
 function TextViewCtrl:initialize(delegate, ...)
   trace(debug.traceback())
@@ -35,9 +37,9 @@ function TextViewCtrl:initialize(delegate, ...)
   vim.api
       .nvim_buf_set_keymap(delegate.buf, "n", "<C-s>", "<cmd> lua TextViewCtrl:on_save()<CR>", {})
   log("bind close", self.m_delegate.win, delegate.buf)
-
-  vim.cmd([[ autocmd TextChangedI <buffer> lua  require'guihua.ListViewCtrl':on_search() ]])
-
+  if opts.edit then
+    vim.cmd([[ autocmd TextChangedI <buffer> lua  require'guihua.ListViewCtrl':on_search() ]])
+  end
   TextViewCtrl._viewctlobject = self
   -- self:on_draw(self.display_data)
   -- self.m_delegate:set_pos(self.selected_line)
@@ -78,7 +80,9 @@ function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
   local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range['end'].line, false)
   local lines = #contents
   local syntax = opts.syntax
-  if syntax == nil or #syntax < 1 then syntax = api.nvim_buf_get_option(bufnr, "ft") end
+  if syntax == nil or #syntax < 1 then
+    syntax = api.nvim_buf_get_option(bufnr, "ft")
+  end
 
   -- TODO: for saving, need update file_info based on data loaded, e.g. if we only load 1 line, but display_height is 10
   self.file_info.lines = lines
@@ -105,9 +109,13 @@ function TextViewCtrl:on_save()
   --   api.nvim_buf_get_lines(txtbufnr, range.start.line, (range["end"].line or 1) + load_opts.display_height, false)
   log("save file info", file_info)
   local bufnr = vim.uri_to_bufnr(file_info.uri)
-  if not api.nvim_buf_is_loaded(bufnr) then vim.fn.bufload(bufnr) end
+  if not api.nvim_buf_is_loaded(bufnr) then
+    vim.fn.bufload(bufnr)
+  end
   local range = file_info.display_range
-  if range == nil then log("incorrect file info, can not save") end
+  if range == nil then
+    log("incorrect file info, can not save")
+  end
 
   log(bufnr, range, file_info.lines, contents)
   vim.api.nvim_buf_set_lines(bufnr, range.start.line, range.start.line + file_info.lines, true,
