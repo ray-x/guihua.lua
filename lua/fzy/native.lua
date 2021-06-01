@@ -6,10 +6,7 @@
 -- > fzy tries to find the result the user intended. It does this by favouring
 -- > matches on consecutive letters and starts of words. This allows matching
 -- > using acronyms or different parts of the path." - J Hawthorn
-
-local os_aliases = {
-  ["osx"] = "darwin"
-}
+local os_aliases = {["osx"] = "darwin"}
 
 local arch_aliases = {
   ["x64"] = "x86_64"
@@ -168,6 +165,7 @@ function fzy.filter(needle, lines, is_case_sensitive)
   return results
 end
 
+-- used by listview filter
 function fzy.filter_table_ordered(needle, items, is_case_sensitive)
   is_case_sensitive = is_case_sensitive or false
   local results = {}
@@ -180,18 +178,17 @@ function fzy.filter_table_ordered(needle, items, is_case_sensitive)
         local positions, score = fzy.positions(needle, line, is_case_sensitive)
         items[i].fzy = {pos = positions, score = score}
         table.insert(results, items[i])
+      else
+        items[i].fzy = nil -- reset previous score
       end
     else
       print("incorrect arguments")
     end
   end
   if #table > 1 then
-    table.sort(
-      results,
-      function(i, j)
-        return i.score < j.score
-      end
-    )
+    table.sort(results, function(i, j)
+      return i.score < j.score
+    end)
   end
   return results
 end
