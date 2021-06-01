@@ -51,7 +51,9 @@ function ListView:initialize(...)
   else
     vim.cmd("normal! zvzb")
   end
-
+  if opts.hl_group then
+    self.hl_group = opts.hl_group
+  end
   ListView.static.Winnr = self.win
   ListView.static.Bufnr = self.buf
   vim.api.nvim_buf_set_keymap(self.buf, "n", "<C-e>", "<cmd> lua ListView.close() <CR>", {})
