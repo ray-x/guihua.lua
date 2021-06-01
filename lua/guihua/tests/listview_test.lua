@@ -240,8 +240,152 @@ local function test_list()
   -- win:set_pos(1)
 end
 
-test_list()
+local function test_list_one_item()
+  data = {
+    {
+      detail = "func",
+      filename = "/Users/ray.xu/go/src/github.com/deltatre-vxp/mtribes-manifester/test/intg/external/ext_srv.go",
+      kind = 12,
+      lnum = 19,
+      name = "main",
+      range = {['end'] = {character = 1, line = 78}, start = {character = 0, line = 18}},
+      selectionRange = {['end'] = {character = 9, line = 18}, start = {character = 5, line = 18}},
+      text = "[ ]main func",
+      uri = "file:///Users/ray.xu/go/src/github.com/deltatre-vxp/mtribes-manifester/test/intg/external/ext_srv.go"
+    }
+  }
+  -- vim.g.debug_trace_output = true
+  package.loaded["guihua"] = nil
+  package.loaded["guihua.view"] = nil
+  package.loaded["guihua.viewctrl"] = nil
+  package.loaded["guihua.listview"] = nil
+  package.loaded["guihua.listviewctrl"] = nil
+  -- package.loaded.packer_plugins['guihua.lua'].loaded = false
+  vim.cmd("packadd guihua.lua")
+
+  local d = prepare_for_render(data)
+  data = d
+  local win = ListView:new({
+    loc = "top_center",
+    border = "none",
+    prompt = false,
+    rect = {height = 5, width = 90},
+    data = d,
+    on_confirm = on_confirm,
+    on_move = on_move
+  })
+  -- log("test", win)
+  -- vim.cmd("startinsert!")
+  -- vim.cmd("normal! zvzb")
+  -- win:on_draw({})
+  -- win:set_pos(1)
+end
+
+local function test_list_one_item_symbol()
+  data = {
+    {
+      detail = "func",
+      filename = "/Users/ray.xu/go/src/github.com/deltatre-vxp/mtribes-manifester/test/intg/external/ext_srv.go",
+      kind = 12,
+      lnum = 18,
+      name = "main",
+      range = {['end'] = {character = 1, line = 77}, start = {character = 0, line = 17}},
+      selectionRange = {['end'] = {character = 9, line = 17}, start = {character = 5, line = 17}},
+      text = "[ ]main func",
+      uri = "file:///Users/ray.xu/go/src/github.com/deltatre-vxp/mtribes-manifester/test/intg/external/ext_srv.go"
+    }
+  }
+  -- data = prepare_for_render(data)
+  log(data)
+
+  local opt = {
+    api = " ",
+    bg = "GHListDark",
+    data = data,
+    enter = true,
+    ft = "go",
+    loc = "top_center",
+    prompt = true,
+    on_confirm = on_confirm,
+    on_move = on_move,
+    rect = {height = 1, pos_x = 0, pos_y = 0, width = 120}
+  }
+
+  -- vim.g.debug_trace_output = true
+  package.loaded["guihua"] = nil
+  package.loaded["guihua.view"] = nil
+  package.loaded["guihua.viewctrl"] = nil
+  package.loaded["guihua.listview"] = nil
+  package.loaded["guihua.listviewctrl"] = nil
+  -- package.loaded.packer_plugins['guihua.lua'].loaded = false
+  vim.cmd("packadd guihua.lua")
+
+  local win = ListView:new(opt)
+  -- log("test", win)
+  -- vim.cmd("startinsert!")
+  -- vim.cmd("normal! zvzb")
+  -- win:set_pos(1)
+end
+
+local function test_list_two_item_symbol()
+
+  local opt = {
+    api = " ",
+    bg = "GHListDark",
+    data = {
+      {
+        detail = "func",
+        filename = "/Users/ray.xu/go/src/github.com/deltatre-vxp/mtribes-manifester/test/intg/external/ext_srv.go",
+        kind = 12,
+        lnum = 18,
+        name = "main",
+        range = {['end'] = {character = 1, line = 77}, start = {character = 0, line = 17}},
+        selectionRange = {['end'] = {character = 9, line = 17}, start = {character = 5, line = 17}},
+        text = "[ ]main func",
+        uri = "file:///Users/ray.xu/go/src/github.com/deltatre-vxp/mtribes-manifester/test/intg/external/ext_srv.go"
+      }, {
+        detail = "func",
+        filename = "/Users/ray.xu/go/src/github.com/deltatre-vxp/mtribes-manifester/test/intg/external/ext_srv.go",
+        kind = 12,
+        lnum = 18,
+        name = "main",
+        range = {['end'] = {character = 1, line = 77}, start = {character = 0, line = 17}},
+        selectionRange = {['end'] = {character = 9, line = 17}, start = {character = 5, line = 17}},
+        text = "[ ]main func",
+        uri = "file:///Users/ray.xu/go/src/github.com/deltatre-vxp/mtribes-manifester/test/intg/external/ext_srv.go"
+      }
+    },
+    enter = true,
+    ft = "go",
+    loc = "top_center",
+    prompt = true,
+    on_confirm = on_confirm,
+    on_move = on_move,
+    rect = {height = 2, pos_x = 0, pos_y = 0, width = 120}
+  }
+
+  -- vim.g.debug_trace_output = true
+  package.loaded["guihua"] = nil
+  package.loaded["guihua.view"] = nil
+  package.loaded["guihua.viewctrl"] = nil
+  package.loaded["guihua.listview"] = nil
+  package.loaded["guihua.listviewctrl"] = nil
+  -- package.loaded.packer_plugins['guihua.lua'].loaded = false
+  vim.cmd("packadd guihua.lua")
+
+  local win = ListView:new(opt)
+  -- log("test", win)
+  -- vim.cmd("startinsert!")
+  -- vim.cmd("normal! zvzb")
+  win:on_draw({})
+  -- win:set_pos(1)
+end
+
+-- test_list()
 -- test_textview()
+
+test_list_one_item_symbol()
+-- test_list_two_item_symbol()
 
 -- test_plaintext()
 -- test_preview()

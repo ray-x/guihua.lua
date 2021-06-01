@@ -4,7 +4,9 @@ local log = require"guihua.log".info
 local util = require "guihua.util"
 local trace = require"guihua.log".trace
 
-if ListViewCtrl == nil then ListViewCtrl = class("ListViewCtrl", ViewController) end
+if ListViewCtrl == nil then
+  ListViewCtrl = class("ListViewCtrl", ViewController)
+end
 
 function ListViewCtrl:initialize(delegate, ...)
   trace(debug.traceback())
@@ -18,18 +20,23 @@ function ListViewCtrl:initialize(delegate, ...)
   self.preview = opts.preview or false
   self.display_height = self.m_delegate.display_height or 10
   self.display_start_at = 1
-  self.on_move = opts.on_move or function(...) end
+  self.on_move = opts.on_move or function(...)
+  end
   self.on_confirm = opts.on_confirm
   if #self.data <= self.display_height then
     self.display_data = opts.data
   else
     self.display_data = {}
-    for i = 1, self.display_height, 1 do table.insert(self.display_data, self.data[i]) end
+    for i = 1, self.display_height, 1 do
+      table.insert(self.display_data, self.data[i])
+    end
   end
   trace("init display: ", self.display_data, self.display_height, self.selected_line)
   -- ... is the view
   -- todo location, readonly? and filetype
-  if delegate.buf == nil or delegate.buf == 0 then log("should not bind to current buffer") end
+  if delegate.buf == nil or delegate.buf == 0 then
+    log("should not bind to current buffer")
+  end
   vim.api
       .nvim_buf_set_keymap(delegate.buf, "n", "<C-p>", "<cmd> lua ListViewCtrl:on_prev()<CR>", {})
   vim.api
@@ -63,7 +70,9 @@ function ListViewCtrl:initialize(delegate, ...)
   trace("listview ctrl created ", self)
 end
 
-function ListViewCtrl:get_ui() return self.m_delegate end
+function ListViewCtrl:get_ui()
+  return self.m_delegate
+end
 
 function ListViewCtrl:wrap_closer(o)
   if o == nil then
@@ -80,15 +89,20 @@ end
 function ListViewCtrl:on_next()
   local listobj = ListViewCtrl._viewctlobject
 
-  if listobj.selected_line == nil then listobj.selected_line = 1 end
+  if listobj.selected_line == nil then
+    listobj.selected_line = 1
+  end
   local l = listobj.selected_line + 1
   local data_collection = listobj.data
-  if listobj.filter_applied then data_collection = listobj.filtered_data end
+  if listobj.filter_applied then
+    data_collection = listobj.filtered_data
+  end
   local disp_h = listobj.display_height
-  if listobj.m_delegate.prompt == true then disp_h = disp_h - 1 end
+  if listobj.m_delegate.prompt == true then
+    disp_h = disp_h - 1
+  end
 
-  trace("next: ", listobj.selected_line, listobj.display_start_at, listobj.display_height, l,
-          disp_h)
+  trace("next: ", listobj.selected_line, listobj.display_start_at, listobj.display_height, l, disp_h)
 
   if l > #data_collection then
     listobj.m_delegate:set_pos(disp_h)
@@ -126,14 +140,20 @@ function ListViewCtrl:on_prev()
   end
 
   local disp_h = listobj.display_height
-  if listobj.m_delegate.prompt == true then disp_h = disp_h - 1 end
+  if listobj.m_delegate.prompt == true then
+    disp_h = disp_h - 1
+  end
   log("pre: ", listobj.selected_line, listobj.display_start_at, disp_h, listobj.display_height,
       listobj.m_delegate.prompt)
 
   local data_collection = listobj.data
-  if listobj.filter_applied then data_collection = listobj.filtered_data end
+  if listobj.filter_applied then
+    data_collection = listobj.filtered_data
+  end
 
-  if listobj.selected_line == nil then listobj.selected_line = 1 end
+  if listobj.selected_line == nil then
+    listobj.selected_line = 1
+  end
   local l = listobj.selected_line - 1
   if l < 1 then
     listobj.m_delegate:set_pos(1)
@@ -183,13 +203,17 @@ function ListViewCtrl:on_search()
     return
   end
   local buf = listobj.m_delegate.buf
-  if not vim.api.nvim_buf_is_valid(buf) then return end
+  if not vim.api.nvim_buf_is_valid(buf) then
+    return
+  end
   local filter_input = vim.api.nvim_buf_get_lines(buf, -2, -1, false)[1]
   -- get string after prompt
 
   local filter_input_trim = string.sub(filter_input, 5, #filter_input)
   trace("filter input", filter_input_trim, filter_input)
-  if #filter_input_trim == 0 or #listobj.data == nil or #listobj.data == 0 then return end
+  if #filter_input_trim == 0 or #listobj.data == nil or #listobj.data == 0 then
+    return
+  end
   listobj.filtered_data = fzy(filter_input_trim, listobj.data)
   --
   -- trace("filtered data", listobj.filtered_data)

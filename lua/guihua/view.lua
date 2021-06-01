@@ -26,6 +26,7 @@ function View:initialize(...)
   local opts = select(1, ...) or {}
   opts.data = opts.data or {}
   log("ctor View start with #items", #opts.data)
+  trace("ctor View items", opts)
   trace("view start opts", opts)
 
   Rect.initialize(self, opts)
@@ -65,7 +66,7 @@ function View:initialize(...)
   })
   log("floatbuf created ", self.buf, self.win)
   self:set_bg(opts)
-  if opts.data ~= nil and #opts.data > 1 then
+  if opts.data ~= nil and #opts.data >= 1 then
     self:on_draw(opts.data)
   end
   if self.prompt then
@@ -144,14 +145,12 @@ end
 -- draw text line by line
 local function draw_lines(buf, start, end_at, data)
   -- the #data should match or < start~end_at
-  if #data < 1 then
+  if data == nil or #data < 1 then
     log("empty body")
     return
   end
   trace("draw_lines", buf, start, end_at, #data, data)
-  if data == nil then
-    return
-  end
+
   vim.fn.clearmatches()
   vim.api.nvim_buf_set_lines(buf, start, end_at, false, {})
   -- vim.api.nvim_buf_set_lines(buf, start, end_at, true, data)
@@ -177,6 +176,7 @@ local function draw_lines(buf, start, end_at, data)
 end
 
 function View:on_draw(data)
+  trace("on_draw", data)
   if not vim.api.nvim_buf_is_valid(self.buf) then
     log("buf id invalid", self.buf)
     return
