@@ -31,12 +31,12 @@ function M.bgcolor(delta, d2, d3)
   end
   if d2 == nil then
     bgi = bgi + delta
-
   else
     bgi = bgi + delta * 65536 + d2 * 256 + d3
   end
 
-  return string.format("#%6x", bgi)
+  log(string.format("#%06x", bgi))
+  return string.format("#%06x", bgi)
 end
 
 -- offset the GHListHl based on GHListDark
@@ -44,7 +44,7 @@ function M.selcolor(Hl)
   vim.validate {Hl = {Hl, 'string'}}
   local bgcolor = tonumber(string.sub(
                                vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("GHListDark")), "bg#"),
-                               2), 16)
+                               2), 16) or 0x303b5f
   vim.validate {bgcolor = {bgcolor, 'number'}}
   local sel = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID(Hl)), "bg#")
   sel = tonumber(string.sub(sel, 2), 16)
