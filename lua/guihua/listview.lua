@@ -40,8 +40,14 @@ function ListView:initialize(...)
   View.initialize(self, opts)
   self:bind_ctrl(opts)
   -- ListView.static.active_view = self
-  log("listview created", self.win) -- , self)
+  log("listview created", self.win) -- , self)=
   local ft = "guihua"
+  if opts.ft == "rust" then
+    ft = "guihua_rust"
+  end
+
+  trace("listview ft:", opts)
+
   vim.api.nvim_buf_set_option(self.buf, "ft", ft)
   vim.api.nvim_win_set_option(self.win, "wrap", false)
 
