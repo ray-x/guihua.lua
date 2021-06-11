@@ -6,6 +6,8 @@ let b:current_syntax = "guihua"
 syntax match GuihuaBufferNumber '\W\d\+'
 syntax match GuihuaBufferField '\.\h\+'
 syntax match GuihuaBufferField2 '->\h\+'
+syn match    GuihuaBufferHex display "\<0x[a-fA-F0-9_]\+\%([iu]\%(size\|8\|16\|32\|64\|128\)\)\="
+syn match    GuihuaBufferFloat       display "\<[0-9][0-9_]*\.\%([^[:cntrl:][:space:][:punct:][:digit:]]\|_\|\.\)\@!"
 syn region      GuihuaBufferComment           start="//" end="$"
 syntax match GuihuaBufferColon '[:|:=|<|>|"|'|{|}|\||=|&|%|\*|(|)|\[|\]|\+|\-|\/]'
 syn region   GuihuaBufferString            start=+"+ skip=+\\\\\|\\"+ end=+"+
@@ -27,6 +29,8 @@ syntax keyword GuihuaNerdfont     𝔉 ⓕ    ﴲ    ﰮ   
 syntax keyword GuihuaNerdfont2  ƒ  
 
 hi default link GuihuaBufferNumber Number
+hi default link GuihuaBufferHex Number
+hi default link GuihuaBufferFloat Float
 hi default link GuihuaBufferColon  Operator
 hi default link GuihuaBufferPath   Title
 hi default link GuihuaBufferKeyword Keyword
