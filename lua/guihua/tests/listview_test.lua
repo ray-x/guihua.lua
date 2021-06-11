@@ -88,37 +88,37 @@ local data = {
     filename = "/Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     lnum = 3,
-    text = "local function tprint(tbl, indent)"
+    text = "1: local function tprint(tbl, indent)"
   }, {
     col = 11,
     filename = "/Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     lnum = 7,
-    text = "  for k, v in pairs(tbl) do"
+    text = "2:  for k, v in pairs(tbl) do"
   }, {
     col = 22,
     filename = "/Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     lnum = 4,
-    text = "if not indent then"
+    text = "3: if not indent then"
   }, {
     col = 20,
     filename = "/Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     lnum = 20,
-    text = "local function partition(arr, low, high) "
+    text = "4: local function partition(arr, low, high) "
   }, {
     col = 31,
     filename = "/Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     lnum = 15,
-    text = "print(formatting .. v) "
+    text = "5: print(formatting .. v) "
   }, {
     col = 31,
     filename = "/Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
     lnum = 9,
-    text = "   if type(v) == 'table' then "
+    text = "6:   if type(v) == 'table' then "
   }
 }
 
@@ -363,6 +363,21 @@ local function test_list_two_item_symbol()
     on_move = on_move,
     rect = {height = 2, pos_x = 0, pos_y = 0, width = 120}
   }
+end
+
+local function test_list_page()
+  local opt = {
+    api = " ",
+    bg = "GHListDark",
+    data = data,
+    enter = true,
+    ft = "go",
+    loc = "top_center",
+    prompt = true,
+    on_confirm = on_confirm,
+    on_move = on_move,
+    rect = {height = 2, pos_x = 0, pos_y = 0, width = 120}
+  }
 
   -- vim.g.debug_trace_output = true
   package.loaded["guihua"] = nil
@@ -384,7 +399,8 @@ end
 -- test_list()
 -- test_textview()
 
-test_list_one_item_symbol()
+-- test_list_one_item_symbol()
+test_list_page()
 -- test_list_two_item_symbol()
 
 -- test_plaintext()

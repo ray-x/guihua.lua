@@ -51,6 +51,23 @@ function ListViewCtrl:initialize(delegate, ...)
   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Up>", "<cmd> lua ListViewCtrl:on_prev()<CR>", {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Down>", "<cmd> lua ListViewCtrl:on_next()<CR>",
                               {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<C-b>", "<cmd> lua ListViewCtrl:on_pageup()<CR>",
+                              {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<C-f>",
+                              "<cmd> lua ListViewCtrl:on_pagedown()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<PageUp>",
+                              "<cmd> lua ListViewCtrl:on_pageup()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<PageDown>",
+                              "<cmd> lua ListViewCtrl:on_pagedown()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-b>", "<cmd> lua ListViewCtrl:on_pageup()<CR>",
+                              {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-f>",
+                              "<cmd> lua ListViewCtrl:on_pagedown()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<PageUp>",
+                              "<cmd> lua ListViewCtrl:on_pageup()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<PageDown>",
+                              "<cmd> lua ListViewCtrl:on_pagedown()<CR>", {})
+
   vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-o>", "<cmd> lua ListViewCtrl:on_confirm()<CR>",
                               {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<C-o>", "<cmd> lua ListViewCtrl:on_confirm()<CR>",
@@ -174,12 +191,97 @@ function ListViewCtrl:on_prev()
     -- listobj:on_draw(listobj.display_data)
     listobj.m_delegate:set_pos(l - listobj.display_start_at + 1)
   end
-
   log("prev: ", l)
   -- log("prev: ", l, listobj.display_data[l].text or listobj.display_data[l])
   listobj.selected_line = l
   self:wrap_closer(listobj.on_move(l))
   return listobj.data[listobj.selected_line]
+end
+
+function ListViewCtrl:on_pagedown()
+  local listobj = ListViewCtrl._viewctlobject
+
+  if listobj.selected_line == nil then
+    listobj.selected_line = 1
+  end
+  local data_collection = listobj.data
+  if listobj.filter_applied then
+    data_collection = listobj.filtered_data
+  end
+  local disp_h = listobj.display_height
+  if listobj.m_delegate.prompt == true then
+    disp_h = disp_h - 1
+  end
+
+  local l = listobj.display_start_at + disp_h
+
+  trace("pagedown: ", listobj.selected_line, listobj.display_start_at, listobj.display_height, l,
+        disp_h)
+
+  if l > #data_collection then
+    listobj.m_delegate:set_pos(disp_h)
+    listobj.on_move(#data_collection)
+    log("next should show at: ", #listobj.data, "set: ", disp_h, listobj.display_height)
+    return
+  end
+
+  -- if l > listobj.display_start_at + disp_h - 1 then
+  -- need to scroll next
+  listobj.display_start_at = listobj.display_start_at + disp_h
+  listobj.display_data = {
+    unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1)
+  }
+  trace("disp", listobj.display_data, disp_h, listobj.display_start_at)
+  listobj.m_delegate:on_draw(listobj.display_data)
+  listobj.m_delegate:set_pos(disp_h)
+
+  -- log("next should show: ", listobj.display_data[l].text or listobj.display_data[l], listobj.display_start_at)
+  listobj.selected_line = l
+  self:wrap_closer(listobj.on_move(l))
+  return data_collection[listobj.selected_line]
+end
+
+function ListViewCtrl:on_pageup()
+  local listobj = ListViewCtrl._viewctlobject
+
+  if listobj.selected_line == nil then
+    listobj.selected_line = 1
+  end
+  local data_collection = listobj.data
+  if listobj.filter_applied then
+    data_collection = listobj.filtered_data
+  end
+  local disp_h = listobj.display_height
+  if listobj.m_delegate.prompt == true then
+    disp_h = disp_h - 1
+  end
+
+  local l = listobj.display_start_at - disp_h
+
+  trace("pagedown: ", listobj.selected_line, listobj.display_start_at, listobj.display_height, l,
+        disp_h)
+
+  if l < 1 then
+    listobj.m_delegate:set_pos(1)
+    listobj.on_move(1)
+    log("prev should show at: ", #listobj.data, "set: ", disp_h, listobj.display_height)
+    return
+  end
+
+  -- if l > listobj.display_start_at + disp_h - 1 then
+  -- need to scroll next
+  listobj.display_start_at = listobj.display_start_at - disp_h
+  listobj.display_data = {
+    unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1)
+  }
+  trace("disp", listobj.display_data, disp_h, listobj.display_start_at)
+  listobj.m_delegate:on_draw(listobj.display_data)
+  listobj.m_delegate:set_pos(disp_h)
+
+  -- log("next should show: ", listobj.display_data[l].text or listobj.display_data[l], listobj.display_start_at)
+  listobj.selected_line = l
+  self:wrap_closer(listobj.on_move(l))
+  return data_collection[listobj.selected_line]
 end
 
 function ListViewCtrl:on_confirm()
