@@ -57,6 +57,7 @@ function TextView:initialize(...)
       end
       trace("active view already existed")
       self = TextView.ActiveTextView
+      TextView.ActiveTextView.ctrl.file_info = opts
       -- TODO: delegate, on_load
       if opts.data then
         TextView.ActiveTextView:on_draw(opts.data)

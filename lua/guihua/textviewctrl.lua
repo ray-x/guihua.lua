@@ -17,8 +17,7 @@ function TextViewCtrl:initialize(delegate, ...)
   self.m_delegate = delegate
 
   local opts = select(1, ...) or {}
-  log("textview ctrl opts")
-  trace(opts)
+  log("textview ctrl opts", opts.uri)
 
   self.file_info = opts
   self.display_height = self.m_delegate.display_height or 10
@@ -94,12 +93,11 @@ end
 -- call from event
 -- get floatwin bufnr, get content, get file range and write to file range
 function TextViewCtrl:on_save()
-  log(TextViewCtrl._viewctlobject)
   local txtbufnr = TextViewCtrl._viewctlobject.bufnr
 
   local file_info = TextViewCtrl._viewctlobject.file_info
   local contents = api.nvim_buf_get_lines(txtbufnr, 0, file_info.lines, false)
-  log(contents)
+  log(contents, file_info)
 
   -- local contents =
   --   api.nvim_buf_get_lines(txtbufnr, range.start.line, (range["end"].line or 1) + load_opts.display_height, false)
@@ -107,6 +105,9 @@ function TextViewCtrl:on_save()
 
   -- local contents =
   --   api.nvim_buf_get_lines(txtbufnr, range.start.line, (range["end"].line or 1) + load_opts.display_height, false)
+  if not file_info.allow_edit then
+    return
+  end
   log("save file info", file_info)
   local bufnr = vim.uri_to_bufnr(file_info.uri)
   if not api.nvim_buf_is_loaded(bufnr) then
