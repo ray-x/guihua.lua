@@ -37,7 +37,7 @@ function TextViewCtrl:initialize(delegate, ...)
       .nvim_buf_set_keymap(delegate.buf, "n", "<C-s>", "<cmd> lua TextViewCtrl:on_save()<CR>", {})
   log("bind close", self.m_delegate.win, delegate.buf)
   if opts.edit then
-    vim.cmd([[ autocmd TextChangedI <buffer> lua  require'guihua.ListViewCtrl':on_search() ]])
+    vim.cmd([[ autocmd TextChangedI <buffer> lua ListViewCtrl:on_search() ]])
   end
   TextViewCtrl._viewctlobject = self
   -- self:on_draw(self.display_data)

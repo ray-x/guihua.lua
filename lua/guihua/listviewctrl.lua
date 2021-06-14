@@ -74,12 +74,12 @@ function ListViewCtrl:initialize(delegate, ...)
                               {})
   log("bind close", self.m_delegate.win, delegate.buf)
 
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-e>",
-                              "<cmd> lua require'guihua.ListViewCtrl':on_close() <CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-e>", "<cmd> lua ListViewCtrl:on_close() <CR>",
+                              {})
   -- vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-c>", "<cmd> lua require'guihua.ListViewCtrl':on_close() <CR>", {})
   -- vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<CR>", "<cmd> lua require'guihua.ListViewCtrl':on_close() <CR>", {})
 
-  vim.cmd([[ autocmd TextChangedI <buffer> lua  require'guihua.ListViewCtrl':on_search() ]])
+  vim.cmd([[ autocmd TextChangedI <buffer> lua  ListViewCtrl:on_search() ]])
 
   ListViewCtrl._viewctlobject = self
   -- self:on_draw(self.display_data)
@@ -97,8 +97,7 @@ function ListViewCtrl:wrap_closer(o)
     return
   end
   if o.class and o.class.name == "TextView" then
-    -- ListViewCtrl._viewctlobject.win = o.ActiveView.win
-    -- ListViewCtrl._viewctlobject.buf = o.ActiveView.buf
+    -- ListViewCtrl._viewctlobject.win = o.ActiveView.win -- ListViewCtrl._viewctlobject.buf = o.ActiveView.buf
     log("bind closer", o.class.name)
   end
 end

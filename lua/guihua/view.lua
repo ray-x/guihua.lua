@@ -63,7 +63,8 @@ function View:initialize(...)
     border = opts.border,
     ft = opts.ft,
     syntax = opts.syntax,
-    relative = opts.relative
+    relative = opts.relative,
+    allow_edit = opts.allow_edit
   })
   log("floatbuf created ", self.buf, self.win)
   self:set_bg(opts)
