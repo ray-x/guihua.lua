@@ -186,4 +186,31 @@ function M.word_find(input, word)
   return string.find(input, "%f[%a]" .. word .. "%f[%A]")
 end
 
+function M.fzy_idx(data_list, pos)
+  -- first check if fzy is set
+  local fzy_on = false
+  for _, value in ipairs(data_list) do
+    if value.fzy ~= nil then
+      fzy_on = true
+      break
+    end
+    if value.fzy ~= nil then
+      fzy_on = true
+      break
+    end
+  end
+  if fzy_on == true then
+    local i = 1
+    for _, value in ipairs(data_list) do
+      if value.fzy ~= nil then
+        if i == pos then
+          return value
+        end
+        i = i + 1
+      end
+    end
+  end
+  return data_list[pos]
+end
+
 return M
