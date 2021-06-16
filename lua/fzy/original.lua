@@ -220,7 +220,7 @@ function fzy.filter_table_ordered(needle, items)
     end
   end
 
-  table.sort(results, function(i, j) return i.score > j.score end)
+  table.sort(results, function(i, j) return i.fzy.score > j.fzy.score end)
   return results
 end
 
