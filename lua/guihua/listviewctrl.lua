@@ -113,6 +113,7 @@ function ListViewCtrl:on_next()
   if listobj.filter_applied then
     data_collection = listobj.filtered_data
   end
+
   local disp_h = listobj.display_height
   if listobj.m_delegate.prompt == true then
     disp_h = disp_h - 1
@@ -126,7 +127,9 @@ function ListViewCtrl:on_next()
     log("next should show at: ", #listobj.data, "set: ", disp_h, listobj.display_height)
     return
   end
-
+  if data_collection[l].filename_only then
+    l = l + 1
+  end
   if l > listobj.display_start_at + disp_h - 1 then
     -- need to scroll next
     listobj.display_start_at = listobj.display_start_at + 1
@@ -159,6 +162,7 @@ function ListViewCtrl:on_prev()
   if listobj.m_delegate.prompt == true then
     disp_h = disp_h - 1
   end
+
   log("pre: ", listobj.selected_line, listobj.display_start_at, disp_h, listobj.display_height,
       listobj.m_delegate.prompt)
 
@@ -170,11 +174,15 @@ function ListViewCtrl:on_prev()
   if listobj.selected_line == nil then
     listobj.selected_line = 1
   end
+
   local l = listobj.selected_line - 1
   if l < 1 then
     listobj.m_delegate:set_pos(1)
     self:wrap_closer(listobj.on_move(1))
     return
+  end
+  if data_collection[l].filename_only then
+    l = l - 1
   end
   if l < listobj.display_start_at and listobj.display_start_at >= 1 then
     -- need to scroll back

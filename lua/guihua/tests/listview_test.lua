@@ -5,6 +5,10 @@ package.loaded["guihua.listview"] = nil
 package.loaded["guihua.listviewctrl"] = nil
 -- vim.cmd("packadd guihua.lua")
 
+local home = vim.env.HOME
+local github = vim.env.HOME .. "/github/"
+local gopath = vim.env.GOPATH
+
 local ListView = require("guihua.listview")
 local TextView = require("guihua.textview")
 local log = require"guihua.log".info
@@ -85,38 +89,38 @@ local lines = {
 local data = {
   {
     col = 11,
-    filename = "/Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
-    uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
+    filename = github .. "guihua.lua/lua/fzy/quicksort.lua",
+    uri = "file:///" .. github .. "guihua.lua/lua/fzy/quicksort.lua",
     lnum = 3,
     text = "1: local function tprint(tbl, indent)"
   }, {
     col = 11,
-    filename = "/Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
-    uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
+    filename = github .. "guihua.lua/lua/fzy/quicksort.lua",
+    uri = "file:///" .. github .. "guihua.lua/lua/fzy/quicksort.lua",
     lnum = 7,
     text = "2:  for k, v in pairs(tbl) do"
   }, {
     col = 22,
-    filename = "/Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
-    uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
+    filename = github .. "guihua.lua/lua/fzy/quicksort.lua",
+    uri = "file:///" .. github .. "guihua.lua/lua/fzy/quicksort.lua",
     lnum = 4,
     text = "3: if not indent then"
   }, {
     col = 20,
-    filename = "/Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
-    uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
+    filename = github .. "guihua.lua/lua/fzy/quicksort.lua",
+    uri = "file:///" .. github .. "guihua.lua/lua/fzy/quicksort.lua",
     lnum = 20,
     text = "4: local function partition(arr, low, high) "
   }, {
     col = 31,
-    filename = "/Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
-    uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
+    filename = github .. "guihua.lua/lua/fzy/quicksort.lua",
+    uri = "file:///" .. github .. "guihua.lua/lua/fzy/quicksort.lua",
     lnum = 15,
     text = "5: print(formatting .. v) "
   }, {
     col = 31,
-    filename = "/Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
-    uri = "file:////Users/ray.xu/github/guihua.lua/lua/fzy/quicksort.lua",
+    filename = github .. "guihua.lua/lua/fzy/quicksort.lua",
+    uri = "file:///" .. github .. "guihua.lua/lua/fzy/quicksort.lua",
     lnum = 9,
     text = "6:   if type(v) == 'table' then "
   }
@@ -189,28 +193,28 @@ local function test_list()
   data = {
     {
       col = 6,
-      filename = "/Users/ray.xu/github/guihua.lua/lua/guihua/view.lua",
+      filename = github .. "guihua.lua/lua/guihua/view.lua",
       display_filename = "./lua/guihua/view.lua",
       lnum = 30,
       range = {start = {character = 5, line = 29}},
       text = "if opts.prompt == true then",
-      uri = "file:///Users/ray.xu/github/guihua.lua/lua/guihua/view.lua"
+      uri = "file://" .. github .. "guihua.lua/lua/guihua/view.lua"
     }, {
       col = 6,
-      filename = "/Users/ray.xu/github/guihua.lua/lua/guihua/view.lua",
+      filename = github .. "guihua.lua/lua/guihua/view.lua",
       display_filename = "./lua/guihua/view.lua",
       lnum = 35,
       range = {start = {character = 5, line = 34}},
       text = "if opts.loc ~= nil then",
-      uri = "file:///Users/ray.xu/github/guihua.lua/lua/guihua/view.lua"
+      uri = "file://" .. github .. "guihua.lua/lua/guihua/view.lua"
     }, {
       col = 6,
-      filename = "/Users/ray.xu/github/guihua.lua/lua/guihua/listview.lua",
+      filename = github .. "guihua.lua/lua/guihua/listview.lua",
       display_filename = "./lua/guihua/listview.lua",
       lnum = 21,
       range = {start = {character = 5, line = 34}},
       text = "function ListView:initialize(...)",
-      uri = "file:///Users/ray.xu/github/guihua.lua/lua/guihua/listview.lua"
+      uri = "file://" .. github .. "guihua.lua/lua/guihua/listview.lua"
     }
   }
   -- vim.g.debug_trace_output = true
@@ -224,6 +228,7 @@ local function test_list()
 
   local d = prepare_for_render(data)
   data = d
+  log(d)
   local win = ListView:new({
     loc = "top_center",
     border = "none",
@@ -244,14 +249,14 @@ local function test_list_one_item()
   data = {
     {
       detail = "func",
-      filename = "/Users/ray.xu/go/src/github.com/deltatre-vxp/mtribes-manifester/test/intg/external/ext_srv.go",
+      filename = gopath .. "/src/github.com/Shopify/sarama/examples/consumergroup/main.go",
       kind = 12,
       lnum = 19,
       name = "main",
       range = {['end'] = {character = 1, line = 78}, start = {character = 0, line = 18}},
       selectionRange = {['end'] = {character = 9, line = 18}, start = {character = 5, line = 18}},
       text = "[ ]main func",
-      uri = "file:///Users/ray.xu/go/src/github.com/deltatre-vxp/mtribes-manifester/test/intg/external/ext_srv.go"
+      uri = "file://" .. gopath .. "/src/github.com/Shopify/sarama/examples/consumergroup/main.go"
     }
   }
   -- vim.g.debug_trace_output = true
@@ -285,14 +290,14 @@ local function test_list_one_item_symbol()
   data = {
     {
       detail = "func",
-      filename = "/Users/ray.xu/go/src/github.com/deltatre-vxp/mtribes-manifester/test/intg/external/ext_srv.go",
+      filename = gopath .. "/src/github.com/Shopify/sarama/examples/consumergroup/main.go",
       kind = 12,
       lnum = 18,
       name = "main",
       range = {['end'] = {character = 1, line = 77}, start = {character = 0, line = 17}},
       selectionRange = {['end'] = {character = 9, line = 17}, start = {character = 5, line = 17}},
       text = "[ ]main func",
-      uri = "file:///Users/ray.xu/go/src/github.com/deltatre-vxp/mtribes-manifester/test/intg/external/ext_srv.go"
+      uri = "file://" .. gopath .. "/src/github.com/Shopify/sarama/examples/consumergroup/main.go"
     }
   }
   -- data = prepare_for_render(data)
@@ -335,24 +340,24 @@ local function test_list_two_item_symbol()
     data = {
       {
         detail = "func",
-        filename = "/Users/ray.xu/go/src/github.com/deltatre-vxp/mtribes-manifester/test/intg/external/ext_srv.go",
+        filename = gopath .. "/src/github.com/Shopify/sarama/examples/consumergroup/main.go",
         kind = 12,
         lnum = 18,
         name = "main",
         range = {['end'] = {character = 1, line = 77}, start = {character = 0, line = 17}},
         selectionRange = {['end'] = {character = 9, line = 17}, start = {character = 5, line = 17}},
         text = "[ ]main func",
-        uri = "file:///Users/ray.xu/go/src/github.com/deltatre-vxp/mtribes-manifester/test/intg/external/ext_srv.go"
+        uri = "file://" .. gopath .. "/src/github.com/Shopify/sarama/examples/consumergroup/main.go"
       }, {
         detail = "func",
-        filename = "/Users/ray.xu/go/src/github.com/deltatre-vxp/mtribes-manifester/test/intg/external/ext_srv.go",
+        filename = gopath .. "/src/github.com/Shopify/sarama/examples/consumergroup/main.go",
         kind = 12,
         lnum = 18,
         name = "main",
         range = {['end'] = {character = 1, line = 77}, start = {character = 0, line = 17}},
         selectionRange = {['end'] = {character = 9, line = 17}, start = {character = 5, line = 17}},
         text = "[ ]main func",
-        uri = "file:///Users/ray.xu/go/src/github.com/deltatre-vxp/mtribes-manifester/test/intg/external/ext_srv.go"
+        uri = "file://" .. gopath .. "/src/github.com/Shopify/sarama/examples/consumergroup/main.go"
       }
     },
     enter = true,
@@ -396,11 +401,11 @@ local function test_list_page()
   -- win:set_pos(1)
 end
 
--- test_list()
+test_list()
 -- test_textview()
 
 -- test_list_one_item_symbol()
-test_list_page()
+-- test_list_page()
 -- test_list_two_item_symbol()
 
 -- test_plaintext()

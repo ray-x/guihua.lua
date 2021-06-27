@@ -46,7 +46,9 @@ log.new = function(config, standalone)
   end
 
   local levels = {}
-  for i, v in ipairs(config.modes) do levels[v.name] = i end
+  for i, v in ipairs(config.modes) do
+    levels[v.name] = i
+  end
 
   local round = function(x, increment)
     increment = increment or 1
@@ -74,7 +76,9 @@ log.new = function(config, standalone)
 
   local log_at_level = function(level, level_config, message_maker, ...)
     -- Return early if we're below the config.level
-    if level < levels[config.level] then return end
+    if level < levels[config.level] then
+      return
+    end
     local nameupper = level_config.name:upper()
 
     local msg = message_maker(...)
@@ -95,7 +99,9 @@ log.new = function(config, standalone)
         vim.cmd(string.format([[echom "[%s] %s"]], config.plugin, vim.fn.escape(v, '"')))
       end
 
-      if config.highlights and level_config.hl then vim.cmd("echohl NONE") end
+      if config.highlights and level_config.hl then
+        vim.cmd("echohl NONE")
+      end
     end
 
     -- Output to log file
@@ -108,14 +114,18 @@ log.new = function(config, standalone)
   end
 
   for i, x in ipairs(config.modes) do
-    obj[x.name] = function(...) return log_at_level(i, x, make_string, ...) end
+    obj[x.name] = function(...)
+      return log_at_level(i, x, make_string, ...)
+    end
 
     obj[("fmt_%s"):format(x.name)] = function()
       return log_at_level(i, x, function(...)
         local passed = {...}
         local fmt = table.remove(passed, 1)
         local inspected = {}
-        for _, v in ipairs(passed) do table.insert(inspected, vim.inspect(v or 'nil')) end
+        for _, v in ipairs(passed) do
+          table.insert(inspected, vim.inspect(v or 'nil'))
+        end
         return string.format(fmt, unpack(inspected))
       end)
     end
