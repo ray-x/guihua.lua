@@ -75,8 +75,12 @@ end
 --   log(" listview on close finish") --, self)
 -- end
 
-local open_file_at = function(filename, line)
+local open_file_at = function(filename, line, col)
   vim.api.nvim_command(string.format("e! +%s %s", line, filename))
+  col = col or 1
+  print(col)
+  -- vim.api.nvim_command(string.format("normal! %dl", col - 1))
+  vim.api.nvim_command(string.format("normal! %d|", col))
 end
 local lines = {
   "./lua/fzy/quicksort.lua:3:  local function tprint(tbl, indent)",
@@ -148,7 +152,7 @@ local on_confirm = function(pos)
   end
   local l = data[pos]
   log("confirm open", l.filename, pos, l.uri)
-  open_file_at(l.filename, l.lnum)
+  open_file_at(l.filename, l.lnum, l.col)
 end
 
 local on_move = function(pos)
@@ -192,29 +196,29 @@ end
 local function test_list()
   data = {
     {
-      col = 6,
-      filename = github .. "guihua.lua/lua/guihua/view.lua",
-      display_filename = "./lua/guihua/view.lua",
-      lnum = 30,
-      range = {start = {character = 5, line = 29}},
-      text = "if opts.prompt == true then",
-      uri = "file://" .. github .. "guihua.lua/lua/guihua/view.lua"
+      col = 9,
+      filename = github .. "guihua.lua/lua/fzy/original.lua",
+      display_filename = "./lua/fzy/original.lua",
+      lnum = 59,
+      range = {start = {character = 8, line = 58}},
+      text = " local match_bonus = {}",
+      uri = "file://" .. github .. "guihua.lua/lua/fzy/original.lua"
     }, {
-      col = 6,
-      filename = github .. "guihua.lua/lua/guihua/view.lua",
-      display_filename = "./lua/guihua/view.lua",
-      lnum = 35,
-      range = {start = {character = 5, line = 34}},
-      text = "if opts.loc ~= nil then",
-      uri = "file://" .. github .. "guihua.lua/lua/guihua/view.lua"
+      col = 7,
+      filename = github .. "guihua.lua/lua/fzy/original.lua",
+      display_filename = "./lua/fzy/original.lua",
+      lnum = 65,
+      range = {start = {character = 6, line = 64}},
+      text = "      match_bonus[i] = SCORE_MATCH_SLASH",
+      uri = "file://" .. github .. "guihua.lua/lua/fzy/original.lua"
     }, {
-      col = 6,
+      col = 10,
       filename = github .. "guihua.lua/lua/guihua/listview.lua",
       display_filename = "./lua/guihua/listview.lua",
-      lnum = 21,
-      range = {start = {character = 5, line = 34}},
-      text = "function ListView:initialize(...)",
-      uri = "file://" .. github .. "guihua.lua/lua/guihua/listview.lua"
+      lnum = 79,
+      range = {start = {character = 9, line = 78}},
+      text = "  return match_bonus",
+      uri = "file://" .. github .. "guihua.lua/lua/fzy/original.lua"
     }
   }
   -- vim.g.debug_trace_output = true

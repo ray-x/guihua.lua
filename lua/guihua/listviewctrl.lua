@@ -181,7 +181,7 @@ function ListViewCtrl:on_prev()
     self:wrap_closer(listobj.on_move(1))
     return
   end
-  if data_collection[l].filename_only then
+  if data_collection[l].filename_only and l > 1 then
     l = l - 1
   end
   if l < listobj.display_start_at and listobj.display_start_at >= 1 then
