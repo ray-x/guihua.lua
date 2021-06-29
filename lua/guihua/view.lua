@@ -178,6 +178,8 @@ local function draw_lines(buf, start, end_at, data)
 end
 
 function View:on_draw(data)
+
+  trace(debug.traceback())
   trace("on_draw", data)
   if not vim.api.nvim_buf_is_valid(self.buf) then
     log("buf id invalid", self.buf)

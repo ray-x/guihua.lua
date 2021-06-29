@@ -236,7 +236,8 @@ local function test_list()
   local win = ListView:new({
     loc = "top_center",
     border = "none",
-    prompt = false,
+    prompt = true,
+    enter = true,
     rect = {height = 5, width = 90},
     data = d,
     on_confirm = on_confirm,

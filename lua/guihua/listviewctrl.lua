@@ -13,9 +13,9 @@ function ListViewCtrl:initialize(delegate, ...)
   ViewController:initialize(delegate, ...)
   self.m_delegate = delegate
   self.selected_line = 1
-
+  --
   local opts = select(1, ...) or {}
-  trace("listview ctrl opts", opts)
+  -- trace("listview ctrl opts", opts)
   self.data = opts.data or {}
   self.preview = opts.preview or false
   self.display_height = self.m_delegate.display_height or 10
@@ -76,11 +76,16 @@ function ListViewCtrl:initialize(delegate, ...)
 
   vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-e>", "<cmd> lua ListViewCtrl:on_close() <CR>",
                               {})
-  -- vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-c>", "<cmd> lua require'guihua.ListViewCtrl':on_close() <CR>", {})
-  -- vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<CR>", "<cmd> lua require'guihua.ListViewCtrl':on_close() <CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-c>",
+                              "<cmd> lua require'guihua.ListViewCtrl':on_close() <CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<CR>",
+                              "<cmd> lua require'guihua.ListViewCtrl':on_close() <CR>", {})
 
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<BS>",
+                              "<cmd> lua require'guihua.ListViewCtrl':on_backspace() <CR>", {})
   vim.cmd([[ autocmd TextChangedI <buffer> lua  ListViewCtrl:on_search() ]])
-
+  vim.cmd([[ autocmd TextChanged <buffer> lua  ListViewCtrl:on_search() ]])
+  --
   ListViewCtrl._viewctlobject = self
   -- self:on_draw(self.display_data)
   -- self.m_delegate:set_pos(self.selected_line)
@@ -324,9 +329,7 @@ function ListViewCtrl:on_search()
     return
   end
   listobj.filtered_data = fzy(filter_input_trim, listobj.data)
-  --
-  -- trace("filtered data", listobj.filtered_data)
-  --
+  trace("filtered data", listobj.filtered_data)
   listobj.display_data = {unpack(listobj.filtered_data, 1, listobj.display_height)}
   listobj.filter_applied = true
   listobj.display_start_at = 1 -- reset
@@ -342,6 +345,21 @@ function ListViewCtrl:on_search()
   vim.cmd([[normal! A]])
   vim.cmd("startinsert!")
   log("on search ends")
+end
+
+function ListViewCtrl:on_backspace()
+  local filter_input = vim.api.nvim_buf_get_lines(buf, -2, -1, false)[1]
+  log(filter_input)
+  local filter_input_trim = string.sub(filter_input, 5, #filter_input)
+
+  if #filter_input_trim > 0 then
+    filter_input = string.sub(filter_input, 1, -2)
+  end
+  vim.api.nvim_buf_set_lines(buf, -2, -1, true, {filter_input})
+  log(filter_input)
+  vim.cmd([[normal! A]])
+  vim.cmd("startinsert!")
+  -- log("on search ends")
 end
 
 function ListViewCtrl:on_close()

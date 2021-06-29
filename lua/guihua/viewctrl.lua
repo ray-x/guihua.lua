@@ -18,11 +18,15 @@ function ViewController:initialize(delegate, ...)
   --   vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-e>", "<cmd> lua require'guihua.view':on_close()<CR>", {})
 end
 
-function ViewController:get_ui() return self.m_delegate end
+function ViewController:get_ui()
+  return self.m_delegate
+end
 
 function ViewController:on_draw(data)
   local ui = self:get_ui()
-  if ui then ui:on_draw(data) end
+  if ui then
+    ui:on_draw(data)
+  end
 end
 
 return ViewController

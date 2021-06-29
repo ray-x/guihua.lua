@@ -12,6 +12,7 @@ function view_test()
     loc = "up_left",
     rect = {height = 5, pos_x = 120},
     prompt = true,
+    enter = true,
     data = data
   })
   log("draw data", data)
