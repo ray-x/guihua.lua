@@ -3,7 +3,7 @@ local View = require "guihua.view"
 local log = require"guihua.log".info
 local trace = require"guihua.log".trace
 local util = require "guihua.util"
-
+local ListViewCtrl = require "guihua.listviewctrl"
 -- _VT_GHLIST = vim.api.nvim_create_namespace("guihua_listview")
 
 if ListView == nil then
@@ -71,7 +71,6 @@ function ListView:bind_ctrl(opts)
     log("already binded", self.ctrl)
     return false
   else
-    local ListViewCtrl = require "guihua.listviewctrl"
     self.ctrl = ListViewCtrl:new(self, opts)
     return true
   end
