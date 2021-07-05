@@ -365,6 +365,8 @@ end
 function ListViewCtrl:on_close()
   log("closer listview") -- , ListViewCtrl._viewctlobject.m_delegate)
   ListViewCtrl._viewctlobject.m_delegate.close()
+
+  --  log("closer ", ListViewCtrl)
   ListViewCtrl._viewctlobject.m_delegate:on_close()
   ListViewCtrl._viewctlobject = nil
 end

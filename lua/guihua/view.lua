@@ -219,7 +219,7 @@ function View:on_draw(data)
 end
 
 function View:unbind_ctrl(...)
-  if self.ctrl then
+  if self and self.ctrl then
     self.ctrl = nil
   end
 end

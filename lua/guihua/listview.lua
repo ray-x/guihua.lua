@@ -77,10 +77,12 @@ function ListView:bind_ctrl(opts)
 end
 
 function ListView:unbind_ctrl(...)
+  if self.super.unbind_ctrl then
+    self.super.unbind_ctrl()
+  end
   if self.ctrl then
     self.ctrl = nil
   end
-  ListViewCtrl._viewctlobject = nil
 end
 
 -- Next time the ListView object will be re-create

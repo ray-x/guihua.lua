@@ -90,6 +90,22 @@ local lines = {
   "./lua/fzy/quicksort.lua:15:  print(formatting .. v)",
   "./lua/fzy/quicksort.lua:9:      if type(v) == 'table' then"
 }
+local function preview_uri(uri, line, offset_y)
+  log(uri)
+  offset_y = offset_y or 6
+  local loc = {targetUri = uri, targetRange = {start = {line = line}}}
+  loc.targetRange["end"] = {line = line + 4}
+  local n = tostring(os.time())
+  local contents = {"local abc = 12", "local winid = " .. n, "print(winid)"}
+  return TextView:new({
+    loc = "top_center",
+    rect = {height = #contents + 1, width = 90, pos_x = 0, pos_y = 7},
+    -- data = display_data,
+    data = contents,
+    syntax = "lua"
+  })
+end
+
 local data = {
   {
     col = 11,
@@ -130,22 +146,6 @@ local data = {
   }
 }
 
-local function preview_uri(uri, line, offset_y)
-  log(uri)
-  offset_y = offset_y or 6
-  local loc = {targetUri = uri, targetRange = {start = {line = line}}}
-  loc.targetRange["end"] = {line = line + 4}
-  local n = tostring(os.time())
-  local contents = {"local abc = 12", "local winid = " .. n, "print(winid)"}
-  return TextView:new({
-    loc = "top_center",
-    rect = {height = #contents + 1, width = 90, pos_x = 0, pos_y = 7},
-    -- data = display_data,
-    data = contents,
-    syntax = "lua"
-  })
-end
-
 local on_confirm = function(pos)
   if pos == 0 then
     pos = 1
@@ -167,6 +167,34 @@ local on_move = function(pos)
   -- todo fix
   return preview_uri(l.uri, l.lnum, 6)
   -- test(false)
+end
+
+local function test_list()
+
+  -- vim.g.debug_trace_output = true
+  package.loaded["guihua"] = nil
+  package.loaded["guihua.view"] = nil
+  package.loaded["guihua.viewctrl"] = nil
+  package.loaded["guihua.listview"] = nil
+  package.loaded["guihua.listviewctrl"] = nil
+  -- package.loaded.packer_plugins['guihua.lua'].loaded = false
+  vim.cmd("packadd guihua.lua")
+
+  local win = ListView:new({
+    loc = "top_center",
+    border = "none",
+    prompt = true,
+    enter = true,
+    rect = {height = 5, width = 90},
+    data = data,
+    on_confirm = on_confirm,
+    on_move = on_move
+  })
+  -- log("test", win)
+  -- vim.cmd("startinsert!")
+  -- vim.cmd("normal! zvzb")
+  -- win:on_draw({})
+  -- win:set_pos(1)
 end
 
 local function test_preview()
@@ -193,8 +221,8 @@ local function test_preview()
   win:set_pos(1)
 end
 
-local function test_list()
-  data = {
+local function test_render_list()
+  local items = {
     {
       col = 9,
       filename = github .. "guihua.lua/lua/fzy/original.lua",
@@ -230,8 +258,7 @@ local function test_list()
   -- package.loaded.packer_plugins['guihua.lua'].loaded = false
   vim.cmd("packadd guihua.lua")
 
-  local d = prepare_for_render(data)
-  data = d
+  local d = prepare_for_render(items)
   log(d)
   local win = ListView:new({
     loc = "top_center",
