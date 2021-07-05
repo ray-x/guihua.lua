@@ -44,7 +44,10 @@ function ListViewCtrl:initialize(delegate, ...)
   vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<Enter>",
                               "<cmd> lua ListViewCtrl:on_confirm()<CR>", {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Enter>",
-                              "<cmd> lua ListViewCtrl:on_search()<CR>", {})
+                              "<cmd> lua ListViewCtrl:on_confirm() <CR>", {})
+
+  -- vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Enter>",
+  --                             "<cmd> lua ListViewCtrl:on_search()<CR>", {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<Up>", "<cmd> lua ListViewCtrl:on_prev()<CR>", {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<Down>", "<cmd> lua ListViewCtrl:on_next()<CR>",
                               {})
@@ -77,8 +80,6 @@ function ListViewCtrl:initialize(delegate, ...)
   vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-e>", "<cmd> lua ListViewCtrl:on_close() <CR>",
                               {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-c>",
-                              "<cmd> lua require'guihua.ListViewCtrl':on_close() <CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<CR>",
                               "<cmd> lua require'guihua.ListViewCtrl':on_close() <CR>", {})
 
   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<BS>",
