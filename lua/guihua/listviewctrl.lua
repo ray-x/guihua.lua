@@ -129,7 +129,7 @@ function ListViewCtrl:on_next()
 
   if l > #data_collection then
     listobj.m_delegate:set_pos(disp_h)
-    listobj.on_move(#data_collection)
+    listobj.on_move(data_collection[l])
     log("next should show at: ", #listobj.data, "set: ", disp_h, listobj.display_height)
     return
   end
@@ -153,7 +153,7 @@ function ListViewCtrl:on_next()
 
   -- log("next should show: ", listobj.display_data[l].text or listobj.display_data[l], listobj.display_start_at)
   listobj.selected_line = l
-  self:wrap_closer(listobj.on_move(l))
+  self:wrap_closer(listobj.on_move(data_collection[l]))
   return data_collection[listobj.selected_line]
 end
 
@@ -184,7 +184,7 @@ function ListViewCtrl:on_prev()
   local l = listobj.selected_line - 1
   if l < 1 then
     listobj.m_delegate:set_pos(1)
-    self:wrap_closer(listobj.on_move(1))
+    self:wrap_closer(listobj.on_move(data_collection[1]))
     return
   end
   if data_collection[l].filename_only and l > 1 then
@@ -207,8 +207,8 @@ function ListViewCtrl:on_prev()
   log("prev: ", l)
   -- log("prev: ", l, listobj.display_data[l].text or listobj.display_data[l])
   listobj.selected_line = l
-  self:wrap_closer(listobj.on_move(l))
-  return listobj.data[listobj.selected_line]
+  self:wrap_closer(listobj.on_move(data_collection[l]))
+  return data_collection[listobj.selected_line]
 end
 
 function ListViewCtrl:on_pagedown()
@@ -233,7 +233,7 @@ function ListViewCtrl:on_pagedown()
 
   if l > #data_collection then
     listobj.m_delegate:set_pos(disp_h)
-    listobj.on_move(#data_collection)
+    listobj.on_move(data_collection[#data_collection])
     log("next should show at: ", #listobj.data, "set: ", disp_h, listobj.display_height)
     return
   end
@@ -250,7 +250,7 @@ function ListViewCtrl:on_pagedown()
 
   -- log("next should show: ", listobj.display_data[l].text or listobj.display_data[l], listobj.display_start_at)
   listobj.selected_line = l
-  self:wrap_closer(listobj.on_move(l))
+  self:wrap_closer(listobj.on_move(data_collection[l]))
   return data_collection[listobj.selected_line]
 end
 
@@ -276,7 +276,7 @@ function ListViewCtrl:on_pageup()
 
   if l < 1 then
     listobj.m_delegate:set_pos(1)
-    listobj.on_move(1)
+    listobj.on_move(data_collection[1])
     log("prev should show at: ", #listobj.data, "set: ", disp_h, listobj.display_height)
     return
   end
@@ -293,15 +293,20 @@ function ListViewCtrl:on_pageup()
 
   -- log("next should show: ", listobj.display_data[l].text or listobj.display_data[l], listobj.display_start_at)
   listobj.selected_line = l
-  self:wrap_closer(listobj.on_move(l))
+  self:wrap_closer(listobj.on_move(data_collection[l]))
   return data_collection[listobj.selected_line]
 end
 
 function ListViewCtrl:on_confirm()
+
   local listobj = ListViewCtrl._viewctlobject
+  local data_collection = listobj.data
+  if listobj.filter_applied then
+    data_collection = listobj.filtered_data
+  end
   listobj.m_delegate:close()
   -- trace(listobj.m_delegate)
-  listobj.on_confirm(listobj.selected_line)
+  listobj.on_confirm(data_collection[listobj.selected_line])
 end
 
 function ListViewCtrl:on_search()
