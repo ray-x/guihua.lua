@@ -146,26 +146,15 @@ local data = {
   }
 }
 
-local on_confirm = function(pos)
-  if pos == 0 then
-    pos = 1
-  end
-  local l = data[pos]
-  log("confirm open", l.filename, pos, l.uri)
-  open_file_at(l.filename, l.lnum, l.col)
+local on_confirm = function(item)
+  log("confirm open", item.filename, item.uri)
+  open_file_at(item.filename, item.lnum, item.col)
 end
 
-local on_move = function(pos)
-  if pos == 0 then
-    pos = 1
-  end
-  if pos > #data then
-    print("[ERR] idx", pos, "length ", #data)
-  end
-  local l = data[pos]
-  log("pos:", pos, l.text or l, l.uri)
+local on_move = function(item)
+  log("pos:", item.text or item, item.uri)
   -- todo fix
-  return preview_uri(l.uri, l.lnum, 6)
+  return preview_uri(item.uri, item.lnum, 6)
   -- test(false)
 end
 

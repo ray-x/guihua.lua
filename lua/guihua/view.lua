@@ -244,7 +244,7 @@ function View:close(...)
   -- View.ActiveView = nil
   View.static.ActiveView = nil
   log("view closed ")
-  trace("Viewobj after close", View)
+  -- trace("Viewobj after close", View)
 end
 
 function View.on_close()

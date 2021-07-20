@@ -84,13 +84,13 @@ function ListViewCtrl:initialize(delegate, ...)
 
   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<BS>",
                               "<cmd> lua ListViewCtrl:on_backspace() <CR>", {})
-  vim.cmd([[ autocmd TextChangedI <buffer> lua  ListViewCtrl:on_search() ]])
-  vim.cmd([[ autocmd TextChanged <buffer> lua  ListViewCtrl:on_search() ]])
+  vim.cmd([[ autocmd TextChangedI,TextChanged <buffer> lua  ListViewCtrl:on_search() ]])
   --
   ListViewCtrl._viewctlobject = self
   -- self:on_draw(self.display_data)
   -- self.m_delegate:set_pos(self.selected_line)
-  trace("listview ctrl created ", self)
+  -- trace("listview ctrl created ", self)
+  trace("listview ctrl created ")
 end
 
 function ListViewCtrl:get_ui()
@@ -321,6 +321,7 @@ end
 
 function ListViewCtrl:on_search()
   -- local cursor = vim.api.nvim_win_get_cursor(0)
+  trace(debug.traceback())
   local fzy = require"fzy".fzy
   if fzy == nil then
     print("[ERR] fzy not found")
@@ -340,11 +341,21 @@ function ListViewCtrl:on_search()
   -- get string after prompt
 
   local filter_input_trim = string.sub(filter_input, 5, #filter_input)
-  trace("filter input", filter_input_trim, filter_input)
-  if #filter_input_trim == 0 or #listobj.data == nil or #listobj.data == 0 then
-    return
+  trace("filter input", filter_input_trim, "input:", filter_input)
+
+  if listobj.search_item == filter_input_trim then
+    return -- same filter may caused by none-search field change
   end
-  listobj.filtered_data = fzy(filter_input_trim, listobj.data)
+  listobj.search_item = filter_input_trim
+
+  if #filter_input_trim == 0 or #listobj.data == nil or #listobj.data == 0 then
+    listobj.filter_applied = false
+    listobj.filtered_data = listobj.data -- filter is not applied, clean up cache data
+    vim.fn.clearmatches()
+    return
+  else
+    listobj.filtered_data = fzy(filter_input_trim, listobj.data)
+  end
   trace("filtered data", listobj.filtered_data)
   listobj.display_data = {unpack(listobj.filtered_data, 1, listobj.display_height)}
   listobj.filter_applied = true
@@ -364,6 +375,8 @@ function ListViewCtrl:on_search()
 end
 
 function ListViewCtrl:on_backspace()
+  local listobj = ListViewCtrl._viewctlobject
+  local buf = listobj.m_delegate.buf
   local filter_input = vim.api.nvim_buf_get_lines(buf, -2, -1, false)[1]
   log(filter_input)
   local filter_input_trim = string.sub(filter_input, 5, #filter_input)

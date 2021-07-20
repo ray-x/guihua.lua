@@ -134,7 +134,7 @@ function ListView:set_pos(i)
   -- _VT_GHLIST = vim.api.nvim_buf_set_virtual_text(self.buf, _VT_GHLIST, i - 1, {{"<-", "Sting"}}, {})
   -- log("set virtual text on ", i, "buf", self.buf, _VT_GHLIST)
   vim.schedule(function()
-    -- log("setpos", self.buf)
+    log("setpos", self.buf, self.selected_line)
     if not vim.api.nvim_buf_is_valid(self.buf) then
       return
     end
