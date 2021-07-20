@@ -131,7 +131,7 @@ function ListViewCtrl:on_next()
   trace("next: ", listobj.selected_line, listobj.display_start_at, listobj.display_height, l, disp_h)
 
   if l > #data_collection then
-    listobj.m_delegate:set_pos(disp_h) -- do not move to next
+    -- listobj.m_delegate:set_pos(disp_h) -- do not move to next
     listobj.on_move(data_collection[#data_collection])
     log("next should show at: ", #listobj.data, "set: ", disp_h, listobj.display_height)
     return
