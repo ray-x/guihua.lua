@@ -10,6 +10,9 @@ function Rect:initialize(...)
   if cfg ~= nil then
     self.rect = cfg.rect
   end
+
+  self.rect = self.rect or {}
+
   if self.rect.height and self.rect.height < 1 then
     self.rect.height = math.floor(height * self.rect.height)
   end
