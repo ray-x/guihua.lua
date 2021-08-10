@@ -9,7 +9,7 @@
 -- > matches on consecutive letters and starts of words. This allows matching
 -- > using acronyms or different parts of the path." - J Hawthorn
 
-local has_path, path = pcall(require, 'telescope.path')
+local has_path, path = pcall(require, 'plenary.path')
 if not has_path then
   path = {
     separator = '/'
