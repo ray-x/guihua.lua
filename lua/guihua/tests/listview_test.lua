@@ -63,7 +63,7 @@ end
 --   log(debug.traceback())
 --   self:unbind_ctrl()
 --   self.super.on_close(...)
---   -- ListView.active_view:buf_closer()
+--   -- ListView.active_view:closer()
 --   log(" listview close finish") --, self)
 -- end
 
@@ -176,6 +176,35 @@ local function test_list()
     enter = true,
     rect = {height = 5, width = 90},
     data = data,
+    on_confirm = on_confirm,
+    on_move = on_move
+  })
+  -- log("test", win)
+  -- vim.cmd("startinsert!")
+  -- vim.cmd("normal! zvzb")
+  -- win:on_draw({})
+  -- win:set_pos(1)
+end
+
+local function test_list_mask()
+
+  -- vim.g.debug_trace_output = true
+  package.loaded["guihua"] = nil
+  package.loaded["guihua.view"] = nil
+  package.loaded["guihua.viewctrl"] = nil
+  package.loaded["guihua.listview"] = nil
+  package.loaded["guihua.listviewctrl"] = nil
+  -- package.loaded.packer_plugins['guihua.lua'].loaded = false
+  vim.cmd("packadd guihua.lua")
+
+  local win = ListView:new({
+    loc = "top_center",
+    border = "none",
+    prompt = true,
+    enter = true,
+    rect = {height = 5, width = 90},
+    data = data,
+    transparency = 60,
     on_confirm = on_confirm,
     on_move = on_move
   })
@@ -422,7 +451,8 @@ local function test_list_page()
   -- win:set_pos(1)
 end
 
-test_list()
+-- test_list()
+test_list_mask()
 -- test_textview()
 
 -- test_list_one_item_symbol()

@@ -61,6 +61,14 @@ function ListView:initialize(...)
   end
   ListView.static.Winnr = self.win
   ListView.static.Bufnr = self.buf
+  ListView.static.Closer = self.closer
+
+  if opts.transparency then
+    ListView.static.MaskWinnr = self.mask_win
+    ListView.static.MaskBufnr = self.mask_buf
+    ListView.static.MaskCloser = self.mask_closer
+  end
+
   vim.api.nvim_buf_set_keymap(self.buf, "n", "<C-e>", "<cmd> lua ListView.close() <CR>", {})
   vim.api.nvim_buf_set_keymap(self.buf, "i", "<C-e>", "<cmd> lua ListView.close() <CR>", {})
   -- vim.fn.setpos('.', {self.win, i, 1, 0})
@@ -89,17 +97,50 @@ end
 -- But I still feel that it is better to de-reference so it will demalloc early
 function ListView.close()
   log("closing listview", ListView.name)
-  local buf = ListView.Bufnr
-  local win = ListView.Winnr
-  if buf == nil and win == nil then
-    return
+
+  local closer = ListView.Closer
+  if closer then
+    closer()
+  else
+    log("fallback closer")
+
+    local buf = ListView.Bufnr
+    local win = ListView.Winnr
+
+    if buf == nil and win == nil then
+      return
+    end
+    if buf and vim.api.nvim_buf_is_valid(buf) and win and vim.api.nvim_win_is_valid(win) then
+
+      -- fallback
+      vim.api.nvim_win_close(win, true)
+    end
   end
-  if buf and vim.api.nvim_buf_is_valid(buf) and win and vim.api.nvim_win_is_valid(win) then
-    vim.api.nvim_win_close(win, true)
-    -- ListView.on_close() -- parent view closer
-    ListView.static.Bufnr = nil
-    ListView.static.Winnr = nil
+
+  -- ListView.on_close() -- parent view closer
+  ListView.static.Bufnr = nil
+  ListView.static.Winnr = nil
+  ListView.static.Closer = nil
+
+  -- close mask
+  local mask_closer = ListView.MaskCloser
+  if mask_closer then
+    mask_closer(mask_win)
+  else
+    log("fallback mask closer")
+    local mask_buf = ListView.MaskBufnr
+    local mask_win = ListView.MaskWinnr
+    if mask_buf and vim.api.nvim_buf_is_valid(mask_buf) and mask_win
+        and vim.api.nvim_win_is_valid(mask_win) then
+
+      vim.api.nvim_win_close(mask_win, true)
+    end
   end
+
+  ListView.static.MaskBufnr = nil
+  ListView.static.MaskWinnr = nil
+  ListView.static.MaskCloser = nil
+
   if ListView.ActiveView and ListView.ActiveView.win then
     ListView.ActiveView.on_close()
     ListView.static.Bufnr = nil

@@ -51,8 +51,9 @@ function View:initialize(...)
   log("height: ", self.display_height)
 
   local floatbuf = require"guihua.floating".floating_buf
+  local floatbuf_mask = require"guihua.floating".floating_buf_mask
   -- listview should not have ft enabled
-  self.buf, self.win, self.buf_closer = floatbuf({
+  self.buf, self.win, self.closer = floatbuf({
     win_width = self.rect.width,
     win_height = self.rect.height,
     x = self.rect.pos_x,
@@ -66,6 +67,9 @@ function View:initialize(...)
     relative = opts.relative,
     allow_edit = opts.allow_edit
   })
+  if opts.transparency then
+    self.mask_buf, self.mask_win, self.mask_closer = floatbuf_mask(opts.transparency)
+  end
   log("floatbuf created ", self.buf, self.win)
   self:set_bg(opts)
   if opts.data ~= nil and #opts.data >= 1 then
@@ -230,15 +234,27 @@ function View:close(...)
     return
   end
   -- vim.api.nvim_win_close(self.win, true)
-  if self.buf_closer ~= nil then
+  if self.closer ~= nil then
     -- vim.api.nvim_win_close
-    self:buf_closer()
-    self.buf_closer = nil
+    self:closer()
+    self.closer = nil
     self.win = nil
   else
     vim.api.nvim_win_close(self.win, true)
     self.win = nil
   end
+
+  if self.mask_closer ~= nil then
+    self:mask_closer()
+    self.mask_closer = nil
+    self.mask_win = nil
+  else
+    if self.mask_win ~= nil and self.mask_win ~= 0 then
+      vim.api.nvim_win_close(self.mask_win, true)
+    end
+    self.mask_win = nil
+  end
+
   self:unbind_ctrl()
   -- View = class("View", Rect)
   -- View.ActiveView = nil

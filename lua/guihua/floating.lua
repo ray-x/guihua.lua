@@ -1,5 +1,6 @@
 local api = vim.api
 local location = require "guihua.location"
+local validate = vim.validate
 
 local log = require"guihua.log".info
 local trace = require"guihua.log".trace
@@ -61,6 +62,46 @@ local function floating_buf(opts) -- win_width, win_height, x, y, loc, prompt, e
   end
 end
 
+-- Create a mask.
+local function floating_buf_mask(transparency) -- win_width, win_height, x, y, loc, prompt, enter, ft)
+  vim.validate({transparency = {transparency, 'number'}})
+  local columns = api.nvim_get_option("columns")
+  local lines = api.nvim_get_option("lines")
+  local loc = location.center
+  local row, col = loc(lines, columns)
+  local win_opts = {
+    style = "minimal",
+    relative = "editor",
+    width = columns,
+    height = lines,
+    bufpos = {0, 0},
+    zindex = 1 -- on bottom
+  }
+
+  local buf = api.nvim_create_buf(false, true)
+  api.nvim_buf_set_option(buf, "bufhidden", "wipe")
+  -- api.nvim_buf_set_option(buf, 'buftype', 'guihua_input')
+  vim.cmd("setlocal nobuflisted")
+  api.nvim_buf_set_option(buf, "readonly", true)
+  vim.api.nvim_buf_set_option(buf, "filetype", "guihua") -- default ft for all buffers. do not use specific ft e.g
+  -- javascript as it may cause lsp loading
+  local win = api.nvim_open_win(buf, false, win_opts)
+  api.nvim_win_set_option(win, "winblend", transparency)
+  log("creating win", win, "buf", buf)
+
+  return buf, win, function(...)
+    if win == nil then
+      -- already closed or not valid
+      return
+    end
+    log("floatwin closing ", win)
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_close(win, true)
+      win = nil
+    end
+  end
+end
+
 -- prepare buf and win for floatterm
 local function floatterm(opts)
   local buf = api.nvim_create_buf(false, true)
@@ -105,7 +146,7 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
 
   api.nvim_win_set_option(win, "winhl", "Normal:Normal")
   api.nvim_command("startinsert!")
-  local closer = function()
+  local closer = function(...)
     log("floatwin closing ", win)
     if vim.api.nvim_win_is_valid(win) then
       vim.api.nvim_win_close(win, true)
@@ -152,9 +193,18 @@ local function test2(prompt)
   end
 end
 
+local function test_mask()
+  local b, w, c = floating_buf_mask()
+end
+
+-- test_mask()
 -- test(true)
 -- test2(false)
 -- test_term(true)
 -- floating_term({cmd = 'lazygit', border = 'single'})
 
-return {floating_buf = floating_buf, floating_term = floating_term}
+return {
+  floating_buf = floating_buf,
+  floating_term = floating_term,
+  floating_buf_mask = floating_buf_mask
+}
