@@ -40,7 +40,11 @@ function ListViewCtrl:initialize(delegate, ...)
   vim.api
       .nvim_buf_set_keymap(delegate.buf, "n", "<C-p>", "<cmd> lua ListViewCtrl:on_prev()<CR>", {})
   vim.api
+      .nvim_buf_set_keymap(delegate.buf, "i", "<C-p>", "<cmd> lua ListViewCtrl:on_prev()<CR>", {})
+  vim.api
       .nvim_buf_set_keymap(delegate.buf, "n", "<C-n>", "<cmd> lua ListViewCtrl:on_next()<CR>", {})
+  vim.api
+      .nvim_buf_set_keymap(delegate.buf, "i", "<C-n>", "<cmd> lua ListViewCtrl:on_next()<CR>", {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<Enter>",
                               "<cmd> lua ListViewCtrl:on_confirm()<CR>", {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Enter>",
