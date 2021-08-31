@@ -35,6 +35,8 @@ function TextViewCtrl:initialize(delegate, ...)
   -- todo location, readonly? and filetype
   vim.api
       .nvim_buf_set_keymap(delegate.buf, "n", "<C-s>", "<cmd> lua TextViewCtrl:on_save()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-w>j", "<cmd> lua gh_jump_to_list()<CR>", {})
+
   log("bind close", self.m_delegate.win, delegate.buf)
   if opts.edit then
     vim.cmd([[ autocmd TextChangedI <buffer> lua ListViewCtrl:on_search() ]])

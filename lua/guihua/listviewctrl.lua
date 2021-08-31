@@ -8,6 +8,43 @@ if ListViewCtrl == nil then
   ListViewCtrl = class("ListViewCtrl", ViewController)
 end
 
+local function gh_jump_to_win()
+  local currentWinnr = vim.api.nvim_get_current_win()
+  local jumpto = TextView.ActiveTextView.win
+  if jumpto == currentWinnr then
+    jumpto = ListView.Winnr
+  end
+
+  if jumpto ~= nil and vim.api.nvim_win_is_valid(jumpto) then
+    log("jump from ", currentWinnr, "to", jumpto)
+    vim.api.nvim_set_current_win(jumpto)
+  end
+end
+
+function _G.gh_jump_to_list()
+  if ListView == nil then
+    return
+  end
+  local jumpto = ListView.Winnr
+  if jumpto ~= nil and vim.api.nvim_win_is_valid(jumpto) then
+    log("jump to", jumpto)
+    vim.api.nvim_set_current_win(jumpto)
+    return
+  end
+end
+
+function _G.gh_jump_to_preview()
+  if TextView == nil or TextView.ActiveTextView == nil then
+    return
+  end
+  local jumpto = TextView.ActiveTextView.win
+  if jumpto ~= nil and vim.api.nvim_win_is_valid(jumpto) then
+    log("jump to", jumpto)
+    vim.api.nvim_set_current_win(jumpto)
+    return
+  end
+end
+
 function ListViewCtrl:initialize(delegate, ...)
   trace(debug.traceback())
   ViewController:initialize(delegate, ...)
@@ -49,6 +86,7 @@ function ListViewCtrl:initialize(delegate, ...)
                               "<cmd> lua ListViewCtrl:on_confirm()<CR>", {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Enter>",
                               "<cmd> lua ListViewCtrl:on_confirm() <CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-w>k", "<cmd> lua gh_jump_to_preview()<CR>", {})
 
   -- vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Enter>",
   --                             "<cmd> lua ListViewCtrl:on_search()<CR>", {})
