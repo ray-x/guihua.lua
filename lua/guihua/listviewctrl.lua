@@ -88,6 +88,13 @@ function ListViewCtrl:initialize(delegate, ...)
 
   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<BS>",
                               "<cmd> lua ListViewCtrl:on_backspace() <CR>", {})
+
+  for i = 1, 9 do
+    local cmd = string.format("<cmd> lua ListViewCtrl:on_item(%i)<CR>", i + 1)
+    vim.api.nvim_buf_set_keymap(delegate.buf, "n", tostring(i), cmd, {})
+    vim.api.nvim_buf_set_keymap(delegate.buf, "i", tostring(i), cmd, {})
+  end
+
   vim.cmd([[ autocmd TextChangedI,TextChanged <buffer> lua  ListViewCtrl:on_search() ]])
   --
   ListViewCtrl._viewctlobject = self
@@ -163,6 +170,29 @@ function ListViewCtrl:on_next()
   listobj.selected_line = l
   self:wrap_closer(listobj.on_move(data_collection[l]))
   return data_collection[listobj.selected_line]
+end
+
+function ListViewCtrl:on_item(i)
+  if i < 1 then
+    i = 1
+  end
+  local listobj = ListViewCtrl._viewctlobject
+  if listobj == nil then
+    log("incorrect on_prev context", ListViewCtrl)
+    return
+  end
+  local data_collection = listobj.data
+
+  if i > #data_collection then
+    i = #data_collection
+  end
+  listobj.m_delegate:set_pos(i)
+  listobj.selected_line = i
+  log("select ", i)
+  self:wrap_closer(listobj.on_move(data_collection[i]))
+
+  return data_collection[listobj.selected_line]
+
 end
 
 function ListViewCtrl:on_prev()
