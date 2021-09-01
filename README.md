@@ -1,5 +1,5 @@
 ![guihua](https://github.com/ray-x/files/blob/master/img/guihua/guihua_800.png)
-Guihua: A Lua Gui and util liberary for nvim plugins
+Guihua: A Lua Gui and util library for nvim plugins
 
 - Provide floating windows
 - A modified wrapper for fzy
