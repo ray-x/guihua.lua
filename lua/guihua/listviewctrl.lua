@@ -115,6 +115,11 @@ function ListViewCtrl:initialize(delegate, ...)
 
   vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-o>", "<cmd> lua ListViewCtrl:on_confirm()<CR>",
                               {})
+
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-v>",
+                              "<cmd> lua ListViewCtrl:on_confirm({split='v'})<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-s>",
+                              "<cmd> lua ListViewCtrl:on_confirm({split='s'})<CR>", {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<C-o>", "<cmd> lua ListViewCtrl:on_confirm()<CR>",
                               {})
   log("bind close", self.m_delegate.win, delegate.buf)
@@ -379,7 +384,7 @@ function ListViewCtrl:on_pageup()
   return data_collection[listobj.selected_line]
 end
 
-function ListViewCtrl:on_confirm()
+function ListViewCtrl:on_confirm(opts)
 
   local listobj = ListViewCtrl._viewctlobject
   local data_collection = listobj.data
@@ -388,7 +393,7 @@ function ListViewCtrl:on_confirm()
   end
   listobj.m_delegate:close()
   -- trace(listobj.m_delegate)
-  listobj.on_confirm(data_collection[listobj.selected_line])
+  listobj.on_confirm(data_collection[listobj.selected_line], opts)
 end
 
 function ListViewCtrl:on_search()
