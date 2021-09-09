@@ -51,6 +51,7 @@ end
 -- need to call after floatwind is created or caller need pass the winnr
 function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
   opts = opts or {}
+  trace(opts)
   local uri = opts.uri
   if opts.uri == nil then
     log("invalid/nil uri ", opts)

@@ -94,17 +94,16 @@ function TextView:initialize(...)
     require"guihua.util".highlighter(self.buf, opts.syntax, opts.lnum)
   end
 
-  TextView.static.ActiveTextView = self
-
   if not opts.enter then
-    -- currsor move will close textview
-    util.close_view_autocmd({"CursorMoved", "CursorMovedI"}, self.win)
+    -- currsor move will close textview. currently disabled because user can edit inside preview
+    log('auto close on cursor move disabled')
   else
-    -- for definition preview <c-e> close
+    -- for user case of symbol definition preview, <c-e> close win/buf
     util.close_view_event("n", "<C-e>", self.win, self.buf, opts.enter)
     util.close_view_event("i", "<C-e>", self.win, self.buf, opts.enter)
   end
 
+  util.close_view_autocmd({"BufHidden", "BufDelete"}, self.win)
   -- controller and data
   if opts.uri then -- well this is a feature flag for early phase dev
     log("ctor TextView: ctrl") -- , View.ActiveView)--, self)
@@ -127,6 +126,8 @@ function TextView:initialize(...)
   if opts.allow_edit then
     vim.api.nvim_buf_set_option(self.buf, "readonly", false)
   end
+
+  TextView.static.ActiveTextView = self
 
   log("ctor TextView: end") -- , View.ActiveView)--, self)
   trace(self)
@@ -178,7 +179,7 @@ function TextView:on_draw(opts)
   if bufnr == 0 then
     print("Error: plugin failure, please submit a issue")
   end
-  -- log("bufnr", bufnr)
+  trace("bufnr", bufnr)
 
   vim.api.nvim_buf_set_option(bufnr, "readonly", false)
   -- vim.api.nvim_buf_set_lines(self.buf, start, end_at, true, content)

@@ -186,17 +186,24 @@ function ListViewCtrl:on_next()
 
   if l > #data_collection then
     -- listobj.m_delegate:set_pos(disp_h) -- do not move to next
-    listobj.on_move(data_collection[#data_collection])
-    log("next should show at: ", #listobj.data, "set: ", disp_h, listobj.display_height)
-    return
+    -- listobj.on_move(data_collection[#data_collection])
+    log("out of boundary next should show at: ", #listobj.data, "set: l", l, "disp_h", disp_h,
+        listobj.display_height)
+    return {}
   end
-  if data_collection[l].filename_only and l + 1 <= #data_collection then
-    l = l + 1
+  local skipped_fn = 1
+  if data_collection[l].filename_only then
+    if l + 1 <= #data_collection then
+      l = l + 1
+      skipped_fn = 2
+    else
+      return {}
+    end
   end
 
-  if l > listobj.display_start_at + disp_h - 1 then
+  if l + 1 > listobj.display_start_at + disp_h then
     -- need to scroll next
-    listobj.display_start_at = listobj.display_start_at + 1
+    listobj.display_start_at = listobj.display_start_at + skipped_fn
     listobj.display_data = {
       unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1)
     }
@@ -250,7 +257,7 @@ function ListViewCtrl:on_prev()
     disp_h = disp_h - 1
   end
 
-  log("pre: ", listobj.selected_line, listobj.display_start_at, disp_h, listobj.display_height,
+  log("on prev: ", listobj.selected_line, listobj.display_start_at, disp_h, listobj.display_height,
       listobj.m_delegate.prompt)
 
   local data_collection = listobj.data
@@ -271,12 +278,16 @@ function ListViewCtrl:on_prev()
     self:wrap_closer(listobj.on_move(data_collection[1]))
     return
   end
+  local skipped_fn = 1
   if data_collection[l].filename_only and l > 1 then
+    trace("skip filename")
+    skipped_fn = 2
     l = l - 1
   end
   if l < listobj.display_start_at and listobj.display_start_at >= 1 then
     -- need to scroll back
-    listobj.display_start_at = listobj.display_start_at - 1
+    log("roll back to ", listobj.display_start_at - 1)
+    listobj.display_start_at = listobj.display_start_at - skipped_fn
     listobj.display_data = {
       unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1)
     }
@@ -286,6 +297,7 @@ function ListViewCtrl:on_prev()
     listobj.m_delegate:set_pos(1)
   else
     -- listobj:on_draw(listobj.display_data)
+    log("move to", l, listobj.display_start_at, l - listobj.display_start_at + 1)
     listobj.m_delegate:set_pos(l - listobj.display_start_at + 1)
   end
   log("prev: ", l)

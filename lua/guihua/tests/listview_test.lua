@@ -90,11 +90,11 @@ local lines = {
   "./lua/fzy/quicksort.lua:15:  print(formatting .. v)",
   "./lua/fzy/quicksort.lua:9:      if type(v) == 'table' then"
 }
-local function preview_uri(uri, line, offset_y)
+local function preview_uri(uri, linenum, offset_y)
   log(uri)
   offset_y = offset_y or 6
-  local loc = {targetUri = uri, targetRange = {start = {line = line}}}
-  loc.targetRange["end"] = {line = line + 4}
+  local loc = {targetUri = uri, targetRange = {start = {line = linenum}}}
+  loc.targetRange["end"] = {line = linenum + 4}
   local n = tostring(os.time())
   local contents = {"local abc = 12", "local winid = " .. n, "print(winid)"}
   return TextView:new({
@@ -452,11 +452,11 @@ local function test_list_page()
 end
 
 -- test_list()
-test_list_mask()
+-- test_list_mask()
 -- test_textview()
 
 -- test_list_one_item_symbol()
--- test_list_page()
+test_list_page()
 -- test_list_two_item_symbol()
 
 -- test_plaintext()

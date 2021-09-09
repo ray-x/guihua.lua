@@ -22,6 +22,8 @@ opts={
 function ListView:initialize(...)
   trace(debug.traceback())
 
+  local ListviewHl = self.hl_group or "PmenuSel"
+  util.selcolor(ListviewHl)
   if win and vim.api.nvim_win_is_valid(win) then
     ListView.close()
   end
@@ -160,10 +162,17 @@ end
 
 function ListView:set_pos(i)
   if not vim.api.nvim_buf_is_valid(self.buf) then
+    log('invalid bufid', self.buf)
     return
   end
   if #vim.api.nvim_buf_get_lines(self.buf, 0, -1, false) < 2 then
+    log('empty buf')
     return
+  end
+  if i < 0 then
+    log("incorrect select_line -1", self.display_height, self.selected_line, self.display_start_at)
+    log(debug.traceback())
+    self.selected_line = 1
   end
   self.selected_line = i
   local selhighlight = vim.api.nvim_create_namespace("selhighlight")
@@ -176,12 +185,13 @@ function ListView:set_pos(i)
   -- log("set virtual text on ", i, "buf", self.buf, _VT_GHLIST)
   vim.schedule(function()
     log("setpos", self.buf, self.selected_line)
+
     if not vim.api.nvim_buf_is_valid(self.buf) then
+      log("setpos error buf not valid")
       return
     end
     vim.api.nvim_buf_clear_namespace(self.buf, selhighlight, 0, -1)
-    local ListviewHl = self.hl_group or "PmenuSel"
-    ListviewHl = util.selcolor(ListviewHl)
+    ListviewHl = 'GHListHl'
     vim.api
         .nvim_buf_add_highlight(self.buf, selhighlight, ListviewHl, self.selected_line - 1, 0, -1)
   end)
