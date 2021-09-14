@@ -24,12 +24,18 @@ local function floating_buf(opts) -- win_width, win_height, x, y, loc, prompt, e
   local row, col = loc(opts.win_height, opts.win_width)
   local win_opts = {
     style = opts.style or "minimal",
-    relative = opts.relative or "editor",
     width = opts.win_width or 80,
     height = opts.win_height or 20,
-    bufpos = {0, 0},
-    border = opts.border or "shadow" -- "shadow"
+    border = opts.border or "single" -- "shadow"
   }
+
+  if opts.external then
+    win_opts.external = true
+  else
+    win_opts.relative = opts.relative or "editor"
+    win_opts.bufpos = {0, 0}
+  end
+
   if win_opts.relative == "editor" then
     win_opts.row = row + y
     win_opts.col = col + x
@@ -120,6 +126,13 @@ local function floatterm(opts)
     border = opts.border
   }
 
+  if opts.external then
+    win_opts.external = true
+    win_opts.relative = nil
+    win_opts.row = nil
+    win_opts.col = nil
+  end
+
   local win = api.nvim_open_win(buf, true, win_opts)
   return win, buf, win_opts
 end
@@ -201,7 +214,7 @@ end
 -- test(true)
 -- test2(false)
 -- test_term(true)
--- floating_term({cmd = 'lazygit', border = 'single'})
+floating_term({cmd = 'lazygit', border = 'single', external = true})
 
 return {
   floating_buf = floating_buf,

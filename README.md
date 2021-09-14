@@ -11,6 +11,12 @@ Guihua: A Lua Gui and util library for nvim plugins
 * Listview with fzy finder
   ![listview](https://github.com/ray-x/files/blob/master/img/navigator/fzy_reference.jpg?raw=true)
 
+* Neovim multigrid external buffer/terminal
+
+![multigrid](https://user-images.githubusercontent.com/1681295/133234734-93817aaa-23a3-4c28-b164-b129be449dee.jpg)
+
+This cool screen shows an external terminal running lazygit and an external floating window running guihua listview
+
 More screen shot please refer to [Navigator.lua](https://github.com/ray-x/navigator.lua)
 
 Please refer to test file of how to use it
