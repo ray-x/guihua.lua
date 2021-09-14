@@ -41,7 +41,8 @@ function ListView:initialize(...)
   View.initialize(self, opts)
   self:bind_ctrl(opts)
   -- ListView.static.active_view = self
-  log("listview created", self.win) -- , self)=
+  log("listview created")
+  -- trace(self.win, self.class)
   local ft = "guihua"
   if opts.ft == "rust" then
     ft = "guihua_rust"
@@ -195,6 +196,12 @@ function ListView:set_pos(i)
     vim.api
         .nvim_buf_add_highlight(self.buf, selhighlight, ListviewHl, self.selected_line - 1, 0, -1)
   end)
+end
+
+function ListView:set_data(data)
+  vim.validate {data = {data, 't'}}
+  self.ctrl:on_data_udpate(data)
+  -- updata view?
 end
 
 return ListView

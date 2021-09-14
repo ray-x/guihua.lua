@@ -489,4 +489,10 @@ function ListViewCtrl:on_close()
   ListViewCtrl._viewctlobject = nil
 end
 
+function ListViewCtrl:on_data_update(data)
+  local listobj = ListViewCtrl._viewctlobject
+  listobj.data = data
+  -- disable data
+end
+
 return ListViewCtrl
