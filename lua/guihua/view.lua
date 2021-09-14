@@ -65,9 +65,10 @@ function View:initialize(...)
     ft = opts.ft,
     syntax = opts.syntax,
     relative = opts.relative,
-    allow_edit = opts.allow_edit
+    allow_edit = opts.allow_edit,
+    external = opts.external
   })
-  if opts.transparency then
+  if opts.transparency and not opts.external then
     self.mask_buf, self.mask_win, self.mask_closer = floatbuf_mask(opts.transparency)
   end
   log("floatbuf created ", self.buf, self.win)
