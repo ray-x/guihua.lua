@@ -214,7 +214,7 @@ end
 -- test(true)
 -- test2(false)
 -- test_term(true)
-floating_term({cmd = 'lazygit', border = 'single', external = true})
+-- floating_term({cmd = 'lazygit', border = 'single', external = true})
 
 return {
   floating_buf = floating_buf,
