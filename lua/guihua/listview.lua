@@ -75,6 +75,7 @@ function ListView:initialize(...)
   vim.api.nvim_buf_set_keymap(self.buf, "n", "<C-e>", "<cmd> lua ListView.close() <CR>", {})
   vim.api.nvim_buf_set_keymap(self.buf, "i", "<C-e>", "<cmd> lua ListView.close() <CR>", {})
   -- vim.fn.setpos('.', {self.win, i, 1, 0})
+  return self
 end
 
 function ListView:bind_ctrl(opts)

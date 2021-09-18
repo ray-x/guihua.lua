@@ -431,6 +431,7 @@ local function test_list_page()
     prompt = true,
     on_confirm = on_confirm,
     on_move = on_move,
+    -- external = true,
     rect = {height = 2, pos_x = 0, pos_y = 0, width = 120}
   }
 

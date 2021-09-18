@@ -131,6 +131,7 @@ function TextView:initialize(...)
 
   log("ctor TextView: end") -- , View.ActiveView)--, self)
   trace(self)
+  return self
 end
 
 function TextView.Active()

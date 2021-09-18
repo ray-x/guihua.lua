@@ -133,7 +133,7 @@ function ListViewCtrl:initialize(delegate, ...)
                               "<cmd> lua ListViewCtrl:on_backspace() <CR>", {})
 
   for i = 1, 9 do
-    local cmd = string.format("<cmd> lua ListViewCtrl:on_item(%i)<CR>", i + 1)
+    local cmd = string.format("<cmd> lua ListViewCtrl:on_item(%i)<CR>", i)
     vim.api.nvim_buf_set_keymap(delegate.buf, "n", tostring(i), cmd, {})
     vim.api.nvim_buf_set_keymap(delegate.buf, "i", tostring(i), cmd, {})
   end
@@ -222,6 +222,16 @@ function ListViewCtrl:on_next()
   return data_collection[listobj.selected_line]
 end
 
+local function item_text(data_collection, idx)
+  local text
+  if type(data_collection[idx]) == 'string' then
+    text = data_collection[idx]
+  elseif data_collection[idx].display_data ~= nil then
+    text = data_collection[idx].display_data
+  end
+  return text
+end
+-- if list start with [i] then select the [i], otherwise return ith item
 function ListViewCtrl:on_item(i)
   if i < 1 then
     i = 1
@@ -231,14 +241,30 @@ function ListViewCtrl:on_item(i)
     log("incorrect on_prev context", ListViewCtrl)
     return
   end
+
   local data_collection = listobj.data
 
   if i > #data_collection then
     i = #data_collection
   end
+
+  local idx
+  for j = i, i + 3 do
+    local t = item_text(data_collection, j)
+    local f = string.find(t, tostring(i))
+    if f ~= nil and f < 3 then
+      idx = j
+      break
+    end
+  end
+
+  if idx then
+    i = idx
+  end
+
   listobj.m_delegate:set_pos(i)
   listobj.selected_line = i
-  log("select ", i)
+  log("select ", i, data_collection[listobj.selected_line])
   self:wrap_closer(listobj.on_move(data_collection[i]))
 
   return data_collection[listobj.selected_line]

@@ -28,7 +28,6 @@ function View:initialize(...)
   log("ctor View start with #items", #opts.data)
   trace("ctor View items", opts)
   trace("view start opts", opts)
-
   Rect.initialize(self, opts)
   if opts.prompt == true then
     self.rect.height = self.rect.height + 1
