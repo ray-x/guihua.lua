@@ -42,6 +42,11 @@ end
 -- offset the GHListHl based on GHListDark
 function M.selcolor(Hl)
   vim.validate {Hl = {Hl, 'string'}}
+
+  if vim.fn.hlexists('GHListHl')
+      and vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("GHListHl")), "bg#") ~= '' then
+    return
+  end
   local bgcolor = tonumber(string.sub(
                                vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("GHListDark")), "bg#"),
                                2), 16) or 0x303b5f
