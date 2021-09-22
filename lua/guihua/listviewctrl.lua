@@ -251,7 +251,7 @@ function ListViewCtrl:on_item(i)
   local idx
   for j = i, i + 3 do
     local t = item_text(data_collection, j)
-    local f = string.find(t, tostring(i))
+    local f = string.find(t or '', tostring(i))
     if f ~= nil and f < 3 then
       idx = j
       break

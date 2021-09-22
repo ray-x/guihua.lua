@@ -43,6 +43,7 @@ local function floating_buf(opts) -- win_width, win_height, x, y, loc, prompt, e
   log("floating", win_opts, opts)
   local buf = api.nvim_create_buf(false, true)
   api.nvim_buf_set_option(buf, "bufhidden", "wipe")
+  api.nvim_buf_set_option(buf, "buflisted", false)
   -- api.nvim_buf_set_option(buf, 'buftype', 'guihua_input')
   if prompt then
     vim.fn.prompt_setprompt(buf, " ")
@@ -75,8 +76,8 @@ end
 -- Create a mask.
 local function floating_buf_mask(transparency) -- win_width, win_height, x, y, loc, prompt, enter, ft)
   vim.validate({transparency = {transparency, 'number'}})
-  local columns = api.nvim_get_option("columns")
-  local lines = api.nvim_get_option("lines")
+  columns = api.nvim_get_option("columns")
+  lines = api.nvim_get_option("lines")
   local loc = location.center
   local row, col = loc(lines, columns)
   local win_opts = {
@@ -92,6 +93,7 @@ local function floating_buf_mask(transparency) -- win_width, win_height, x, y, l
   api.nvim_buf_set_option(buf, "bufhidden", "wipe")
   -- api.nvim_buf_set_option(buf, 'buftype', 'guihua_input')
   api.nvim_buf_set_option(buf, "readonly", true)
+  api.nvim_buf_set_option(buf, "buflisted", false)
   vim.api.nvim_buf_set_option(buf, "filetype", "guihua") -- default ft for all buffers. do not use specific ft e.g
   -- javascript as it may cause lsp loading
   local win = api.nvim_open_win(buf, false, win_opts)
@@ -116,6 +118,7 @@ local function floatterm(opts)
   local buf = api.nvim_create_buf(false, true)
   api.nvim_buf_set_keymap(buf, "t", "<ESC>", "<C-\\><C-c>", {})
   api.nvim_buf_set_option(buf, "bufhidden", "wipe")
+  api.nvim_buf_set_option(buf, "buflisted", false)
 
   local width = opts.win_width or math.floor(columns * 0.9)
   local height = opts.win_height or math.floor(lines * 0.9)
@@ -156,6 +159,9 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
   -- local height = api.nvim_get_option("lines")
 
   -- calculate our floating window size
+
+  columns = api.nvim_get_option("columns")
+  lines = api.nvim_get_option("lines")
   opts.win_height = opts.win_width or math.ceil(lines * 0.88)
   opts.win_width = opts.win_width or math.ceil(columns * 0.88)
   local win, buf, _ = floatterm(opts)
@@ -200,7 +206,7 @@ local function test(prompt)
     vim.api.nvim_buf_set_lines(b, i, -1, false, {data[i]})
   end
   -- vim.cmd('silent buffer ' .. tostring(b))
-  vim.fn.win_gotoid(w)
+  -- vim.fn.win_gotoid(w)
   if prompt == true then
     vim.cmd("startinsert!")
   end
