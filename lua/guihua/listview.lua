@@ -22,8 +22,6 @@ opts={
 function ListView:initialize(...)
   trace(debug.traceback())
 
-  local ListviewHl = self.hl_group or "PmenuSel"
-  util.selcolor(ListviewHl)
   if win and vim.api.nvim_win_is_valid(win) then
     ListView.close()
   end
@@ -33,8 +31,15 @@ function ListView:initialize(...)
 
   -- vim.cmd([[hi default GHListDark guifg=#e0d8f4 guibg=#272755]])
   -- vim.cmd([[hi default GHListDark guifg=#e0d8f4 guibg=#103234]])
-  local bg = util.bgcolor(0x051012)
-  vim.cmd([[hi default GHListDark guifg=#e0d8f4  guibg=]] .. bg)
+
+  local listviewHl = self.hl_group or "PmenuSel"
+  util.selcolor(listviewHl)
+  local bg
+  if not vim.fn.hlexists('GHListDark')
+      or vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("GHListDark")), "bg#") == '' then
+    bg = util.bgcolor(0x051012)
+    vim.cmd([[hi default GHListDark guifg=#e0d8f4  guibg=]] .. bg)
+  end
   opts.bg = opts.bg or "GHListDark"
 
   opts.enter = true

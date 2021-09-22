@@ -44,10 +44,9 @@ local function floating_buf(opts) -- win_width, win_height, x, y, loc, prompt, e
   local buf = api.nvim_create_buf(false, true)
   api.nvim_buf_set_option(buf, "bufhidden", "wipe")
   -- api.nvim_buf_set_option(buf, 'buftype', 'guihua_input')
-  vim.cmd("setlocal nobuflisted")
   if prompt then
     vim.fn.prompt_setprompt(buf, " ")
-    api.nvim_buf_set_option(buf, "buftype", "prompt")
+    api.nvim_buf_set_option(buf, "buftype", "prompt") -- vim.fn.setbufvar(bufnr, "buflisted", 0)
   else
     api.nvim_buf_set_option(buf, "readonly", true)
     vim.api.nvim_buf_set_option(buf, "filetype", "guihua") -- default ft for all buffers. do not use specific ft e.g
@@ -55,6 +54,11 @@ local function floating_buf(opts) -- win_width, win_height, x, y, loc, prompt, e
   end
   local win = api.nvim_open_win(buf, enter, win_opts)
   log("creating win", win, "buf", buf)
+
+  -- note: if failed to focus on the view, you can add to the caller
+  -- vim.fn.win_gotoid(win)
+
+  -- api.nvim_buf_set_option(buf, "nobuflisted")
   return buf, win, function()
     if win == nil then
       -- already closed or not valid
@@ -87,7 +91,6 @@ local function floating_buf_mask(transparency) -- win_width, win_height, x, y, l
   local buf = api.nvim_create_buf(false, true)
   api.nvim_buf_set_option(buf, "bufhidden", "wipe")
   -- api.nvim_buf_set_option(buf, 'buftype', 'guihua_input')
-  vim.cmd("setlocal nobuflisted")
   api.nvim_buf_set_option(buf, "readonly", true)
   vim.api.nvim_buf_set_option(buf, "filetype", "guihua") -- default ft for all buffers. do not use specific ft e.g
   -- javascript as it may cause lsp loading
@@ -158,7 +161,6 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
   local win, buf, _ = floatterm(opts)
 
   api.nvim_win_set_option(win, "winhl", "Normal:Normal")
-  api.nvim_command("startinsert!")
   local closer = function(...)
     log("floatwin closing ", win)
     if vim.api.nvim_win_is_valid(win) then
@@ -185,11 +187,20 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
 end
 
 local function test(prompt)
-  local b, w, c = floating_buf({win_width = 30, win_height = 6, x = 5, y = 5, prompt = prompt})
+  local b, w, c = floating_buf({
+    win_width = 30,
+    win_height = 6,
+    x = 5,
+    y = 5,
+    prompt = prompt,
+    focus = true
+  })
   local data = {"floating buf", "line1", "line2", "line3", "line4", "line5"}
   for i = 1, 10, 1 do
     vim.api.nvim_buf_set_lines(b, i, -1, false, {data[i]})
   end
+  -- vim.cmd('silent buffer ' .. tostring(b))
+  vim.fn.win_gotoid(w)
   if prompt == true then
     vim.cmd("startinsert!")
   end
@@ -214,7 +225,9 @@ end
 -- test(true)
 -- test2(false)
 -- test_term(true)
+-- multigrid
 -- floating_term({cmd = 'lazygit', border = 'single', external = true})
+-- floating_term({cmd = 'lazygit', border = 'single', external = false})
 
 return {
   floating_buf = floating_buf,
