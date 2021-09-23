@@ -142,7 +142,7 @@ function ListViewCtrl:initialize(delegate, ...)
   end
 
   vim.cmd([[ autocmd TextChangedI,TextChanged <buffer> lua  ListViewCtrl:on_search() ]])
-  vim.cmd([[ autocmd WinLeave <buffer> lua  ListViewCtrl:on_leave() ]])
+  vim.cmd([[ autocmd WinLeave <buffer> ++once lua  ListViewCtrl:on_leave() ]])
 
   --
   ListViewCtrl._viewctlobject = self
