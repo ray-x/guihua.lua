@@ -132,6 +132,9 @@ function ListViewCtrl:initialize(delegate, ...)
   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<BS>",
                               "<cmd> lua ListViewCtrl:on_backspace() <CR>", {})
 
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<C-W>",
+                              "<cmd> lua ListViewCtrl:on_backspace(true) <CR>", {})
+
   for i = 1, 9 do
     local cmd = string.format("<cmd> lua ListViewCtrl:on_item(%i)<CR>", i)
     vim.api.nvim_buf_set_keymap(delegate.buf, "n", tostring(i), cmd, {})
@@ -489,20 +492,30 @@ function ListViewCtrl:on_search()
   log("on search ends")
 end
 
-function ListViewCtrl:on_backspace()
+function ListViewCtrl:on_backspace(deleteword)
+
   local listobj = ListViewCtrl._viewctlobject
   local buf = listobj.m_delegate.buf
   local filter_input = vim.api.nvim_buf_get_lines(buf, -2, -1, false)[1]
-  log(filter_input)
   local filter_input_trim = string.sub(filter_input, 5, #filter_input)
 
-  if #filter_input_trim > 0 then
-    filter_input = string.sub(filter_input, 1, -2)
+  if #filter_input_trim == 0 then
+    -- filter_input = string.sub(filter_input, 1, -2)
+    return
   end
-  vim.api.nvim_buf_set_lines(buf, -2, -1, true, {filter_input})
-  log(filter_input)
+
+  vim.cmd([[stopi]])
+  if deleteword then
+    vim.cmd([[normal! diw]])
+  else
+    vim.cmd([[normal! cl]])
+  end
   vim.cmd([[normal! A]])
   vim.cmd("startinsert!")
+
+  -- log(filter_input)
+  -- vim.api.nvim_buf_set_lines(buf, -2, -1, true, {filter_input})
+  -- log(filter_input)
   -- log("on search ends")
 end
 

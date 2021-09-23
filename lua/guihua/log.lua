@@ -36,7 +36,7 @@ log.new = function(config, standalone)
   config = vim.tbl_deep_extend("force", default_config, config)
   -- path ~/.local/share/nvim
   local outfile = string.format("%s/%s.log", vim.api.nvim_call_function("stdpath", {"data"}),
-                                config.plugin)
+                                config.plugin or 'gh')
 
   local obj
   if standalone then
