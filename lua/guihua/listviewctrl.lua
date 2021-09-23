@@ -534,7 +534,8 @@ end
 function ListViewCtrl:on_leave()
   log("closer background") -- , ListViewCtrl._viewctlobject.m_delegate)
   vim.defer_fn(function()
-    ListViewCtrl._viewctlobject.m_delegate.close()
+    return
+    -- ListViewCtrl._viewctlobject.m_delegate.close()
   end, 200)
 
 end
