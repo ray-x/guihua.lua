@@ -142,6 +142,8 @@ function ListViewCtrl:initialize(delegate, ...)
   end
 
   vim.cmd([[ autocmd TextChangedI,TextChanged <buffer> lua  ListViewCtrl:on_search() ]])
+  vim.cmd([[ autocmd BufLeave <buffer> lua  ListViewCtrl:on_leave() ]])
+
   --
   ListViewCtrl._viewctlobject = self
   -- self:on_draw(self.display_data)
@@ -525,7 +527,16 @@ function ListViewCtrl:on_close()
 
   --  log("closer ", ListViewCtrl)
   ListViewCtrl._viewctlobject.m_delegate:on_close()
+  ListViewCtrl:on_leave()
   ListViewCtrl._viewctlobject = nil
+end
+
+function ListViewCtrl:on_leave()
+  log("closer background") -- , ListViewCtrl._viewctlobject.m_delegate)
+  vim.defer_fn(function()
+    ListViewCtrl._viewctlobject.m_delegate.close()
+  end, 200)
+
 end
 
 function ListViewCtrl:on_data_update(data)

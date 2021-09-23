@@ -428,6 +428,7 @@ local function test_list_page()
     enter = true,
     ft = "go",
     loc = "top_center",
+    transparency = 50,
     prompt = true,
     on_confirm = on_confirm,
     on_move = on_move,
