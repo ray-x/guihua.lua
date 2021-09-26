@@ -1,6 +1,7 @@
 local class = require "middleclass"
 local ViewController = require "guihua.viewctrl"
 local log = require"guihua.log".info
+local error = require"guihua.log".error
 local util = require "guihua.util"
 local trace = require"guihua.log".trace
 
@@ -229,6 +230,9 @@ end
 
 local function item_text(data_collection, idx)
   local text
+  if idx < 1 or idx > #data_collection then
+    error('error: idx out of range', #data_collection, idx)
+  end
   if type(data_collection[idx]) == 'string' then
     text = data_collection[idx]
   elseif data_collection[idx].display_data ~= nil then
@@ -255,6 +259,9 @@ function ListViewCtrl:on_item(i)
 
   local idx
   for j = i, i + 3 do
+    if j > #data_collection then
+      break
+    end
     local t = item_text(data_collection, j)
     local f = string.find(t or '', tostring(i))
     if f ~= nil and f < 3 then
@@ -447,6 +454,7 @@ function ListViewCtrl:on_search()
     print("[ERR] fzy not found")
     return
   end
+
   local listobj = ListViewCtrl._viewctlobject
   if listobj == nil then
     log("on search failed, no listviewCTRL")
@@ -461,7 +469,7 @@ function ListViewCtrl:on_search()
   -- get string after prompt
 
   local filter_input_trim = string.sub(filter_input, 5, #filter_input)
-  trace("filter input", filter_input_trim, "input:", filter_input)
+  log("filter input", filter_input_trim, "input:", filter_input)
 
   if listobj.search_item == filter_input_trim then
     return -- same filter may caused by none-search field change
@@ -471,7 +479,8 @@ function ListViewCtrl:on_search()
   if #filter_input_trim == 0 or #listobj.data == nil or #listobj.data == 0 then
     listobj.filter_applied = false
     listobj.filtered_data = listobj.data -- filter is not applied, clean up cache data
-    vim.fn.clearmatches()
+    -- vim.fn.clearmatches()
+    vim.api.nvim_buf_clear_namespace(buf, _GH_SEARCH_NS, 0, -1)
     return
   else
     listobj.filtered_data = fzy(filter_input_trim, listobj.data)

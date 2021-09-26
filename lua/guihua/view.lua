@@ -25,6 +25,8 @@ function View:initialize(...)
   trace(debug.traceback())
   local opts = select(1, ...) or {}
   opts.data = opts.data or {}
+
+  _GH_SEARCH_NS = _GH_SEARCH_NS or vim.api.nvim_create_namespace("guihua_search_namespace")
   log("ctor View start with #items", #opts.data)
   trace("ctor View items", opts)
   trace("view start opts", opts)
@@ -124,26 +126,36 @@ local function draw_table_item(buf, item, pos)
     log("draw nil lines", buf, item.text, pos)
     return
   end
+
+  vim.api.nvim_buf_set_lines(buf, pos, pos, true, {item.text})
   -- if item.symbol_name is not nil highlight it
   if item.symbol_name and #item.symbol_name > 0 then
     -- lets find all
     local s, e = word_find(item.text, item.symbol_name)
-    trace('hl', s, e)
+    -- log('hl', pos, s, e, item.text, item.Symbol_name)
     while s ~= nil do
-      vim.fn.matchaddpos("Error", {{pos + 1, s, e - s + 1}})
+      -- vim.fn.matchaddpos("IncSearch", {{pos + 1, s, e - s + 1}})
+      vim.api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, s - 1,
+                                   {end_line = pos, end_col = e, hl_group = "Warnings"})
+
       s, e = word_find(item.text, item.sybol_name)
     end
   end
-  vim.api.nvim_buf_set_lines(buf, pos, pos, true, {item.text})
   -- vim.api.nvim_buf_set_lines(buf, 0, 1, true, '{item.text}')
   if item.pos ~= nil then
     for _, v in pairs(item.pos) do
-      vim.fn.matchaddpos("IncSearch", {{pos + 1, v}})
+      -- vim.fn.matchaddpos("IncSearch", {{pos + 1, v}})
+
+      log('hl', pos, v)
+      vim.api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, v - 1,
+                                   {end_line = pos, end_col = v, hl_group = "IncSearch"})
     end
   end
   if item.fzy ~= nil then
     for _, v in pairs(item.fzy.pos) do
-      vim.fn.matchaddpos("IncSearch", {{pos + 1, v}})
+      -- vim.fn.matchaddpos("IncSearch", {{pos + 1, v}})
+      vim.api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, v - 1,
+                                   {end_line = pos, end_col = v, hl_group = "IncSearch"})
     end
   end
 end
@@ -155,6 +167,8 @@ local function draw_lines(buf, start, end_at, data)
     log("empty body")
     return
   end
+
+  vim.api.nvim_buf_clear_namespace(0, _GH_SEARCH_NS, 0, -1)
   trace("draw_lines", buf, start, end_at, #data, data)
 
   vim.fn.clearmatches()
@@ -173,7 +187,14 @@ local function draw_lines(buf, start, end_at, data)
       vim.api.nvim_buf_set_lines(buf, i, i, true, {line})
       local pos = l[2]
       for _, v in pairs(pos) do
-        vim.fn.matchaddpos("IncSearch", {{i + 1, v}})
+        -- vim.fn.matchaddpos("IncSearch", {{i + 1, v}})
+
+        vim.api.nvim_buf_set_extmark(0, _GH_SEARCH_NS, i, v, {
+          end_line = i,
+          end_col = v + 1,
+          hl_group = "IncSearch"
+          -- hl_group = _LSP_SIG_CFG.hint_scheme
+        })
       end
     else
       draw_table_item(buf, l, i)
