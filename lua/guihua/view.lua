@@ -134,7 +134,6 @@ local function draw_table_item(buf, item, pos)
     local s, e = word_find(item.text, item.symbol_name)
     -- log('hl', pos, s, e, item.text, item.Symbol_name)
     while s ~= nil do
-      log('hl', pos, s, e, item.text, 'symbolname:', item.symbol_name)
       -- vim.fn.matchaddpos("IncSearch", {{pos + 1, s, e - s + 1}})
       vim.api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, s - 1,
                                    {end_line = pos, end_col = e, hl_group = "Warnings"})
