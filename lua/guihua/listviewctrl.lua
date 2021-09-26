@@ -1,6 +1,7 @@
 local class = require "middleclass"
 local ViewController = require "guihua.viewctrl"
 local log = require"guihua.log".info
+local error = require"guihua.log".error
 local util = require "guihua.util"
 local trace = require"guihua.log".trace
 
@@ -229,6 +230,9 @@ end
 
 local function item_text(data_collection, idx)
   local text
+  if idx < 1 or idx > #data_collection then
+    error('error: idx out of range', #data_collection, idx)
+  end
   if type(data_collection[idx]) == 'string' then
     text = data_collection[idx]
   elseif data_collection[idx].display_data ~= nil then
@@ -255,6 +259,9 @@ function ListViewCtrl:on_item(i)
 
   local idx
   for j = i, i + 3 do
+    if j > #data_collection then
+      break
+    end
     local t = item_text(data_collection, j)
     local f = string.find(t or '', tostring(i))
     if f ~= nil and f < 3 then
