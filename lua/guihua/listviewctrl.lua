@@ -130,6 +130,8 @@ function ListViewCtrl:initialize(delegate, ...)
   vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-c>", "<cmd> lua ListViewCtrl:on_close() <CR>",
                               {})
 
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<ESC>", "<cmd> lua ListViewCtrl:on_close() <CR>",
+                              {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<BS>",
                               "<cmd> lua ListViewCtrl:on_backspace() <CR>", {})
 
@@ -544,7 +546,9 @@ function ListViewCtrl:on_leave()
   log("closer background") -- , ListViewCtrl._viewctlobject.m_delegate)
   vim.defer_fn(function()
     -- return
-    ListViewCtrl._viewctlobject.m_delegate.close()
+    if ListViewCtrl._viewctlobject and ListViewCtrl._viewctlobject.m_delegate then
+      ListViewCtrl._viewctlobject.m_delegate.close()
+    end
   end, 200)
 
 end
