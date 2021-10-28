@@ -34,11 +34,19 @@ function ListView:initialize(...)
 
   local listviewHl = self.hl_group or "PmenuSel"
   util.selcolor(listviewHl)
+  local normalbg = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("NormalFloat")), "bg#"), 2), 16)
+  or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("Normal")), "bg#"), 2), 16)
+
   local bg
   if not vim.fn.hlexists('GHListDark')
       or vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("GHListDark")), "bg#") == '' then
     bg = util.bgcolor(0x051012)
-    vim.cmd([[hi default GHListDark guifg=#e0d8f4  guibg=]] .. bg)
+    local fg = '#e0d8f4'
+    if normalbg > 0xa00000 then
+      bg = util.bgcolor(normalbg)
+      fg = '#6f9d8e'
+    end
+    vim.cmd([[hi default GHListDark guifg=]] .. fg ..  [[ guibg=]] .. bg)
   end
   opts.bg = opts.bg or "GHListDark"
 

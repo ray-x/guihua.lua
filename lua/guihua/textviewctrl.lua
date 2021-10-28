@@ -33,8 +33,7 @@ function TextViewCtrl:initialize(delegate, ...)
   trace("init display: ", self.display_data, self.display_height, self.selected_line)
   -- ... is the view
   -- todo location, readonly? and filetype
-  vim.api
-      .nvim_buf_set_keymap(delegate.buf, "n", "<C-s>", "<cmd> lua TextViewCtrl:on_save()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-s>", "<cmd> lua TextViewCtrl:on_save()<CR>", {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-w>j", "<cmd> lua gh_jump_to_list()<CR>", {})
 
   log("bind close", self.m_delegate.win, delegate.buf)
@@ -78,7 +77,7 @@ function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
   --   opts.lnum = range.start.line + 1
   -- end
   -- local lines = range['end'].line - range.start.line + 1
-  trace(bufnr, range)
+  log(bufnr, range, uri)
   local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range['end'].line, false)
   local lines = #contents
   local syntax = opts.syntax
@@ -122,8 +121,7 @@ function TextViewCtrl:on_save()
   end
 
   log(bufnr, range, file_info.lines, contents)
-  vim.api.nvim_buf_set_lines(bufnr, range.start.line, range.start.line + file_info.lines, true,
-                             contents)
+  vim.api.nvim_buf_set_lines(bufnr, range.start.line, range.start.line + file_info.lines, true, contents)
 end
 
 return TextViewCtrl

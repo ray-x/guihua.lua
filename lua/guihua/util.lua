@@ -4,8 +4,8 @@ local log = require"guihua.log".info
 local trace = require"guihua.log".trace
 
 function M.close_view_autocmd(events, winnr)
-  api.nvim_command("autocmd " .. table.concat(events, ",")
-                       .. " <buffer> ++once lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true)")
+  api.nvim_command("autocmd " .. table.concat(events, ",") .. " <buffer> ++once lua pcall(vim.api.nvim_win_close, "
+                       .. winnr .. ", true)")
 end
 
 local function lshift(x, by)
@@ -42,24 +42,28 @@ end
 -- offset the GHListHl based on GHListDark
 function M.selcolor(Hl)
   vim.validate {Hl = {Hl, 'string'}}
+  log(Hl)
+  local bg = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("NormalFloat")), "bg#"), 2), 16)
+                 or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("Normal")), "bg#"), 2), 16)
 
-  if vim.fn.hlexists('GHListHl')
-      and vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("GHListHl")), "bg#") ~= '' then
+  if vim.fn.hlexists('GHListHl') and vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("GHListHl")), "bg#") ~= '' then
     return
   end
-  local bgcolor = tonumber(string.sub(
-                               vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("GHListDark")), "bg#"),
-                               2), 16) or 0x303b5f
+  local bgcolor = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("GHListDark")), "bg#"), 2), 16)
+                      or bg or 0x303030
   vim.validate {bgcolor = {bgcolor, 'number'}}
   local sel = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID(Hl)), "bg#")
+  log(sel)
   sel = tonumber(string.sub(sel, 2), 16)
+  log(sel)
   if sel == nil then
-    print("color scheme ", Hl, "does not have bg")
     sel = 0x506b8f
+    if bg > 0xa00000 then
+      sel = bg or 0xafafbf
+    end
   end
 
   if bgcolor == nil then
-    print("color scheme GHListDark does not have bg")
     bgcolor = 0x40495f
   end
 
@@ -75,9 +79,9 @@ function M.selcolor(Hl)
   diff = diff + math.abs(bit.band(b1, 255) - bit.band(b2, 255))
   t = t + math.abs(bit.band(b1, 255))
   if diff > 24 * 3 then
-    local fg = string.format("#%6x", sel)
+    local lbg = string.format("#%6x", sel)
     log(diff, sel, bgcolor, Hl)
-    vim.cmd("hi default GHListHl cterm=Bold gui=Bold guibg = " .. fg)
+    vim.cmd("hi default GHListHl cterm=Bold gui=Bold guibg = " .. lbg)
   else
     log(diff, t, sel, bgcolor, Hl)
     if t > 360 then -- not sure how this plugin works for light schema
@@ -85,10 +89,10 @@ function M.selcolor(Hl)
     elseif t > 216 then
       sel = 0x120103
     else
-      sel = bgcolor + 0x171320
+      sel = bgcolor + 0x23202a
     end
-    local fg = string.format("#%6x", sel)
-    vim.cmd("hi default GHListHl cterm=Bold gui=Bold guibg=" .. fg)
+    local lbg = string.format("#%6x", sel)
+    vim.cmd("hi default GHListHl cterm=Bold gui=Bold guibg=" .. lbg)
   end
 
   return "GHListHl"
@@ -131,7 +135,7 @@ end
 function M.add_pec(s)
   -- / & ! . ^ * $ \ ?
   local special = {"%[", "%]", "%-"}
-  local str = s
+  local str = s or ''
   for i = 1, #special do
     str = string.gsub(str, special[i], "%" .. special[i])
   end
@@ -148,8 +152,7 @@ local function apply_syntax_to_region(ft, start, finish)
   if not pcall(vim.cmd, string.format("syntax include %s syntax/%s.vim", lang, ft)) then
     return
   end
-  vim.cmd(string.format("syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s", name, start,
-                        finish + 1, lang))
+  vim.cmd(string.format("syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s", name, start, finish + 1, lang))
 end
 
 -- Attach ts highlighter
