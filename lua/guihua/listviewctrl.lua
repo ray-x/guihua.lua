@@ -75,68 +75,43 @@ function ListViewCtrl:initialize(delegate, ...)
   if delegate.buf == nil or delegate.buf == 0 then
     log("should not bind to current buffer")
   end
-  vim.api
-      .nvim_buf_set_keymap(delegate.buf, "n", "<C-p>", "<cmd> lua ListViewCtrl:on_prev()<CR>", {})
-  vim.api
-      .nvim_buf_set_keymap(delegate.buf, "i", "<C-p>", "<cmd> lua ListViewCtrl:on_prev()<CR>", {})
-  vim.api
-      .nvim_buf_set_keymap(delegate.buf, "n", "<C-n>", "<cmd> lua ListViewCtrl:on_next()<CR>", {})
-  vim.api
-      .nvim_buf_set_keymap(delegate.buf, "i", "<C-n>", "<cmd> lua ListViewCtrl:on_next()<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<Enter>",
-                              "<cmd> lua ListViewCtrl:on_confirm()<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Enter>",
-                              "<cmd> lua ListViewCtrl:on_confirm() <CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-p>", "<cmd> lua ListViewCtrl:on_prev()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<C-p>", "<cmd> lua ListViewCtrl:on_prev()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-n>", "<cmd> lua ListViewCtrl:on_next()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<C-n>", "<cmd> lua ListViewCtrl:on_next()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<Enter>", "<cmd> lua ListViewCtrl:on_confirm()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Enter>", "<cmd> lua ListViewCtrl:on_confirm() <CR>", {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-w>k", "<cmd> lua gh_jump_to_preview()<CR>", {})
 
   -- vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Enter>",
   --                             "<cmd> lua ListViewCtrl:on_search()<CR>", {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<Up>", "<cmd> lua ListViewCtrl:on_prev()<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<Down>", "<cmd> lua ListViewCtrl:on_next()<CR>",
-                              {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<Down>", "<cmd> lua ListViewCtrl:on_next()<CR>", {})
   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Up>", "<cmd> lua ListViewCtrl:on_prev()<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Down>", "<cmd> lua ListViewCtrl:on_next()<CR>",
-                              {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<C-b>", "<cmd> lua ListViewCtrl:on_pageup()<CR>",
-                              {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<C-f>",
-                              "<cmd> lua ListViewCtrl:on_pagedown()<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<PageUp>",
-                              "<cmd> lua ListViewCtrl:on_pageup()<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<PageDown>",
-                              "<cmd> lua ListViewCtrl:on_pagedown()<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-b>", "<cmd> lua ListViewCtrl:on_pageup()<CR>",
-                              {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-f>",
-                              "<cmd> lua ListViewCtrl:on_pagedown()<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<PageUp>",
-                              "<cmd> lua ListViewCtrl:on_pageup()<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<PageDown>",
-                              "<cmd> lua ListViewCtrl:on_pagedown()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Down>", "<cmd> lua ListViewCtrl:on_next()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<C-b>", "<cmd> lua ListViewCtrl:on_pageup()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<C-f>", "<cmd> lua ListViewCtrl:on_pagedown()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<PageUp>", "<cmd> lua ListViewCtrl:on_pageup()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<PageDown>", "<cmd> lua ListViewCtrl:on_pagedown()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-b>", "<cmd> lua ListViewCtrl:on_pageup()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-f>", "<cmd> lua ListViewCtrl:on_pagedown()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<PageUp>", "<cmd> lua ListViewCtrl:on_pageup()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<PageDown>", "<cmd> lua ListViewCtrl:on_pagedown()<CR>", {})
 
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-o>", "<cmd> lua ListViewCtrl:on_confirm()<CR>",
-                              {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-o>", "<cmd> lua ListViewCtrl:on_confirm()<CR>", {})
 
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-v>",
-                              "<cmd> lua ListViewCtrl:on_confirm({split='v'})<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-s>",
-                              "<cmd> lua ListViewCtrl:on_confirm({split='s'})<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<C-o>", "<cmd> lua ListViewCtrl:on_confirm()<CR>",
-                              {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-v>", "<cmd> lua ListViewCtrl:on_confirm({split='v'})<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-s>", "<cmd> lua ListViewCtrl:on_confirm({split='s'})<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<C-o>", "<cmd> lua ListViewCtrl:on_confirm()<CR>", {})
   log("bind close", self.m_delegate.win, delegate.buf)
 
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-e>", "<cmd> lua ListViewCtrl:on_close() <CR>",
-                              {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-c>", "<cmd> lua ListViewCtrl:on_close() <CR>",
-                              {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-e>", "<cmd> lua ListViewCtrl:on_close() <CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-c>", "<cmd> lua ListViewCtrl:on_close() <CR>", {})
 
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<ESC>", "<cmd> lua ListViewCtrl:on_close() <CR>",
-                              {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<BS>",
-                              "<cmd> lua ListViewCtrl:on_backspace() <CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<ESC>", "<cmd> lua ListViewCtrl:on_close() <CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<BS>", "<cmd> lua ListViewCtrl:on_backspace() <CR>", {})
 
-  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<C-W>",
-                              "<cmd> lua ListViewCtrl:on_backspace(true) <CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<C-W>", "<cmd> lua ListViewCtrl:on_backspace(true) <CR>", {})
 
   for i = 1, 9 do
     local cmd = string.format("<cmd> lua ListViewCtrl:on_item(%i)<CR>", i)
@@ -195,8 +170,7 @@ function ListViewCtrl:on_next()
   if l > #data_collection then
     -- listobj.m_delegate:set_pos(disp_h) -- do not move to next
     -- listobj.on_move(data_collection[#data_collection])
-    log("out of boundary next should show at: ", #listobj.data, "set: l", l, "disp_h", disp_h,
-        listobj.display_height)
+    log("out of boundary next should show at: ", #listobj.data, "set: l", l, "disp_h", disp_h, listobj.display_height)
     return {}
   end
   local skipped_fn = 1
@@ -364,8 +338,7 @@ function ListViewCtrl:on_pagedown()
 
   local l = listobj.display_start_at + disp_h
 
-  trace("pagedown: ", listobj.selected_line, listobj.display_start_at, listobj.display_height, l,
-        disp_h)
+  trace("pagedown: ", listobj.selected_line, listobj.display_start_at, listobj.display_height, l, disp_h)
 
   if #data_collection == 0 then
     return {}
@@ -410,8 +383,7 @@ function ListViewCtrl:on_pageup()
 
   local l = listobj.display_start_at - disp_h
 
-  trace("pagedown: ", listobj.selected_line, listobj.display_start_at, listobj.display_height, l,
-        disp_h)
+  trace("pagedown: ", listobj.selected_line, listobj.display_start_at, listobj.display_height, l, disp_h)
 
   if l < 1 then
     listobj.m_delegate:set_pos(1)
@@ -450,6 +422,7 @@ end
 
 function ListViewCtrl:on_search()
   -- local cursor = vim.api.nvim_win_get_cursor(0)
+  local trace = log
   trace(debug.traceback())
   local fzy = require"fzy".fzy
   if fzy == nil then
@@ -480,10 +453,7 @@ function ListViewCtrl:on_search()
 
   if #filter_input_trim == 0 or #listobj.data == nil or #listobj.data == 0 then
     listobj.filter_applied = false
-    listobj.filtered_data = listobj.data -- filter is not applied, clean up cache data
-    -- vim.fn.clearmatches()
-    vim.api.nvim_buf_clear_namespace(buf, _GH_SEARCH_NS, 0, -1)
-    return
+    listobj.filtered_data = vim.deepcopy(listobj.data) -- filter is not applied, clean up cache data
   else
     listobj.filtered_data = fzy(filter_input_trim, listobj.data)
   end
@@ -498,6 +468,10 @@ function ListViewCtrl:on_search()
   listobj.m_delegate:set_pos(1)
 
   vim.api.nvim_buf_set_lines(buf, -2, -1, true, {filter_input})
+
+  if #filter_input_trim == 0 or #listobj.data == nil or #listobj.data == 0 then
+    vim.api.nvim_buf_clear_namespace(buf, _GH_SEARCH_NS, 0, -1)
+  end
   -- log(cursor)
   -- vim.api.nvim_win_set_cursor(0, cursor)
   vim.cmd([[normal! A]])
