@@ -56,6 +56,7 @@ function ListViewCtrl:initialize(delegate, ...)
   -- trace("listview ctrl opts", opts)
   self.data = opts.data or {}
   self.preview = opts.preview or false
+  self.prompt = opts.prompt
   self.display_height = self.m_delegate.display_height or 10
   self.display_start_at = 1
   self.on_move = opts.on_move or function(...)
@@ -422,8 +423,13 @@ end
 
 function ListViewCtrl:on_search()
   -- local cursor = vim.api.nvim_win_get_cursor(0)
-  local trace = log
   trace(debug.traceback())
+  trace = log
+
+  local listobj = ListViewCtrl._viewctlobject
+  if listobj.m_delegate.prompt ~= true then
+    return
+  end
   local fzy = require"fzy".fzy
   if fzy == nil then
     print("[ERR] fzy not found")
@@ -454,6 +460,8 @@ function ListViewCtrl:on_search()
   if #filter_input_trim == 0 or #listobj.data == nil or #listobj.data == 0 then
     listobj.filter_applied = false
     listobj.filtered_data = vim.deepcopy(listobj.data) -- filter is not applied, clean up cache data
+    vim.api.nvim_buf_clear_namespace(buf, _GH_SEARCH_NS, 0, -1)
+    return
   else
     listobj.filtered_data = fzy(filter_input_trim, listobj.data)
   end
@@ -469,9 +477,6 @@ function ListViewCtrl:on_search()
 
   vim.api.nvim_buf_set_lines(buf, -2, -1, true, {filter_input})
 
-  if #filter_input_trim == 0 or #listobj.data == nil or #listobj.data == 0 then
-    vim.api.nvim_buf_clear_namespace(buf, _GH_SEARCH_NS, 0, -1)
-  end
   -- log(cursor)
   -- vim.api.nvim_win_set_cursor(0, cursor)
   vim.cmd([[normal! A]])
