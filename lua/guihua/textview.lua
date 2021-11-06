@@ -24,7 +24,7 @@ opts= {uri = l.uri, width = width, height=height, lnum = l.lnum, col = l.col, of
 
 with file uri {
     syntax = syntax,
-    width = opts.width,
+    rect = {width = 40, height = 20},
     pos_x = opts.offset_x or 0,
     pos_y = opts.offset_y or 10,
     range = range,
@@ -45,6 +45,10 @@ function TextView:initialize(...)
   vim.cmd([[hi default GHTextViewDark guifg=#e0d8f4  guibg=]] .. bg)
 
   opts.bg = opts.bg or "GHTextViewDark"
+
+  if opts.width or opts.height then
+    opts.rect = {widht = opts.widht or 60, height = opts.height or 30}
+  end
 
   if TextView.ActiveTextView ~= nil then
     if TextView.ActiveTextView.win ~= nil and vim.api.nvim_win_is_valid(TextView.ActiveTextView.win)
@@ -69,8 +73,7 @@ function TextView:initialize(...)
           opts.hl_line = 1
         end
         log("hl buf", self.buf, "l ", opts.hl_line)
-        TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "GHListHl",
-                                                               opts.hl_line - 1, 0, -1)
+        TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "GHListHl", opts.hl_line - 1, 0, -1)
         TextView.static.hl_line = opts.hl_line
       end
       log("ctor TextView: end, already existed") -- , View.ActiveView)--, self)
@@ -79,8 +82,7 @@ function TextView:initialize(...)
   end
   if opts.allow_edit then
     -- log("map au Insert")
-    vim.api.nvim_command("autocmd InsertEnter "
-                             .. " <buffer> ++once echo 'use <C-s> to save your changes'")
+    vim.api.nvim_command("autocmd InsertEnter " .. " <buffer> ++once echo 'use <C-s> to save your changes'")
   end
 
   opts.enter = opts.enter or false
@@ -118,8 +120,7 @@ function TextView:initialize(...)
       opts.hl_line = 1
     end
     log("buf", self.buf, "l: ", opts.hl_line)
-    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "GHListHl",
-                                                           opts.hl_line - 1, 0, -1)
+    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "GHListHl", opts.hl_line - 1, 0, -1)
     TextView.static.hl_line = opts.hl_line
   end
 
@@ -188,8 +189,7 @@ function TextView:on_draw(opts)
   -- vim.api.nvim_buf_set_option(bufnr, "readonly", true)
   vim.api.nvim_buf_set_option(bufnr, "bufhidden", "wipe")
   if TextView.hl_line ~= nil then
-    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "GHListHl",
-                                                           TextView.hl_line - 1, 0, -1)
+    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "GHListHl", TextView.hl_line - 1, 0, -1)
   end
   -- vim.fn.setpos(".", {0, 1, 1, 0})
 

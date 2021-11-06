@@ -70,6 +70,8 @@ function ListViewCtrl:initialize(delegate, ...)
       table.insert(self.display_data, self.data[i])
     end
   end
+
+  log("init display: ", self.display_height, self.selected_line)
   trace("init display: ", self.display_data, self.display_height, self.selected_line)
   -- ... is the view
   -- todo location, readonly? and filetype
@@ -128,7 +130,7 @@ function ListViewCtrl:initialize(delegate, ...)
   -- self:on_draw(self.display_data)
   -- self.m_delegate:set_pos(self.selected_line)
   -- trace("listview ctrl created ", self)
-  trace("listview ctrl created ")
+  log("listview ctrl created ")
 end
 
 function ListViewCtrl:get_ui()
@@ -450,7 +452,7 @@ function ListViewCtrl:on_search()
   -- get string after prompt
 
   local filter_input_trim = string.sub(filter_input, 5, #filter_input)
-  log("filter input", filter_input_trim, "input:", filter_input)
+  log("filter input:", filter_input_trim, "input:", filter_input)
 
   if listobj.search_item == filter_input_trim then
     return -- same filter may caused by none-search field change
@@ -460,6 +462,11 @@ function ListViewCtrl:on_search()
   if #filter_input_trim == 0 or #listobj.data == nil or #listobj.data == 0 then
     listobj.filter_applied = false
     listobj.filtered_data = vim.deepcopy(listobj.data) -- filter is not applied, clean up cache data
+
+    listobj.display_data = {unpack(listobj.filtered_data, 1, listobj.display_height)}
+    listobj.filter_applied = true
+    listobj.display_start_at = 1 -- reset
+    listobj:on_draw(listobj.display_data)
     vim.api.nvim_buf_clear_namespace(buf, _GH_SEARCH_NS, 0, -1)
     return
   else
