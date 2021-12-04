@@ -120,13 +120,14 @@ local function floatterm(opts)
   api.nvim_buf_set_option(buf, "bufhidden", "wipe")
   api.nvim_buf_set_option(buf, "buflisted", false)
 
+  log(opts)
   local width = opts.win_width or math.floor(columns * 0.9)
   local height = opts.win_height or math.floor(lines * 0.9)
   local win_opts = {
     relative = "editor",
     style = "minimal",
-    row = math.floor((lines - height) * 0.5),
-    col = math.floor((columns - width) * 0.5),
+    row = opts.y or math.floor((lines - height) * 0.5),
+    col = opts.x or math.floor((columns - width) * 0.5),
     width = width,
     height = height,
     border = opts.border
@@ -139,6 +140,7 @@ local function floatterm(opts)
     win_opts.col = nil
   end
 
+  log(win_opts)
   local win = api.nvim_open_win(buf, true, win_opts)
   return win, buf, win_opts
 end
@@ -147,8 +149,8 @@ end
 local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y)
   local current_window = vim.api.nvim_get_current_win()
   opts.enter = opts.enter or true
-  opts.x = opts.x or 1
-  opts.y = opts.y or 1
+  -- opts.x = opts.x or 1
+  -- opts.y = opts.y or 1
 
   if opts.cmd == "" or opts.cmd == nil then
     opts.cmd = vim.api.nvim_get_option("shell")
@@ -162,18 +164,29 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
 
   columns = api.nvim_get_option("columns")
   lines = api.nvim_get_option("lines")
-  opts.win_height = opts.win_width or math.ceil(lines * 0.88)
+  opts.win_height = opts.win_height or math.ceil(lines * 0.88)
   opts.win_width = opts.win_width or math.ceil(columns * 0.88)
   local win, buf, _ = floatterm(opts)
 
   api.nvim_win_set_option(win, "winhl", "Normal:Normal")
+
   local closer = function(...)
     log("floatwin closing ", win)
-    if vim.api.nvim_win_is_valid(win) then
-      vim.api.nvim_win_close(win, true)
-      win = nil
+
+    if opts.autoclose ~= false then
+      if vim.api.nvim_buf_is_valid(buf) then
+        vim.api.nvim_buf_delete(buf, {force = true})
+      end
+      if vim.api.nvim_win_is_valid(win) then
+        vim.api.nvim_win_close(win, true)
+        win = nil
+      end
+    end
+    if opts.closer ~= nil then
+      opts.closer(opts.closer_args)
     end
   end
+  vim.api.nvim_buf_set_option(buf, "filetype", "guihua") -- default ft for all buffers. do not use specific ft e.g
 
   local args = {shell, shellcmdflag, opts.cmd}
 
