@@ -1,11 +1,16 @@
 local M = {}
 local api = vim.api
-local log = require"guihua.log".info
-local trace = require"guihua.log".trace
+local log = require('guihua.log').info
+local trace = require('guihua.log').trace
 
 function M.close_view_autocmd(events, winnr)
-  api.nvim_command("autocmd " .. table.concat(events, ",") .. " <buffer> ++once lua pcall(vim.api.nvim_win_close, "
-                       .. winnr .. ", true)")
+  api.nvim_command(
+    'autocmd '
+      .. table.concat(events, ',')
+      .. ' <buffer> ++once lua pcall(vim.api.nvim_win_close, '
+      .. winnr
+      .. ', true)'
+  )
 end
 
 local function lshift(x, by)
@@ -21,13 +26,12 @@ end
 -- end
 
 function M.bgcolor(delta, d2, d3)
-  local bg = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("Normal")), "bg#")
-  local sel = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("PmenuSel")), "bg#")
+  local bg = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'bg#')
 
   bg = string.sub(bg, 2)
   local bgi = tonumber(bg, 16)
   if bgi == nil then
-    return "#101b3f"
+    return '#101b3f'
   end
   if d2 == nil then
     bgi = bgi + delta
@@ -35,38 +39,11 @@ function M.bgcolor(delta, d2, d3)
     bgi = bgi + delta * 65536 + d2 * 256 + d3
   end
 
-  log(string.format("#%06x", bgi))
-  return string.format("#%06x", bgi)
+  log(string.format('#%06x', bgi))
+  return string.format('#%06x', bgi)
 end
 
--- offset the GHListHl based on GHListDark
-function M.selcolor(Hl)
-  vim.validate {Hl = {Hl, 'string'}}
-  log(Hl)
-  local bg = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("NormalFloat")), "bg#"), 2), 16)
-                 or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("Normal")), "bg#"), 2), 16)
-
-  if vim.fn.hlexists('GHListHl') and vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("GHListHl")), "bg#") ~= '' then
-    return
-  end
-  local bgcolor = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("GHListDark")), "bg#"), 2), 16)
-                      or bg or 0x303030
-  vim.validate {bgcolor = {bgcolor, 'number'}}
-  local sel = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID(Hl)), "bg#")
-  log(sel)
-  sel = tonumber(string.sub(sel, 2), 16)
-  log(sel)
-  if sel == nil then
-    sel = 0x506b8f
-    if bg > 0xa00000 then
-      sel = bg or 0xafafbf
-    end
-  end
-
-  if bgcolor == nil then
-    bgcolor = 0x40495f
-  end
-
+local function diff_color(bgcolor, sel)
   local b1, b2 = bgcolor, sel
   local diff = math.abs(bit.band(b1, 255) - bit.band(b2, 255))
   local t = math.abs(bit.band(b1, 255))
@@ -78,10 +55,65 @@ function M.selcolor(Hl)
   b2 = bit.rshift(b2, 8)
   diff = diff + math.abs(bit.band(b1, 255) - bit.band(b2, 255))
   t = t + math.abs(bit.band(b1, 255))
+  return diff, t
+end
+
+-- offset the GHListHl based on GHListDark
+function M.selcolor(Hl)
+  vim.validate({ Hl = { Hl, 'string' } })
+  log(Hl)
+  local bg = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'bg#'), 2), 16)
+    or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'bg#'), 2), 16)
+
+  local fg = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'fg#'), 2), 16)
+    or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'fg#'), 2), 16)
+
+  if vim.fn.hlexists('GHListHl') and vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GHListHl')), 'bg#') ~= '' then
+    return
+  end
+  local bgcolor = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GHListDark')), 'bg#'), 2), 16)
+    or bg
+    or 0x303030
+
+  vim.validate({ bgcolor = { bgcolor, 'number' } })
+  --   local sel = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("PmenuSel")), "bg#") default
+  local sel = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID(Hl)), 'bg#')
+
+  local selfgstr = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID(Hl)), 'fg#')
+
+  log('sel, ', sel, selfgstr)
+  sel = tonumber(string.sub(sel, 2), 16)
+  local selfg = tonumber(string.sub(selfgstr, 2), 16)
+  log(sel, selfg)
+  if sel == nil then
+    sel = 0x506b8f
+    if bg > 0xa00000 then
+      sel = bg or 0xafafbf
+    end
+  end
+
+  if selfg == nil then
+    sel = 0xa0abcf
+    if bg > 0xa00000 then
+      selfg = fg or 0xefefef
+    end
+  end
+
+  if bgcolor == nil then
+    bgcolor = 0x40495f
+  end
+
+  local diff, t = diff_color(bgcolor, sel)
   if diff > 24 * 3 then
-    local lbg = string.format("#%6x", sel)
+    local lbg = string.format('#%6x', sel)
     log(diff, sel, bgcolor, Hl)
-    vim.cmd("hi default GHListHl cterm=Bold gui=Bold guibg = " .. lbg)
+
+    local hi = [[hi default GHListHl cterm=Bold gui=Bold guibg=]] .. lbg
+    if vim.o.background == 'light' then
+      hi = hi .. ' guifg=' .. selfgstr
+    end
+
+    vim.cmd(hi)
   else
     log(diff, t, sel, bgcolor, Hl)
     if t > 360 then -- not sure how this plugin works for light schema
@@ -91,21 +123,21 @@ function M.selcolor(Hl)
     else
       sel = bgcolor + 0x23202a
     end
-    local lbg = string.format("#%6x", sel)
-    vim.cmd("hi default GHListHl cterm=Bold gui=Bold guibg=" .. lbg)
+    local lbg = string.format('#%6x', sel)
+    vim.cmd('hi default GHListHl cterm=Bold gui=Bold guibg=' .. lbg)
   end
 
-  return "GHListHl"
+  return 'GHListHl'
 end
 
 function M.close_view_event(mode, key, winnr, bufnr, enter)
-  local closer = " <Cmd> lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true) <CR>"
+  local closer = ' <Cmd> lua pcall(vim.api.nvim_win_close, ' .. winnr .. ', true) <CR>'
   enter = enter or false
   bufnr = bufnr or 0
 
   -- log ("!! closer", winnr, bufnr, enter)
   if enter then
-    vim.api.nvim_buf_set_keymap(bufnr, "n", key, closer, {})
+    vim.api.nvim_buf_set_keymap(bufnr, 'n', key, closer, {})
     -- api.nvim_command( mode .. "map <buffer> " .. key .. " <Cmd> lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true) <CR>" )
   end
 end
@@ -113,7 +145,7 @@ end
 function M.clone(st)
   local tab = {}
   for k, v in pairs(st or {}) do
-    if type(v) ~= "table" then
+    if type(v) ~= 'table' then
       tab[k] = v
     else
       tab[k] = M.clone(v)
@@ -124,20 +156,20 @@ end
 
 function M.add_escape(s)
   -- / & ! . ^ * $ \ ?
-  local special = {"&", "!", "*", "?", "/"}
+  local special = { '&', '!', '*', '?', '/' }
   local str = s
   for i = 1, #special do
-    str = string.gsub(str, special[i], "\\" .. special[i])
+    str = string.gsub(str, special[i], '\\' .. special[i])
   end
   return str
 end
 
 function M.add_pec(s)
   -- / & ! . ^ * $ \ ?
-  local special = {"%[", "%]", "%-"}
+  local special = { '%[', '%]', '%-' }
   local str = s or ''
   for i = 1, #special do
-    str = string.gsub(str, special[i], "%" .. special[i])
+    str = string.gsub(str, special[i], '%' .. special[i])
   end
   return str
 end
@@ -148,34 +180,34 @@ local function apply_syntax_to_region(ft, start, finish)
     return
   end
   local name = ft .. 'guihua'
-  local lang = "@" .. ft:upper()
-  if not pcall(vim.cmd, string.format("syntax include %s syntax/%s.vim", lang, ft)) then
+  local lang = '@' .. ft:upper()
+  if not pcall(vim.cmd, string.format('syntax include %s syntax/%s.vim', lang, ft)) then
     return
   end
-  vim.cmd(string.format("syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s", name, start, finish + 1, lang))
+  vim.cmd(string.format('syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s', name, start, finish + 1, lang))
 end
 
 -- Attach ts highlighter
 M.highlighter = function(bufnr, ft, lines)
-  if ft == nil or ft == "" then
+  if ft == nil or ft == '' then
     return false
   end
 
-  local has_ts, _ = pcall(require, "nvim-treesitter")
+  local has_ts, _ = pcall(require, 'nvim-treesitter')
   if has_ts then
-    local _, ts_highlight = pcall(require, "nvim-treesitter.highlight")
-    local _, ts_parsers = pcall(require, "nvim-treesitter.parsers")
+    local _, ts_highlight = pcall(require, 'nvim-treesitter.highlight')
+    local _, ts_parsers = pcall(require, 'nvim-treesitter.parsers')
     local lang = ts_parsers.ft_to_lang(ft)
     if ts_parsers.has_parser(lang) then
-      trace("attach ts")
+      trace('attach ts')
       ts_highlight.attach(bufnr, lang)
       return true
     end
   else
     -- apply_syntax_to_region ?
-    log("ts not enable")
+    log('ts not enable')
     if not lines then
-      log("need spcific lines!")
+      log('need spcific lines!')
       -- TODO: did not verify this part of code yet
       lines = 12
     end
@@ -191,7 +223,7 @@ function M.word_find(input, word)
   if input == nil or word == nil then
     return nil
   end
-  return string.find(input, "%f[%a]" .. word .. "%f[%A]")
+  return string.find(input, '%f[%a]' .. word .. '%f[%A]')
 end
 
 function M.fzy_idx(data_list, pos)
