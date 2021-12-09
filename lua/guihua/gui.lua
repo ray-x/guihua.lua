@@ -104,7 +104,7 @@ function M.new_list_view(opts)
 
   local loc = 'top_center'
 
-  local mwidth = opts.min_width or 30
+  local mwidth = opts.min_width or 0.3
   local width = math.floor(wwidth * mwidth)
   if opts.width_ratio ~= nil and opts.width_ratio > 0.3 and opts.width_ratio < 0.99 then
     width = math.floor(wwidth * opts.width_ratio)
@@ -130,7 +130,7 @@ function M.new_list_view(opts)
     prompt = true
   end
 
-  local lheight = math.min(#data, math.floor(wheight * (opts.min_height or 15)))
+  local lheight = math.min(#data, math.floor(wheight * (opts.min_height or 0.3)))
 
   local r, _ = top_center(lheight, width)
 
