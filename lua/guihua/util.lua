@@ -94,7 +94,7 @@ function M.selcolor(Hl)
 
   if selfg == nil then
     sel = 0xa0abcf
-    if bg > 0xa00000 then
+    if bg and bg > 0xa00000 then
       selfg = fg or 0xefefef
     end
   end
@@ -109,7 +109,7 @@ function M.selcolor(Hl)
     log(diff, sel, bgcolor, Hl)
 
     local hi = [[hi default GHListHl cterm=Bold gui=Bold guibg=]] .. lbg
-    if vim.o.background == 'light' then
+    if vim.o.background == 'light' and selfgstr then
       hi = hi .. ' guifg=' .. selfgstr
     end
 
