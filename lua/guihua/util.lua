@@ -77,9 +77,9 @@ function M.selcolor(Hl)
 
   vim.validate({ bgcolor = { bgcolor, 'number' } })
   --   local sel = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("PmenuSel")), "bg#") default
-  local sel = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID(Hl)), 'bg#')
+  local sel = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID(Hl)), 'bg#') or '#434550'
 
-  local selfgstr = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID(Hl)), 'fg#')
+  local selfgstr = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID(Hl)), 'fg#') or '#EFEFEF'
 
   log('sel, ', sel, selfgstr)
   sel = tonumber(string.sub(sel, 2), 16)
@@ -93,7 +93,7 @@ function M.selcolor(Hl)
   end
 
   if selfg == nil then
-    sel = 0xa0abcf
+    selfg = 0xa0abcf
     if bg and bg > 0xa00000 then
       selfg = fg or 0xefefef
     end

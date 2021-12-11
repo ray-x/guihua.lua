@@ -11,6 +11,7 @@ local top_center = require('guihua.location').top_center
 local path_sep = require('navigator.util').path_sep()
 local path_cur = require('navigator.util').path_cur()
 function M._preview_location(opts) -- location, width, pos_x, pos_y
+  log(opts)
   local uri = opts.uri
   if uri == nil then
     log('invalid/nil uri ')
@@ -81,13 +82,21 @@ end
 function M.preview_uri(opts) -- uri, width, line, col, offset_x, offset_y
   -- local handle = vim.loop.new_async(vim.schedule_wrap(function()
   local line_beg = (opts.lnum or 2) - 1
-  if line_beg >= opts.preview_lines_before or 1 then
+  if line_beg >= (opts.preview_lines_before or 1) then
     line_beg = line_beg - (opts.preview_lines_before or 1)
   elseif line_beg >= 2 then
     line_beg = line_beg - 2
   end
   local loc = { uri = opts.uri, range = { start = { line = line_beg } } }
 
+  local wwidth = api.nvim_get_option('columns')
+
+  local mwidth = opts.min_width or 0.3
+  local width = math.floor(wwidth * mwidth)
+  if opts.width_ratio ~= nil and opts.width_ratio > 0.3 and opts.width_ratio < 0.99 then
+    width = math.floor(wwidth * opts.width_ratio)
+  end
+  opts.width = math.min(120, width, opts.width or 120)
   -- TODO: preview height
   loc.range['end'] = { line = opts.lnum + opts.preview_height }
   opts.location = loc
@@ -99,6 +108,9 @@ end
 function M.new_list_view(opts)
   local items = opts.items
   local data = opts.data or {}
+  opts.height_ratio = opts.height_ratio or 0.8
+  opts.width_ratio = opts.width_ratio or 0.8
+  opts.preview_height_ratio = opts.preview_height_ratio or 0.5
 
   local wwidth = api.nvim_get_option('columns')
 

@@ -223,7 +223,7 @@ local term = function(opts)
     opts.y = win_height
     opts.x = columns - win_width
   else
-    win_height = math.ceil(lines * (opts.sheight_ratio) or 0.6  )
+    win_height = math.ceil(lines * (opts.height_ratio or 0.6))
     win_width = math.ceil(columns * 0.98)
 
     opts.y = opts.y or lines - win_height
