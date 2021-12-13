@@ -175,6 +175,8 @@ function M.new_list_view(opts)
     style = opts.style,
     api = opts.api,
     total = opts.total,
+
+    width_ratio = opts.width_ratio,
     rect = { height = lheight, width = width, pos_x = 0, pos_y = 0 },
     -- preview_height = pheight,
     ft = opts.ft or 'guihua',
@@ -200,6 +202,7 @@ function M.new_list_view(opts)
       end
       return M.preview_uri({
         uri = item.uri,
+        width_ratio = opts.width_ratio,
         preview_lines_before = opts.preview_lines_before or 3,
         width = width,
         height = lheight, -- this is to cal offset
