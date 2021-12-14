@@ -1,15 +1,15 @@
 local M = {}
 local ListView = require('guihua.listview')
 local TextView = require('guihua.textview')
-local util = require('navigator.util')
-local log = require('navigator.util').log
-local trace = require('navigator.util').trace
+local util = require('guihua.util')
+local log = require('guihua.log').info
+local trace = require('guihua.log').trace
 local api = vim.api
 
 local top_center = require('guihua.location').top_center
 
-local path_sep = require('navigator.util').path_sep()
-local path_cur = require('navigator.util').path_cur()
+-- local path_sep = require('navigator.util').path_sep()
+-- local path_cur = require('navigator.util').path_cur()
 function M._preview_location(opts) -- location, width, pos_x, pos_y
   log(opts)
   local uri = opts.uri
