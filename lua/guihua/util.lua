@@ -4,7 +4,7 @@ local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 
 function M.close_view_autocmd(events, winnr)
-  api.nvim_command(
+  vim.cmd(
     'autocmd '
       .. table.concat(events, ',')
       .. ' <buffer> ++once lua pcall(vim.api.nvim_win_close, '
@@ -138,7 +138,7 @@ function M.close_view_event(mode, key, winnr, bufnr, enter)
   -- log ("!! closer", winnr, bufnr, enter)
   if enter then
     vim.api.nvim_buf_set_keymap(bufnr, 'n', key, closer, {})
-    -- api.nvim_command( mode .. "map <buffer> " .. key .. " <Cmd> lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true) <CR>" )
+    -- cmd( mode .. "map <buffer> " .. key .. " <Cmd> lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true) <CR>" )
   end
 end
 
@@ -251,6 +251,32 @@ function M.fzy_idx(data_list, pos)
     end
   end
   return data_list[pos]
+end
+
+M.open_file_at = function(filename, line, col, split)
+  if split == nil then
+    -- code
+    vim.cmd(string.format('e! +%s %s', line, filename))
+  elseif split == 'v' then
+    vim.cmd(string.format('vsp! +%s %s', line, filename))
+  elseif split == 's' then
+    vim.cmd(string.format('sp! +%s %s', line, filename))
+  end
+  -- vim.cmd(string.format("e! %s", filename))
+  col = col or 1
+  vim.fn.cursor(line, col)
+  -- sometime highlight failed because lazyloading
+  local has_ts, _ = pcall(require, 'nvim-treesitter')
+  if has_ts then
+    local _, ts_highlight = pcall(require, 'nvim-treesitter.highlight')
+    local _, ts_parsers = pcall(require, 'nvim-treesitter.parsers')
+    local lang = ts_parsers.ft_to_lang(vim.o.ft)
+    if ts_parsers.has_parser(lang) then
+      trace('attach ts')
+      ts_highlight.attach(0, lang)
+      return true
+    end
+  end
 end
 
 return M
