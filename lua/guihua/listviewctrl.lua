@@ -3,8 +3,8 @@ local ViewController = require('guihua.viewctrl')
 local error = require('guihua.log').error
 -- local util = require('guihua.util')
 
-local log = require"guihua.log".info
-local trace = require"guihua.log".trace
+local log = require('guihua.log').info
+local trace = require('guihua.log').trace
 
 TextView = TextView or require('guihua.textview')
 if ListViewCtrl == nil then
@@ -217,6 +217,8 @@ local function item_text(data_collection, idx)
     text = data_collection[idx]
   elseif data_collection[idx].display_data ~= nil then
     text = data_collection[idx].display_data
+  elseif data_collection[idx].text ~= nil then
+    text = data_collection[idx].text
   end
   return text
 end
@@ -239,12 +241,17 @@ function ListViewCtrl:on_item(i)
 
   local idx
   for j = i, i + 3 do
+    log(data_collection[j])
     if j > #data_collection then
+      break
+    end
+    if data_collection[j] and data_collection[j].idx == i then
+      idx = j
       break
     end
     local t = item_text(data_collection, j)
     local f = string.find(t or '', tostring(i))
-    if f ~= nil and f < 3 then
+    if f ~= nil and f < 4 then
       idx = j
       break
     end

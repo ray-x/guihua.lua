@@ -220,4 +220,89 @@ function M.new_list_view(opts)
   })
 end
 
+M.select = function(items, opts, on_choice)
+  log('select called')
+  local data = { { text = '  select ' .. opts.prompt .. ' <C-o> Apply <C-e> Exit' } }
+
+  local width = #data[1].text + 4
+  for i, item in ipairs(items) do
+    table.insert(data, {
+      text = ' [' .. tostring(i) .. '] ' .. opts.format_item(item),
+      value = item,
+      idx = i,
+    })
+    if item and item[2] and item[2].edit then
+      local edit = item[2].edit
+      local title = ''
+      if edit.documentChanges or item.edit.changes then
+        local changes = edit.documentChanges or edit.changes
+        -- trace(action.edit.documentChanges)
+        for _, change in pairs(changes or {}) do
+          -- trace(change)
+          if change.edits then
+            title = title .. ' [newText:]'
+            for _, ed in pairs(change.edits) do
+              -- trace(ed)
+              if ed.newText and ed.newText ~= '' then
+                local newText = ed.newText:gsub('\n\t', ' ↳ ')
+                newText = newText:gsub('\n', '↳')
+                newText = newText:gsub('↳↳', '↳')
+                title = title .. ' (' .. newText
+                if ed.range then
+                  title = title .. ' line: ' .. tostring(ed.range.start.line) .. ')'
+                else
+                  title = title .. ')'
+                end
+              end
+            end
+          elseif change.newText and change.newText ~= '' then
+            local newText = change.newText:gsub('"\n\t"', ' ↳  ')
+            newText = newText:gsub('\n', '↳')
+            title = title .. ' (newText: ' .. newText
+            if change.range then
+              title = title .. ' line: ' .. tostring(change.range.start.line) .. ')'
+            else
+              title = title .. ')'
+            end
+          end
+        end
+      end
+      if #title > 1 then
+        data[#data].text = data[#data].text .. ' ' .. title
+      end
+    end
+
+    if #data[#data].text + 6 > width then
+      width = #data[#data].text + 6
+    end
+  end
+
+  local divider = string.rep('─', width + 2)
+  table.insert(data, 2, divider)
+  log(data)
+  local listview = M.new_list_view({
+    items = data,
+    border = 'single',
+    width = width + 4,
+    loc = 'top_center',
+    relative = 'cursor',
+    rawdata = true,
+    data = data,
+    on_confirm = function(item)
+      log(item)
+      return on_choice(item.value)
+    end,
+    on_move = function(pos)
+      trace(pos)
+      return pos
+    end,
+  })
+
+  vim.api.nvim_buf_add_highlight(listview.bufnr, -1, 'Title', 0, 0, -1)
+  ListViewCtrl:on_next()
+  ListViewCtrl:on_next()
+
+  return listview
+end
+
 return M
