@@ -192,7 +192,12 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
   end
   vim.api.nvim_buf_set_option(buf, 'filetype', 'guihua') -- default ft for all buffers. do not use specific ft e.g
 
-  local args = { shell, shellcmdflag, opts.cmd }
+  local args
+  if type(opts.cmd) == 'string' then
+    args = { shell, shellcmdflag, opts.cmd }
+  else
+    args = opts.cmd
+  end
 
   vim.fn.termopen(args, {
     on_exit = function(_, _, _)
