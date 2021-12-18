@@ -242,7 +242,7 @@ local term = function(opts)
   end
 
   opts.closer = function(args)
-    utils.log('closer callback')
+    log('closer callback')
     vim.cmd('set noconfirm')
     vim.cmd('bufdo e!')
     vim.cmd('set confirm')
