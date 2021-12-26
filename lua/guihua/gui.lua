@@ -225,6 +225,9 @@ M.select = function(items, opts, on_choice)
   local data = { { text = '  select ' .. opts.prompt .. ' <C-o> Apply <C-e> Exit' } }
 
   local width = #data[1].text + 4
+  opts.format_item = opts.format_item or function(item)
+    return item
+  end
   for i, item in ipairs(items) do
     table.insert(data, {
       text = ' [' .. tostring(i) .. '] ' .. opts.format_item(item),
