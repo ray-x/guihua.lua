@@ -229,6 +229,7 @@ M.select = function(items, opts, on_choice)
     return item
   end
   for i, item in ipairs(items) do
+    trace(i, item)
     table.insert(data, {
       text = ' [' .. tostring(i) .. '] ' .. opts.format_item(item),
       value = item,
@@ -237,7 +238,7 @@ M.select = function(items, opts, on_choice)
     if item and item[2] and item[2].edit then
       local edit = item[2].edit
       local title = ''
-      if edit.documentChanges or item.edit.changes then
+      if edit.documentChanges or edit.changes then
         local changes = edit.documentChanges or edit.changes
         -- trace(action.edit.documentChanges)
         for _, change in pairs(changes or {}) do
