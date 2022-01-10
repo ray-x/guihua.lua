@@ -40,8 +40,7 @@ function ListView:initialize(...)
 
   local bg
   if
-    not vim.fn.hlexists('GHListDark')
-    or vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GHListDark')), 'bg#') == ''
+    not vim.fn.hlexists('GHListDark') or vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GHListDark')), 'bg#') == ''
   then
     bg = util.bgcolor(0x051012)
     local fg = '#e0d8f4'
@@ -117,6 +116,7 @@ end
 -- But I still feel that it is better to de-reference so it will demalloc early
 function ListView.close()
   log('closing listview', ListView.name)
+  trace('callback', debug.traceback())
 
   local closer = ListView.Closer
   if closer then

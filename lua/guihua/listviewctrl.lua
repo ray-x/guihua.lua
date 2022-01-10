@@ -48,6 +48,14 @@ function _G.gh_jump_to_preview()
   end
 end
 
+function on_preview()
+  if TextView == nil or TextView.ActiveTextView == nil then
+    return false
+  end
+  local jumpto = TextView.ActiveTextView.win
+  return jumpto ~= nil and vim.api.nvim_win_is_valid(jumpto)
+end
+
 function ListViewCtrl:initialize(delegate, ...)
   trace(debug.traceback())
   ViewController:initialize(delegate, ...)
@@ -61,8 +69,7 @@ function ListViewCtrl:initialize(delegate, ...)
   self.prompt = opts.prompt
   self.display_height = self.m_delegate.display_height or 10
   self.display_start_at = 1
-  self.on_move = opts.on_move or function(...)
-  end
+  self.on_move = opts.on_move or function(...) end
   self.on_confirm = opts.on_confirm
   if #self.data <= self.display_height then
     self.display_data = opts.data
@@ -86,12 +93,14 @@ function ListViewCtrl:initialize(delegate, ...)
   vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<C-n>', '<cmd> lua ListViewCtrl:on_next()<CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<Enter>', '<cmd> lua ListViewCtrl:on_confirm()<CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<Enter>', '<cmd> lua ListViewCtrl:on_confirm() <CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-w>k', '<cmd> lua gh_jump_to_preview()<CR>', {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-w>j', '<cmd> lua gh_jump_to_preview()<CR>', {})
 
   -- vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Enter>",
   --                             "<cmd> lua ListViewCtrl:on_search()<CR>", {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<Up>', '<cmd> lua ListViewCtrl:on_prev()<CR>', {})
+  -- vim.api.nvim_buf_set_keymap(delegate.buf, 'n', 'k', '<cmd> lua ListViewCtrl:on_prev()<CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<Down>', '<cmd> lua ListViewCtrl:on_next()<CR>', {})
+  -- vim.api.nvim_buf_set_keymap(delegate.buf, 'n', 'j', '<cmd> lua ListViewCtrl:on_next()<CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<Up>', '<cmd> lua ListViewCtrl:on_prev()<CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<Down>', '<cmd> lua ListViewCtrl:on_next()<CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<C-b>', '<cmd> lua ListViewCtrl:on_pageup()<CR>', {})
@@ -192,7 +201,7 @@ function ListViewCtrl:on_next()
     -- need to scroll next
     listobj.display_start_at = listobj.display_start_at + skipped_fn
     listobj.display_data = {
-      unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1)
+      unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1),
     }
     trace('disp', listobj.display_data, disp_h, listobj.display_start_at)
     listobj.m_delegate:on_draw(listobj.display_data)
@@ -282,8 +291,14 @@ function ListViewCtrl:on_prev()
     disp_h = disp_h - 1
   end
 
-  log('on prev: ', listobj.selected_line, listobj.display_start_at, disp_h, listobj.display_height,
-      listobj.m_delegate.prompt)
+  log(
+    'on prev: ',
+    listobj.selected_line,
+    listobj.display_start_at,
+    disp_h,
+    listobj.display_height,
+    listobj.m_delegate.prompt
+  )
 
   local data_collection = listobj.data
   if listobj.filter_applied then
@@ -314,7 +329,7 @@ function ListViewCtrl:on_prev()
     log('roll back to ', listobj.display_start_at - 1)
     listobj.display_start_at = listobj.display_start_at - skipped_fn
     listobj.display_data = {
-      unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1)
+      unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1),
     }
 
     trace('dispdata', listobj.display_data)
@@ -365,7 +380,7 @@ function ListViewCtrl:on_pagedown()
   -- need to scroll next
   listobj.display_start_at = listobj.display_start_at + disp_h
   listobj.display_data = {
-    unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1)
+    unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1),
   }
   trace('disp', listobj.display_data, disp_h, listobj.display_start_at)
   listobj.m_delegate:on_draw(listobj.display_data)
@@ -407,7 +422,7 @@ function ListViewCtrl:on_pageup()
   -- need to scroll next
   listobj.display_start_at = listobj.display_start_at - disp_h
   listobj.display_data = {
-    unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1)
+    unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1),
   }
   trace('disp', listobj.display_data, disp_h, listobj.display_start_at)
   listobj.m_delegate:on_draw(listobj.display_data)
@@ -470,7 +485,7 @@ function ListViewCtrl:on_search()
     listobj.filter_applied = false
     listobj.filtered_data = vim.deepcopy(listobj.data) -- filter is not applied, clean up cache data
 
-    listobj.display_data = {unpack(listobj.filtered_data, 1, listobj.display_height)}
+    listobj.display_data = { unpack(listobj.filtered_data, 1, listobj.display_height) }
     listobj.filter_applied = true
     listobj.display_start_at = 1 -- reset
     listobj:on_draw(listobj.display_data)
@@ -480,7 +495,7 @@ function ListViewCtrl:on_search()
     listobj.filtered_data = fzy(filter_input_trim, listobj.data)
   end
   trace('filtered data', listobj.filtered_data)
-  listobj.display_data = {unpack(listobj.filtered_data, 1, listobj.display_height)}
+  listobj.display_data = { unpack(listobj.filtered_data, 1, listobj.display_height) }
   listobj.filter_applied = true
   listobj.display_start_at = 1 -- reset
   --
@@ -489,7 +504,7 @@ function ListViewCtrl:on_search()
   listobj.selected_line = 1
   listobj.m_delegate:set_pos(1)
 
-  vim.api.nvim_buf_set_lines(buf, -2, -1, true, {filter_input})
+  vim.api.nvim_buf_set_lines(buf, -2, -1, true, { filter_input })
 
   -- log(cursor)
   -- vim.api.nvim_win_set_cursor(0, cursor)
@@ -530,16 +545,21 @@ function ListViewCtrl:on_close()
 
   --  log("closer ", ListViewCtrl)
   ListViewCtrl._viewctlobject.m_delegate:on_close()
-  ListViewCtrl:on_leave()
+  ListViewCtrl:on_leave(true)
   ListViewCtrl._viewctlobject = nil
 end
 
-function ListViewCtrl:on_leave()
+function ListViewCtrl:on_leave(force)
   log('closer background') -- , ListViewCtrl._viewctlobject.m_delegate)
   vim.defer_fn(function()
     -- return
     if ListViewCtrl._viewctlobject and ListViewCtrl._viewctlobject.m_delegate then
-      ListViewCtrl._viewctlobject.m_delegate.close()
+      if force then
+        ListViewCtrl._viewctlobject.m_delegate.close()
+      end
+      if not on_preview() then
+        ListViewCtrl._viewctlobject.m_delegate.close()
+      end
     end
   end, 200)
 end
