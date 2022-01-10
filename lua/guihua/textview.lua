@@ -1,14 +1,14 @@
-local class = require "middleclass"
-local View = require "guihua.view"
-local log = require"guihua.log".info
-local util = require "guihua.util"
-local trace = require"guihua.log".trace
+local class = require('middleclass')
+local View = require('guihua.view')
+local log = require('guihua.log').info
+local util = require('guihua.util')
+local trace = require('guihua.log').trace
 
-local TextViewCtrl = require "guihua.textviewctrl"
+local TextViewCtrl = require('guihua.textviewctrl')
 -- local TextView = {}
 
 if TextView == nil then
-  TextView = class("TextView", View)
+  TextView = class('TextView', View)
 end
 -- Note, Support only one active view
 -- ActiveView = nil
@@ -38,28 +38,31 @@ function TextView:initialize(...)
 
   local opts = select(1, ...) or {}
 
-  log("ctor TextView start:")
+  log('ctor TextView start:')
   trace(opts)
   -- vim.cmd([[hi default GHTextViewDark guifg=#e0d8f4 guibg=#332e55]])
   local bg = util.bgcolor(0x050812)
   vim.cmd([[hi default GHTextViewDark guifg=#e0d8f4  guibg=]] .. bg)
 
-  opts.bg = opts.bg or "GHTextViewDark"
+  opts.bg = opts.bg or 'GHTextViewDark'
 
   if opts.width or opts.height then
-    opts.rect = {widht = opts.widht or 60, height = opts.height or 30}
+    opts.rect = { widht = opts.widht or 60, height = opts.height or 30 }
   end
 
   if TextView.ActiveTextView ~= nil then
-    if TextView.ActiveTextView.win ~= nil and vim.api.nvim_win_is_valid(TextView.ActiveTextView.win)
-        and vim.api.nvim_buf_is_valid(self.buf) then
-      log("active view ", TextView.ActiveTextView.buf, TextView.ActiveTextView.win)
+    if
+      TextView.ActiveTextView.win ~= nil
+      and vim.api.nvim_win_is_valid(TextView.ActiveTextView.win)
+      and vim.api.nvim_buf_is_valid(TextView.ActiveTextView.buf)
+    then
+      log('active view ', TextView.ActiveTextView.buf, TextView.ActiveTextView.win)
       if TextView.hl_id ~= nil then
         vim.api.nvim_buf_clear_namespace(0, TextView.hl_id, 0, -1)
         TextView.static.hl_id = nil
         TextView.static.hl_line = nil
       end
-      trace("active view already existed")
+      trace('active view already existed')
       self = TextView.ActiveTextView
       TextView.ActiveTextView.ctrl.file_info = opts
       -- TODO: delegate, on_load
@@ -72,28 +75,28 @@ function TextView:initialize(...)
         if opts.hl_line == 0 then
           opts.hl_line = 1
         end
-        log("hl buf", self.buf, "l ", opts.hl_line)
-        TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "GHListHl", opts.hl_line - 1, 0, -1)
+        log('hl buf', self.buf, 'l ', opts.hl_line)
+        TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, 'GHListHl', opts.hl_line - 1, 0, -1)
         TextView.static.hl_line = opts.hl_line
       end
-      log("ctor TextView: end, already existed") -- , View.ActiveView)--, self)
+      log('ctor TextView: end, already existed') -- , View.ActiveView)--, self)
       return TextView.ActiveTextView
     end
   end
   if opts.allow_edit then
     -- log("map au Insert")
-    vim.api.nvim_command("autocmd InsertEnter " .. " <buffer> ++once echo 'use <C-s> to save your changes'")
+    vim.api.nvim_command('autocmd InsertEnter ' .. " <buffer> ++once echo 'use <C-s> to save your changes'")
   end
 
   opts.enter = opts.enter or false
   View.initialize(self, opts)
 
-  trace("textview after super", self)
-  self.cursor_pos = {1, 1}
+  trace('textview after super', self)
+  self.cursor_pos = { 1, 1 }
   if opts.syntax then
     self.syntax = opts.syntax
-    log("hl ", self.buf, opts.syntax)
-    require"guihua.util".highlighter(self.buf, opts.syntax, opts.lnum)
+    log('hl ', self.buf, opts.syntax)
+    require('guihua.util').highlighter(self.buf, opts.syntax, opts.lnum)
   end
 
   if not opts.enter then
@@ -101,14 +104,14 @@ function TextView:initialize(...)
     log('auto close on cursor move disabled')
   else
     -- for user case of symbol definition preview, <c-e> close win/buf
-    util.close_view_event("n", "<C-e>", self.win, self.buf, opts.enter)
-    util.close_view_event("i", "<C-e>", self.win, self.buf, opts.enter)
+    util.close_view_event('n', '<C-e>', self.win, self.buf, opts.enter)
+    util.close_view_event('i', '<C-e>', self.win, self.buf, opts.enter)
   end
 
-  util.close_view_autocmd({"BufHidden", "BufDelete"}, self.win)
+  util.close_view_autocmd({ 'BufHidden', 'BufDelete' }, self.win)
   -- controller and data
   if opts.uri then -- well this is a feature flag for early phase dev
-    log("ctor TextView: ctrl") -- , View.ActiveView)--, self)
+    log('ctor TextView: ctrl') -- , View.ActiveView)--, self)
     self:bind_ctrl(opts)
 
     local content = self.ctrl:on_load(opts)
@@ -119,18 +122,18 @@ function TextView:initialize(...)
     if opts.hl_line == 0 then
       opts.hl_line = 1
     end
-    log("buf", self.buf, "l: ", opts.hl_line)
-    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "GHListHl", opts.hl_line - 1, 0, -1)
+    log('buf', self.buf, 'l: ', opts.hl_line)
+    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, 'GHListHl', opts.hl_line - 1, 0, -1)
     TextView.static.hl_line = opts.hl_line
   end
 
   if opts.allow_edit then
-    vim.api.nvim_buf_set_option(self.buf, "readonly", false)
+    vim.api.nvim_buf_set_option(self.buf, 'readonly', false)
   end
 
   TextView.static.ActiveTextView = self
 
-  log("ctor TextView: end") -- , View.ActiveView)--, self)
+  log('ctor TextView: end') -- , View.ActiveView)--, self)
   trace(self)
   return self
 end
@@ -149,7 +152,7 @@ function TextView:on_draw(opts)
   end
   local data = {}
   if not self or not vim.api.nvim_buf_is_valid(self.buf) then
-    log("buf id invalid", self)
+    log('buf id invalid', self)
     return
   end
   if opts.uri ~= nil then
@@ -158,18 +161,18 @@ function TextView:on_draw(opts)
     data = opts
   end
   local content = {}
-  if type(data) == "string" then
-    content = {data}
-  elseif type(data) == "table" then
+  if type(data) == 'string' then
+    content = { data }
+  elseif type(data) == 'table' then
     content = data
   else
-    log("invalid draw data", data, self.buf, self.win)
+    log('invalid draw data', data, self.buf, self.win)
     return
   end
 
-  log("draw data: ", data[1], " size: ", #data, self.buf, self.win)
+  log('draw data: ', data[1], ' size: ', #data, self.buf, self.win)
   if #data < 1 then
-    log("nothing to redraw")
+    log('nothing to redraw')
     return
   end
   local start = 0
@@ -179,40 +182,40 @@ function TextView:on_draw(opts)
   local end_at = -1
   local bufnr = self.buf or TextView.ActiveTextView.buf
   if bufnr == 0 then
-    print("Error: plugin failure, please submit a issue")
+    print('Error: plugin failure, please submit a issue')
   end
-  trace("bufnr", bufnr)
+  trace('bufnr', bufnr)
 
-  vim.api.nvim_buf_set_option(bufnr, "readonly", false)
+  vim.api.nvim_buf_set_option(bufnr, 'readonly', false)
   -- vim.api.nvim_buf_set_lines(self.buf, start, end_at, true, content)
   vim.api.nvim_buf_set_lines(bufnr, start, end_at, true, content)
   -- vim.api.nvim_buf_set_option(bufnr, "readonly", true)
-  vim.api.nvim_buf_set_option(bufnr, "bufhidden", "wipe")
+  vim.api.nvim_buf_set_option(bufnr, 'bufhidden', 'wipe')
   if TextView.hl_line ~= nil then
-    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, "GHListHl", TextView.hl_line - 1, 0, -1)
+    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, 'GHListHl', TextView.hl_line - 1, 0, -1)
   end
   -- vim.fn.setpos(".", {0, 1, 1, 0})
 
-  log("textview draw finished")
+  log('textview draw finished')
 end
 
 function TextView.on_close()
   trace(debug.traceback())
   if TextView.ActiveTextView == nil then
-    log("view onclose nil")
+    log('view onclose nil')
     return
   end
-  log("TextView onclose ", TextView.ActiveTextView.win)
+  log('TextView onclose ', TextView.ActiveTextView.win)
   TextView.ActiveTextView:close()
   TextView.static.ActiveView = nil
 end
 
 function TextView:bind_ctrl(opts)
-  if self.ctrl and self.ctrl.class_name == "TextViewCtrl" then
+  if self.ctrl and self.ctrl.class_name == 'TextViewCtrl' then
     return false
   else
     self.ctrl = TextViewCtrl:new(self, opts)
-    trace("textview ctrl", self.ctrl)
+    trace('textview ctrl', self.ctrl)
     return true
   end
 end
