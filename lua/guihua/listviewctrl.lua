@@ -31,7 +31,7 @@ function _G.gh_jump_to_list()
   local jumpto = ListView.Winnr
   if jumpto ~= nil and vim.api.nvim_win_is_valid(jumpto) then
     log('jump to', jumpto)
-    vim.api.nvim_set_current_win(jumpto)
+    vim.cmd(string.format('noa call nvim_set_current_win(%s)', jumpto))
     return
   end
 end
@@ -43,7 +43,7 @@ function _G.gh_jump_to_preview()
   local jumpto = TextView.ActiveTextView.win
   if jumpto ~= nil and vim.api.nvim_win_is_valid(jumpto) then
     log('jump to', jumpto)
-    vim.api.nvim_set_current_win(jumpto)
+    vim.cmd(string.format('noa call nvim_set_current_win(%s)', jumpto))
     return
   end
 end
