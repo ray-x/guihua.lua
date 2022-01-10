@@ -105,7 +105,7 @@ function M.selcolor(Hl)
 
   local diff, t = diff_color(bgcolor, sel)
   if diff > 24 * 3 then
-    local lbg = string.format('#%6x', sel)
+    local lbg = string.format('#%06x', sel)
     log(diff, sel, bgcolor, Hl)
 
     local hi = [[hi default GHListHl cterm=Bold gui=Bold guibg=]] .. lbg
