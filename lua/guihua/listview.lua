@@ -124,8 +124,8 @@ function ListView.close()
   else
     log('fallback closer')
 
-    local buf = ListView.Bufnr
-    local win = ListView.Winnr
+    local buf = ListView.static.Bufnr
+    local win = ListView.static.Winnr
 
     if buf == nil and win == nil then
       return

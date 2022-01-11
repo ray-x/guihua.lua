@@ -302,7 +302,7 @@ M.select = function(items, opts, on_choice)
     end,
   })
 
-  vim.api.nvim_buf_add_highlight(listview.Bufnr, -1, 'Title', 0, 0, -1)
+  vim.api.nvim_buf_add_highlight(listview.buf, -1, 'Title', 0, 0, -1)
   ListViewCtrl:on_next()
   ListViewCtrl:on_next()
 
