@@ -1,14 +1,14 @@
-local class = require "middleclass"
+local class = require('middleclass')
 
-local ViewController = require "guihua.viewctrl"
-local util = require "guihua.util"
+local ViewController = require('guihua.viewctrl')
+local util = require('guihua.util')
 local api = vim.api
-local log = require"guihua.log".info
+local log = require('guihua.log').info
 
-local trace = require"guihua.log".trace
+local trace = require('guihua.log').trace
 
 if TextViewCtrl == nil then
-  TextViewCtrl = class("TextViewCtrl")
+  TextViewCtrl = class('TextViewCtrl')
 end -- no need to subclass from viewctrl
 
 function TextViewCtrl:initialize(delegate, ...)
@@ -17,33 +17,33 @@ function TextViewCtrl:initialize(delegate, ...)
   self.m_delegate = delegate
 
   local opts = select(1, ...) or {}
-  log("textview ctrl opts", opts.uri)
+  log('textview ctrl opts', opts.uri)
 
   self.file_info = opts
   self.display_height = self.m_delegate.display_height or 10
   self.file_info.lines = self.display_height
   if opts.data == nil or opts.data == {} or #opts.data < 1 and opts.uri == nil then
-    log("data not provided opts", opts)
+    log('data not provided opts', opts)
     -- self.on_load(opts)
     -- local data = self:on_load(opts)
     -- log("will displaying", data)
     -- self.m_delegate:on_draw(data)
   end
 
-  trace("init display: ", self.display_data, self.display_height, self.selected_line)
+  trace('init display: ', self.display_data, self.display_height, self.selected_line)
   -- ... is the view
   -- todo location, readonly? and filetype
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-s>", "<cmd> lua TextViewCtrl:on_save()<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, "n", "<C-w>j", "<cmd> lua gh_jump_to_list()<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-s>', '<cmd>lua TextViewCtrl:on_save()<CR>', {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-w>k', '<cmd>lua gh_jump_to_list()<CR>', {})
 
-  log("bind close", self.m_delegate.win, delegate.buf)
+  log('bind close', self.m_delegate.win, delegate.buf)
   if opts.edit then
     vim.cmd([[ autocmd TextChangedI <buffer> lua ListViewCtrl:on_search() ]])
   end
   TextViewCtrl._viewctlobject = self
   -- self:on_draw(self.display_data)
   -- self.m_delegate:set_pos(self.selected_line)
-  log("textview ctrl created ")
+  log('textview ctrl created ')
 end
 
 -- load file uri if data is nil
@@ -53,19 +53,19 @@ function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
   trace(opts)
   local uri = opts.uri
   if opts.uri == nil then
-    log("invalid/nil uri ", opts)
+    log('invalid/nil uri ', opts)
     return
   end
   local bufnr = vim.uri_to_bufnr(uri)
   if not api.nvim_buf_is_loaded(bufnr) then
-    log("load buf", uri, bufnr)
+    log('load buf', uri, bufnr)
     vim.fn.bufload(bufnr)
   end
   --
 
   local range = opts.display_range or opts.range
   if range.start == nil then
-    print("error invalid range")
+    print('error invalid range')
     return
   end
   -- if range.start.line == nil then
@@ -82,7 +82,7 @@ function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
   local lines = #contents
   local syntax = opts.syntax
   if syntax == nil or #syntax < 1 then
-    syntax = api.nvim_buf_get_option(bufnr, "ft")
+    syntax = api.nvim_buf_get_option(bufnr, 'ft')
   end
 
   -- TODO: for saving, need update file_info based on data loaded, e.g. if we only load 1 line, but display_height is 10
@@ -110,14 +110,14 @@ function TextViewCtrl:on_save()
   if not file_info.allow_edit then
     return
   end
-  log("save file info", file_info)
+  log('save file info', file_info)
   local bufnr = vim.uri_to_bufnr(file_info.uri)
   if not api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
   end
   local range = file_info.display_range
   if range == nil then
-    log("incorrect file info, can not save")
+    log('incorrect file info, can not save')
   end
 
   log(bufnr, range, file_info.lines, contents)
