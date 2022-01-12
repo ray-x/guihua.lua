@@ -35,7 +35,9 @@ local unpack = unpack or table.unpack
 log.new = function(config, standalone)
   config = vim.tbl_deep_extend("force", default_config, config)
   -- path ~/.local/share/nvim
-  local outfile = string.format("%s/%s.log", vim.api.nvim_call_function("stdpath", {"data"}),
+
+  local cache_dir = vim.fn.stdpath("cache")
+  local outfile = string.format("%s/%s.log", cache_dir,
                                 config.plugin or 'gh')
 
   local obj
