@@ -3,6 +3,17 @@ local api = vim.api
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 
+local os_name = vim.loop.os_uname().sysname
+local is_windows = os_name == 'Windows' or os_name == 'Windows_NT'
+-- Check whether current buffer contains main function
+
+function M.sep()
+  if is_windows then
+    return '\\'
+  end
+  return '/'
+end
+
 function M.close_view_autocmd(events, winnr)
   vim.cmd(
     'autocmd '
@@ -287,12 +298,12 @@ M.merge = function(t1, t2)
 end
 
 M.map = function(modes, key, result, options)
-  options = M.merge({noremap = true, silent = false, expr = false, nowait = false}, options or {})
+  options = M.merge({ noremap = true, silent = false, expr = false, nowait = false }, options or {})
   local buffer = options.buffer
   options.buffer = nil
 
-  if type(modes) ~= "table" then
-    modes = {modes}
+  if type(modes) ~= 'table' then
+    modes = { modes }
   end
 
   for i = 1, #modes do
