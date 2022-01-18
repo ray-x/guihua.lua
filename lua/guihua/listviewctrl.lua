@@ -442,6 +442,9 @@ function ListViewCtrl:on_confirm(opts)
   end
   listobj.m_delegate:close()
   -- trace(listobj.m_delegate)
+  if listobj.on_confirm == ListViewCtrl.on_confirm then
+    return
+  end
   listobj.on_confirm(data_collection[listobj.selected_line], opts)
 end
 
