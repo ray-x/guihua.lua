@@ -40,7 +40,8 @@ local function floating_buf(opts) -- win_width, win_height, x, y, loc, prompt, e
     win_opts.row = row + y
     win_opts.col = col + x
   end
-  log('floating', win_opts, opts)
+  log('floating size', win_opts.height, win_opts.width)
+  trace('floating opts: ', win_opts, opts)
   local buf = api.nvim_create_buf(false, true)
   api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
   api.nvim_buf_set_option(buf, 'buflisted', false)

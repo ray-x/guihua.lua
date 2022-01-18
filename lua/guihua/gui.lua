@@ -11,7 +11,7 @@ local top_center = require('guihua.location').top_center
 -- local path_sep = require('navigator.util').path_sep()
 -- local path_cur = require('navigator.util').path_cur()
 function M._preview_location(opts) -- location, width, pos_x, pos_y
-  log(opts)
+  trace(opts)
   local uri = opts.uri
   if uri == nil then
     log('invalid/nil uri ')
@@ -53,7 +53,7 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
     win_opts.hl_line = 1
   end
   trace(opts.lnum, opts.range.start.line, win_opts.hl_line)
-  log(win_opts)
+  log(win_opts.uri, win_opts.syntax)
   local w = TextView:new({
     loc = 'offset_center',
     rect = {
