@@ -265,30 +265,30 @@ function M.fzy_idx(data_list, pos)
 end
 
 M.open_file_at = function(filename, line, col, split)
-    log('open ' .. filename)
-    if split == nil then
-      -- code
-      vim.cmd(string.format('e  %s', filename))
-    elseif split == 'v' then
-      vim.cmd(string.format('vsp! %s', filename))
-    elseif split == 's' then
-      vim.cmd(string.format('sp! %s', filename))
+  log('open ' .. filename)
+  if split == nil then
+    -- code
+    vim.cmd(string.format('e  %s', filename))
+  elseif split == 'v' then
+    vim.cmd(string.format('vsp! %s', filename))
+  elseif split == 's' then
+    vim.cmd(string.format('sp! %s', filename))
+  end
+  vim.cmd([[e]]) -- force reload so on_attach will work
+  col = col or 1
+  vim.fn.cursor(line, col)
+  -- sometime highlight failed because lazyloading
+  local has_ts, _ = pcall(require, 'nvim-treesitter')
+  if has_ts then
+    local _, ts_highlight = pcall(require, 'nvim-treesitter.highlight')
+    local _, ts_parsers = pcall(require, 'nvim-treesitter.parsers')
+    local lang = ts_parsers.ft_to_lang(vim.o.ft)
+    if ts_parsers.has_parser(lang) then
+      trace('attach ts')
+      ts_highlight.attach(0, lang)
+      return true
     end
-    vim.cmd([[e]]) -- force reload so on_attach will work
-    col = col or 1
-    vim.fn.cursor(line, col)
-    -- sometime highlight failed because lazyloading
-    local has_ts, _ = pcall(require, 'nvim-treesitter')
-    if has_ts then
-      local _, ts_highlight = pcall(require, 'nvim-treesitter.highlight')
-      local _, ts_parsers = pcall(require, 'nvim-treesitter.parsers')
-      local lang = ts_parsers.ft_to_lang(vim.o.ft)
-      if ts_parsers.has_parser(lang) then
-        trace('attach ts')
-        ts_highlight.attach(0, lang)
-        return true
-      end
-    end
+  end
 end
 
 M.merge = function(t1, t2)
