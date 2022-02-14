@@ -120,6 +120,13 @@ log.new = function(config, standalone)
 
     -- Output to log file
     if config.use_file then
+      -- check file size
+      local lfs = require('lfs')
+      local size = lfs.attributes(outfile, 'size')
+      if size > 1234567 then
+        os.remove(outfile)
+      end
+
       local fp = io.open(outfile, 'a')
       local str = string.format('[%-6s%s] %s: %s\n', nameupper, os.date(), lineinfo, msg)
       fp:write(str)
