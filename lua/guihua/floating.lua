@@ -221,7 +221,10 @@ local term = function(opts)
   local lines = api.nvim_get_option('lines')
 
   local win_width, win_height
-  if columns > (opts.vsplit or 130) then
+  if type(opts.vsplit) == 'boolean' and opts.vsplit == true then
+    opts.vsplit = 130
+  end
+  if opts.vsplit and columns > opts.vsplit then
     -- split in right
     win_height = math.ceil(lines * 0.98)
     win_width = math.ceil(columns * (opts.vwidth_rator or 0.5))
@@ -353,7 +356,8 @@ end
 -- test_term(true)
 -- multigrid
 -- floating_term({cmd = 'lazygit', border = 'single', external = true})
--- floating_term({cmd = 'lazygit', border = 'single', external = false})
+-- floating_term({ cmd = 'lazygit', border = 'single', external = false })
+-- term({ cmd = 'lazygit', border = 'single', external = false })
 
 return {
   floating_buf = floating_buf,

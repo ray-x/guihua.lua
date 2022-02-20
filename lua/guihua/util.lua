@@ -284,9 +284,12 @@ M.open_file_at = function(filename, line, col, split)
     local _, ts_parsers = pcall(require, 'nvim-treesitter.parsers')
     local lang = ts_parsers.ft_to_lang(vim.o.ft)
     if ts_parsers.has_parser(lang) then
-      trace('attach ts')
+      trace('attach ts', lang)
       ts_highlight.attach(0, lang)
       return true
+    else
+      log('ts not enable')
+      return false
     end
   end
 end
