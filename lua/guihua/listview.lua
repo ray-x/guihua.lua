@@ -4,6 +4,9 @@ local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 local util = require('guihua.util')
 local ListViewCtrl = require('guihua.listviewctrl')
+if _GH_SETUP == nil then
+  require('guihua').setup()
+end
 -- _VT_GHLIST = vim.api.nvim_create_namespace("guihua_listview")
 
 if ListView == nil then
@@ -87,8 +90,9 @@ function ListView:initialize(...)
     ListView.static.MaskCloser = self.mask_closer
   end
 
-  vim.api.nvim_buf_set_keymap(self.buf, 'n', '<C-e>', '<cmd> lua ListView.close() <CR>', {})
-  vim.api.nvim_buf_set_keymap(self.buf, 'i', '<C-e>', '<cmd> lua ListView.close() <CR>', {})
+  local m = _GH_SETUP.maps
+  vim.api.nvim_buf_set_keymap(self.buf, 'n', m.close_view, '<cmd> lua ListView.close() <CR>', {})
+  vim.api.nvim_buf_set_keymap(self.buf, 'i', m.close_view, '<cmd> lua ListView.close() <CR>', {})
   -- vim.fn.setpos('.', {self.win, i, 1, 0})
   return self
 end

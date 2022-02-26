@@ -36,6 +36,32 @@ Plugin has implementation of fzy with both ffi and native lua. If you like to tr
  use {'ray-x/guihua.lua', run = 'cd lua/fzy && make'}
 ```
 
+## Setup
+
+```lua
+  -- default mapping
+  maps = {
+    close_view = '<C-e>',
+    save = '<C-s>',
+    jump_to_list = '<C-w>k',
+    jump_to_preview = '<C-w>j',
+    prev = '<C-p>',
+    next = '<C-n>',
+    pageup = '<C-b>',
+    pagedown = '<C-f>',
+    confirm = '<C-o>',
+    split = '<C-s>',
+    vsplit = '<C-v>',
+  }
+
+  --
+  require('guihua.maps').setup({
+  maps = {
+    close_view = '<C-x>',
+  }
+  })
+```
+
 ## Plug
 
 ```vim

@@ -6,6 +6,9 @@ local error = require('guihua.log').error
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 
+if _GH_SETUP == nil then
+  require('guihua.maps').setup()
+end
 TextView = TextView or require('guihua.textview')
 if ListViewCtrl == nil then
   ListViewCtrl = class('ListViewCtrl', ViewController)
@@ -87,10 +90,11 @@ function ListViewCtrl:initialize(delegate, ...)
   if delegate.buf == nil or delegate.buf == 0 then
     log('should not bind to current buffer')
   end
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-p>', '<cmd> lua ListViewCtrl:on_prev()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<C-p>', '<cmd> lua ListViewCtrl:on_prev()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-n>', '<cmd> lua ListViewCtrl:on_next()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<C-n>', '<cmd> lua ListViewCtrl:on_next()<CR>', {})
+  m = _GH_SETUP.maps
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.prev, '<cmd> lua ListViewCtrl:on_prev()<CR>', {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', m.prev, '<cmd> lua ListViewCtrl:on_prev()<CR>', {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.next, '<cmd> lua ListViewCtrl:on_next()<CR>', {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', m.next, '<cmd> lua ListViewCtrl:on_next()<CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<Enter>', '<cmd> lua ListViewCtrl:on_confirm()<CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<Enter>', '<cmd> lua ListViewCtrl:on_confirm() <CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-w>j', '<cmd> lua gh_jump_to_preview()<CR>', {})
@@ -103,23 +107,24 @@ function ListViewCtrl:initialize(delegate, ...)
   -- vim.api.nvim_buf_set_keymap(delegate.buf, 'n', 'j', '<cmd> lua ListViewCtrl:on_next()<CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<Up>', '<cmd> lua ListViewCtrl:on_prev()<CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<Down>', '<cmd> lua ListViewCtrl:on_next()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<C-b>', '<cmd> lua ListViewCtrl:on_pageup()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<C-f>', '<cmd> lua ListViewCtrl:on_pagedown()<CR>', {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', m.pageup, '<cmd> lua ListViewCtrl:on_pageup()<CR>', {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', m.pagedown, '<cmd> lua ListViewCtrl:on_pagedown()<CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<PageUp>', '<cmd> lua ListViewCtrl:on_pageup()<CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<PageDown>', '<cmd> lua ListViewCtrl:on_pagedown()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-b>', '<cmd> lua ListViewCtrl:on_pageup()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-f>', '<cmd> lua ListViewCtrl:on_pagedown()<CR>', {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.pageup, '<cmd> lua ListViewCtrl:on_pageup()<CR>', {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.pagedown, '<cmd> lua ListViewCtrl:on_pagedown()<CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<PageUp>', '<cmd> lua ListViewCtrl:on_pageup()<CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<PageDown>', '<cmd> lua ListViewCtrl:on_pagedown()<CR>', {})
 
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-o>', '<cmd> lua ListViewCtrl:on_confirm()<CR>', {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.confirm, '<cmd> lua ListViewCtrl:on_confirm()<CR>', {})
 
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-v>', "<cmd> lua ListViewCtrl:on_confirm({split='v'})<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-s>', "<cmd> lua ListViewCtrl:on_confirm({split='s'})<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<C-o>', '<cmd> lua ListViewCtrl:on_confirm()<CR>', {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.vsplit, "<cmd> lua ListViewCtrl:on_confirm({split='v'})<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.split, "<cmd> lua ListViewCtrl:on_confirm({split='s'})<CR>", {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', m.confirm, '<cmd> lua ListViewCtrl:on_confirm()<CR>', {})
+
   log('bind close', self.m_delegate.win, delegate.buf)
 
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-e>', '<cmd> lua ListViewCtrl:on_close() <CR>', {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.close_view, '<cmd> lua ListViewCtrl:on_close() <CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-c>', '<cmd> lua ListViewCtrl:on_close() <CR>', {})
 
   vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<ESC>', '<cmd> lua ListViewCtrl:on_close() <CR>', {})

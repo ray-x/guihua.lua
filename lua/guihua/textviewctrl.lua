@@ -7,6 +7,9 @@ local log = require('guihua.log').info
 
 local trace = require('guihua.log').trace
 
+if _GH_SETUP == nil then
+  require('guihua.maps').setup()
+end
 if TextViewCtrl == nil then
   TextViewCtrl = class('TextViewCtrl')
 end -- no need to subclass from viewctrl
@@ -30,11 +33,20 @@ function TextViewCtrl:initialize(delegate, ...)
     -- self.m_delegate:on_draw(data)
   end
 
+  local m = _GH_SETUP.maps
+  if not opts.enter then
+    -- currsor move will close textview. currently disabled because user can edit inside preview
+    log('auto close on cursor move disabled')
+  else
+    -- for user case of symbol definition preview, <c-e> close win/buf
+    util.close_view_event('n', m.close_view, self.win, self.buf, opts.enter)
+    util.close_view_event('i', m.close_view, self.win, self.buf, opts.enter)
+  end
   trace('init display: ', self.display_data, self.display_height, self.selected_line)
   -- ... is the view
   -- todo location, readonly? and filetype
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-s>', '<cmd>lua TextViewCtrl:on_save()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-w>k', '<cmd>lua gh_jump_to_list()<CR>', {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.save, '<cmd>lua TextViewCtrl:on_save()<CR>', {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.jump_to_list, '<cmd>lua gh_jump_to_list()<CR>', {})
 
   log('bind close', self.m_delegate.win, delegate.buf)
   if opts.edit then
@@ -68,15 +80,6 @@ function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
     print('error invalid range')
     return
   end
-  -- if range.start.line == nil then
-  --   range.start.line = range["end"].line - 1
-  --   opts.lnum = range["end"].line + 1
-  -- end
-  -- if range["end"].line == nil then
-  --   range["end"].line = range.start.line + 1
-  --   opts.lnum = range.start.line + 1
-  -- end
-  -- local lines = range['end'].line - range.start.line + 1
   log(bufnr, range, uri)
   local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range['end'].line, false)
   local lines = #contents
@@ -101,12 +104,6 @@ function TextViewCtrl:on_save()
   local contents = api.nvim_buf_get_lines(txtbufnr, 0, file_info.lines, false)
   log(contents, file_info)
 
-  -- local contents =
-  --   api.nvim_buf_get_lines(txtbufnr, range.start.line, (range["end"].line or 1) + load_opts.display_height, false)
-  --
-
-  -- local contents =
-  --   api.nvim_buf_get_lines(txtbufnr, range.start.line, (range["end"].line or 1) + load_opts.display_height, false)
   if not file_info.allow_edit then
     return
   end

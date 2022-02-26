@@ -10,6 +10,10 @@ local TextViewCtrl = require('guihua.textviewctrl')
 if TextView == nil then
   TextView = class('TextView', View)
 end
+
+if _GH_SETUP == nil then
+  require('guihua.maps').setup()
+end
 -- Note, Support only one active view
 -- ActiveView = nil
 --[[
@@ -104,8 +108,9 @@ function TextView:initialize(...)
     log('auto close on cursor move disabled')
   else
     -- for user case of symbol definition preview, <c-e> close win/buf
-    util.close_view_event('n', '<C-e>', self.win, self.buf, opts.enter)
-    util.close_view_event('i', '<C-e>', self.win, self.buf, opts.enter)
+    local m = _GH_SETUP.maps
+    util.close_view_event('n', m.close_view, self.win, self.buf, opts.enter)
+    util.close_view_event('i', m.close_view, self.win, self.buf, opts.enter)
   end
 
   util.close_view_autocmd({ 'BufHidden', 'BufDelete' }, self.win)
