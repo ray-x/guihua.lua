@@ -142,9 +142,14 @@ function M.selcolor(Hl)
 end
 
 function M.close_view_event(mode, key, winnr, bufnr, enter)
+  if winnr == nil then
+    winnr = vim.api.nvim_get_current_win()
+  end
+  if bufnr == nil then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
   local closer = ' <Cmd> lua pcall(vim.api.nvim_win_close, ' .. winnr .. ', true) <CR>'
   enter = enter or false
-  bufnr = bufnr or 0
 
   -- log ("!! closer", winnr, bufnr, enter)
   if enter then

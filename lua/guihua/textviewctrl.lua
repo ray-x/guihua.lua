@@ -39,8 +39,10 @@ function TextViewCtrl:initialize(delegate, ...)
     log('auto close on cursor move disabled')
   else
     -- for user case of symbol definition preview, <c-e> close win/buf
-    util.close_view_event('n', m.close_view, self.win, self.buf, opts.enter)
-    util.close_view_event('i', m.close_view, self.win, self.buf, opts.enter)
+    log('winnr bufnr closer', self.m_delegate.win, self.m_delegate.buf)
+
+    util.close_view_event('n', m.close_view, self.m_delegate.win, self.m_delegate.buf, opts.enter)
+    util.close_view_event('i', m.close_view, self.m_delegate.win, self.m_delegate.buf, opts.enter)
   end
   trace('init display: ', self.display_data, self.display_height, self.selected_line)
   -- ... is the view
