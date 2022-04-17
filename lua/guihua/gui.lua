@@ -108,6 +108,7 @@ end
 function M.new_list_view(opts)
   local items = opts.items
   local data = opts.data or {}
+  log('total items:', #items, 'data: ', #data)
   opts.height_ratio = opts.height_ratio or 0.8
   opts.width_ratio = opts.width_ratio or 0.8
   opts.preview_height_ratio = opts.preview_height_ratio or 0.5

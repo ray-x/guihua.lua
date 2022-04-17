@@ -172,7 +172,8 @@ function ListViewCtrl:on_next()
   end
   local l = listobj.selected_line + 1
   local data_collection = listobj.data
-  if listobj.filter_applied then
+  if listobj.filter_applied == true then
+    log('filter applied')
     data_collection = listobj.filtered_data
   end
   if #data_collection == 0 then
@@ -189,7 +190,17 @@ function ListViewCtrl:on_next()
   if l > #data_collection then
     -- listobj.m_delegate:set_pos(disp_h) -- do not move to next
     -- listobj.on_move(data_collection[#data_collection])
-    log('out of boundary next should show at: ', #listobj.data, 'set: l', l, 'disp_h', disp_h, listobj.display_height)
+    log(
+      'out of boundary next should show at: ',
+      #listobj.data,
+      'set: l',
+      l,
+      'collection',
+      #data_collection,
+      'disp_h',
+      disp_h,
+      listobj.display_height
+    )
     return {}
   end
   local skipped_fn = 1
@@ -306,7 +317,7 @@ function ListViewCtrl:on_prev()
   )
 
   local data_collection = listobj.data
-  if listobj.filter_applied then
+  if listobj.filter_applied == true then
     data_collection = listobj.filtered_data
   end
 
@@ -359,7 +370,7 @@ function ListViewCtrl:on_pagedown()
     listobj.selected_line = 1
   end
   local data_collection = listobj.data
-  if listobj.filter_applied then
+  if listobj.filter_applied == true then
     data_collection = listobj.filtered_data
   end
   local disp_h = listobj.display_height
@@ -404,7 +415,7 @@ function ListViewCtrl:on_pageup()
     listobj.selected_line = 1
   end
   local data_collection = listobj.data
-  if listobj.filter_applied then
+  if listobj.filter_applied == true then
     data_collection = listobj.filtered_data
   end
   local disp_h = listobj.display_height
@@ -442,7 +453,7 @@ end
 function ListViewCtrl:on_confirm(opts)
   local listobj = ListViewCtrl._viewctlobject
   local data_collection = listobj.data
-  if listobj.filter_applied then
+  if listobj.filter_applied == true then
     data_collection = listobj.filtered_data
   end
   listobj.m_delegate:close()
@@ -490,16 +501,17 @@ function ListViewCtrl:on_search()
   listobj.search_item = filter_input_trim
 
   if #filter_input_trim == 0 or #listobj.data == nil or #listobj.data == 0 then
+    log('no filter')
     listobj.filter_applied = false
     listobj.filtered_data = vim.deepcopy(listobj.data) -- filter is not applied, clean up cache data
 
     listobj.display_data = { unpack(listobj.filtered_data, 1, listobj.display_height) }
-    listobj.filter_applied = true
     listobj.display_start_at = 1 -- reset
     listobj:on_draw(listobj.display_data)
     vim.api.nvim_buf_clear_namespace(buf, _GH_SEARCH_NS, 0, -1)
     return
   else
+    log('filter applied ', filter_input_trim)
     listobj.filtered_data = fzy(filter_input_trim, listobj.data)
   end
   trace('filtered data', listobj.filtered_data)

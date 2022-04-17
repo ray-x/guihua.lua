@@ -355,7 +355,8 @@ end
 -- test2(false)
 -- test_term(true)
 -- multigrid
--- floating_term({cmd = 'lazygit', border = 'single', external = true})
+-- floating_term({ cmd = 'lazygit', border = 'single', external = true })
+-- floating_term({ cmd = 'pwd', border = 'single', external = false, autoclose = false })
 -- floating_term({ cmd = 'lazygit', border = 'single', external = false })
 -- term({ cmd = 'lazygit', border = 'single', external = false })
 
