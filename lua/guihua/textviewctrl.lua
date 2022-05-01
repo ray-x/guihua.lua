@@ -100,7 +100,7 @@ end
 -- call from event
 -- get floatwin bufnr, get content, get file range and write to file range
 function TextViewCtrl:on_save()
-  local txtbufnr = TextViewCtrl._viewctlobject.bufnr
+  local txtbufnr = TextViewCtrl._viewctlobject.m_delegate.buf
 
   local file_info = TextViewCtrl._viewctlobject.file_info
   local contents = api.nvim_buf_get_lines(txtbufnr, 0, file_info.lines, false)

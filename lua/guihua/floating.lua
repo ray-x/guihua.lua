@@ -154,19 +154,13 @@ end
 local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y)
   local current_window = vim.api.nvim_get_current_win()
   opts.enter = opts.enter or true
-  -- opts.x = opts.x or 1
-  -- opts.y = opts.y or 1
 
   if opts.cmd == '' or opts.cmd == nil then
     opts.cmd = vim.api.nvim_get_option('shell')
   end
 
   -- get dimensions
-  -- local width = api.nvim_get_option("columns")
-  -- local height = api.nvim_get_option("lines")
-
   -- calculate our floating window size
-
   columns = api.nvim_get_option('columns')
   lines = api.nvim_get_option('lines')
   opts.win_height = opts.win_height or math.ceil(lines * 0.88)
@@ -202,12 +196,8 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
 
   vim.fn.termopen(args, {
     on_exit = function(_, _, _)
-      -- local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
       vim.api.nvim_set_current_win(current_window)
       closer()
-      -- if callback then
-      --   callback(lines)
-      -- end
     end,
   })
 
@@ -215,10 +205,24 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
   return buf, win, closer
 end
 
--- wraper for tui/gui
+local function close_float_terminal(name)
+  local cur_buf = api.nvim_get_current_buf()
+  local has_var, float_term_win = pcall(api.nvim_buf_get_var, cur_buf, name)
+  if not has_var then
+    return
+  end
+  if float_term_win[1] ~= nil and api.nvim_buf_is_valid(float_term_win[1]) then
+    api.nvim_buf_delete(float_term_win[1], { force = true })
+  end
+  if float_term_win[2] ~= nil and api.nvim_win_is_valid(float_term_win[2]) then
+    api.nvim_win_close(float_term_win[2], true)
+  end
+end
+
+-- wrapper for tui/gui
 local term = function(opts)
-  local columns = api.nvim_get_option('columns')
-  local lines = api.nvim_get_option('lines')
+  columns = api.nvim_get_option('columns')
+  lines = api.nvim_get_option('lines')
 
   local win_width, win_height
   if type(opts.vsplit) == 'boolean' and opts.vsplit == true then
@@ -254,8 +258,12 @@ local term = function(opts)
   opts.closer_args = {}
   local buf, win, closer = floating_term(opts)
   api.nvim_command('setlocal nobuflisted')
-  api.nvim_buf_set_var(buf, opts.term_name or 'guihua_floating_term', { buf, win })
-
+  local var_key = opts.term_name or 'guihua_floating_term'
+  api.nvim_buf_set_var(buf, var_key, { buf, win })
+  local m = _GH_SETUP.maps
+  local f = string.format('lua require("guihua.floating").close(%s)<CR>', var_key)
+  vim.api.nvim_buf_set_keymap(buf, 'n', m.close_view, f, {})
+  vim.api.nvim_buf_set_keymap(buf, 'i', m.close_view, f, {})
   return buf, win, closer
 end
 
@@ -358,7 +366,7 @@ end
 -- floating_term({ cmd = 'lazygit', border = 'single', external = true })
 -- floating_term({ cmd = 'pwd', border = 'single', external = false, autoclose = false })
 -- floating_term({ cmd = 'lazygit', border = 'single', external = false })
--- term({ cmd = 'lazygit', border = 'single', external = false })
+-- term({ cmd = 'fish', border = 'single', external = false })
 
 return {
   floating_buf = floating_buf,
@@ -367,4 +375,5 @@ return {
   input = input,
   input_callback = input_callback,
   gui_term = term,
+  close = close_float_terminal,
 }
