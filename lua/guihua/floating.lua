@@ -199,14 +199,14 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
 
   vim.fn.termopen(args, {
     on_exit = function(_, _, _)
-      if opts.autoclose then
+      if opts.autoclose ~= false then
         vim.api.nvim_set_current_win(current_window)
         closer()
       end
     end,
   })
 
-  if opts.autoclose then
+  if opts.autoclose ~= false then
     vim.cmd('startinsert!')
   end
 
