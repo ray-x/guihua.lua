@@ -166,6 +166,10 @@ end
 
 function ListViewCtrl:on_next()
   local listobj = ListViewCtrl._viewctlobject
+  if listobj == nil then
+    log("failed to find ListViewObject")
+    return
+  end
 
   if listobj.selected_line == nil then
     listobj.selected_line = 1
@@ -204,7 +208,7 @@ function ListViewCtrl:on_next()
     return {}
   end
   local skipped_fn = 1
-  if data_collection[l].filename_only then
+  if data_collection[l].filename_only and not listobj.filter_applied == true then
     if l + 1 <= #data_collection then
       l = l + 1
       skipped_fn = 2
