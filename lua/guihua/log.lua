@@ -60,6 +60,8 @@ log.new = function(config, standalone)
     if size > 1234567 then
       os.remove(outfile)
     end
+  else
+    return
   end
 
   local obj
@@ -133,8 +135,10 @@ log.new = function(config, standalone)
 
       fp = io.open(outfile, 'a')
       local str = string.format('[%-6s%s] %s: %s\n', nameupper, os.date(), lineinfo, msg)
-      fp:write(str)
-      fp:close()
+      if fp then
+        fp:write(str)
+        fp:close()
+      end
     end
   end
 
