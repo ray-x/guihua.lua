@@ -60,8 +60,6 @@ log.new = function(config, standalone)
     if size > 1234567 then
       os.remove(outfile)
     end
-  else
-    return
   end
 
   local obj
