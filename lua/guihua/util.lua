@@ -96,6 +96,7 @@ function M.selcolor(Hl)
   sel = tonumber(string.sub(sel, 2), 16)
   local selfg = tonumber(string.sub(selfgstr, 2), 16)
   log(sel, selfg)
+  bg = bg or 0x303030
   if sel == nil then
     sel = 0x506b8f
     if bg > 0xa00000 then
