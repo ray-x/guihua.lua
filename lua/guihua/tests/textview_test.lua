@@ -1,7 +1,7 @@
 package.loaded["guihua"] = nil
 package.loaded["guihua.view"] = nil
 package.loaded["guihua.viewctrl"] = nil
-package.loaded["guihua.listview"] = nil
+package.loaded["guihua.textview"] = nil
 package.loaded["guihua.listviewctrl"] = nil
 vim.cmd("packadd guihua.lua")
 
