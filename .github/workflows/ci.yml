@@ -44,4 +44,4 @@ jobs:
         run: |
           export PATH="${PWD}/_neovim/bin:${PATH}"
           nvim --headless -u lua/guihua/tests/minimal.vim -c "q"
-          make test
+          make tests
