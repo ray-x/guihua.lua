@@ -1,0 +1,47 @@
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  unit_tests:
+    name: unit tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            url: https://github.com/neovim/neovim/releases/download/nightly/nvim-linux64.tar.gz
+            manager: sudo snap
+            packages: go
+          - os: ubuntu-22.04
+            url: https://github.com/neovim/neovim/releases/download/v0.7.0/nvim-linux64.tar.gz
+            manager: sudo snap
+            packages: go
+    steps:
+      - uses: actions/checkout@v2
+      - run: date +%F > todays-date
+      - name: Restore cache for today's nightly.
+        uses: actions/cache@v2
+        with:
+          path: _neovim
+          key: ${{ runner.os }}-${{ matrix.url }}-${{ hashFiles('todays-date') }}
+
+      - name: Prepare
+        run: |
+          ${{ matrix.manager }} install --classic ${{ matrix.packages }}
+          # sudo apt install go
+          test -d _neovim || {
+            mkdir -p _neovim
+            curl -sL ${{ matrix.url }} | tar xzf - --strip-components=1 -C "${PWD}/_neovim"
+          }
+          GO111MODULE=on go install golang.org/x/tools/gopls@latest
+
+          mkdir -p ~/.local/share/nvim/site/pack/vendor/start
+          git clone --depth 1 https://github.com/nvim-lua/plenary.nvim ~/.local/share/nvim/site/pack/vendor/start/plenary.nvim
+          ln -s $(pwd) ~/.local/share/nvim/site/pack/vendor/start
+      - name: Run tests
+        run: |
+          export PATH="${PWD}/_neovim/bin:${PATH}"
+          nvim --headless -u lua/guihua/tests/minimal.vim -c "q"
+          make test
