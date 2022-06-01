@@ -67,13 +67,14 @@ function View:initialize(...)
     syntax = opts.syntax,
     relative = opts.relative,
     allow_edit = opts.allow_edit,
-    external = opts.external
+    external = opts.external,
+    border_hl = opts.border_hl
   })
   if opts.transparency and not opts.external then
     self.mask_buf, self.mask_win, self.mask_closer = floatbuf_mask(opts.transparency)
   end
   log("floatbuf created ", self.buf, self.win)
-  self:set_bg(opts)
+  self:set_hl(opts)
   if opts.data ~= nil and #opts.data >= 1 then
     self:on_draw(opts.data)
   end
@@ -95,11 +96,14 @@ function View.Active()
   return false
 end
 
-function View:set_bg(opts)
+function View:set_hl(opts)
   local bg = opts.bg or "GHBgDark"
   vim.cmd([[hi default GHBgDark guifg=#d0c8e4 guibg=#1a101f]])
 
   local cmd = "Normal:" .. bg .. ",NormalNC:" .. bg
+  if opts.border_hl ~= nil then
+    cmd = cmd .. ",FloatBorder:" .. opts.border_hl
+  end
   vim.api.nvim_win_set_option(self.win, "winhl", cmd)
   -- def_icon = opts.finder_definition_icon or ' '
   -- self.prompt = opts.prompt or " "

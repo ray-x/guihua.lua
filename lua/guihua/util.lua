@@ -276,11 +276,17 @@ M.open_file_at = function(filename, line, col, split)
     -- code
     vim.cmd(string.format('e  %s', filename))
   elseif split == 'v' then
-    vim.cmd([[normal! \<c-w>\<c-w>]])
-    vim.cmd(string.format('vsp! %s', filename))
+    if M.split_existed() then
+      vim.cmd(string.format('e  %s', filename))
+    else
+      vim.cmd(string.format('vsp! %s', filename))
+    end
   elseif split == 's' then
-    vim.cmd([[normal! \<c-w>\<c-w>]])
-    vim.cmd(string.format('sp! %s', filename))
+    if M.split_existed() then
+      vim.cmd(string.format('e  %s', filename))
+    else
+      vim.cmd(string.format('sp! %s', filename))
+    end
   end
   vim.cmd([[e]]) -- force reload so on_attach will work
   col = col or 1
@@ -325,6 +331,20 @@ M.map = function(modes, key, result, options)
       vim.api.nvim_set_keymap(modes[i], key, result, options)
     end
   end
+end
+
+-- if split existed, cursor will move to next split and return true
+M.split_existed = function()
+  local curNr = vim.fn.winnr()
+  vim.cmd('wincmd h')
+  if vim.fn.winnr() ~= curNr then
+    return true
+  end
+  vim.cmd('wincmd l')
+  if vim.fn.winnr() ~= curNr then
+    return true
+  end
+  return false
 end
 
 return M

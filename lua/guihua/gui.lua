@@ -54,6 +54,10 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
   end
   trace(opts.lnum, opts.range.start.line, win_opts.hl_line)
   log(win_opts.uri, win_opts.syntax)
+  local hl
+  if vim.fn.hlID('TelescopePreviewBorder') > 0 then
+    hl = 'TelescopePreviewBorder'
+  end
   local w = TextView:new({
     loc = 'offset_center',
     rect = {
@@ -75,6 +79,7 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
     hl_line = win_opts.hl_line,
     allow_edit = win_opts.allow_edit,
     external = win_opts.external,
+    border_hl = hl,
   })
   return w
 end
@@ -169,6 +174,10 @@ function M.new_list_view(opts)
   if ext then
     opts.relative = nil
   end
+  local hl
+  if vim.fn.hlID('TelescopePromptBorder') > 0 then
+    hl = 'TelescopePromptBorder'
+  end
   return ListView:new({
     loc = loc,
     prompt = prompt,
@@ -185,6 +194,7 @@ function M.new_list_view(opts)
     data = data,
     border = border,
     external = ext,
+    border_hl = hl,
     on_confirm = opts.on_confirm or function(item, split_opts)
       log(split_opts)
       split_opts = split_opts or {}
