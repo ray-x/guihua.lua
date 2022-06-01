@@ -276,8 +276,10 @@ M.open_file_at = function(filename, line, col, split)
     -- code
     vim.cmd(string.format('e  %s', filename))
   elseif split == 'v' then
+    vim.cmd([[normal! \<c-w>\<c-w>]])
     vim.cmd(string.format('vsp! %s', filename))
   elseif split == 's' then
+    vim.cmd([[normal! \<c-w>\<c-w>]])
     vim.cmd(string.format('sp! %s', filename))
   end
   vim.cmd([[e]]) -- force reload so on_attach will work
