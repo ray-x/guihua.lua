@@ -120,6 +120,9 @@ function TextViewCtrl:on_save()
   end
 
   log(bufnr, range, file_info.lines, contents)
+  if range == nil or range.start == nil or file_info == nil then
+    return
+  end
   vim.api.nvim_buf_set_lines(bufnr, range.start.line, range.start.line + file_info.lines, true, contents)
 end
 

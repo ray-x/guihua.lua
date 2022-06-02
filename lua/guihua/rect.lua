@@ -1,5 +1,5 @@
 local class = require "middleclass"
-local log = require"guihua.log".info
+-- local log = require"guihua.log".info
 local Rect = class("Rect")
 function Rect:initialize(...)
   local cfg = select(1, ...)
@@ -9,6 +9,8 @@ function Rect:initialize(...)
 
   if cfg ~= nil then
     self.rect = cfg.rect
+  else
+    cfg = {data={}}
   end
 
   self.rect = self.rect or {}
@@ -21,6 +23,9 @@ function Rect:initialize(...)
     self.rect.wdith = math.floor(height * self.rect.width)
   end
 
+  if cfg == nil then
+    return
+  end
   self.rect.height = self.rect.height or #cfg.data or 8
   if self.rect.height > math.floor(height * 1 / 2) then
     self.rect.height = math.floor(height * 1 / 2)

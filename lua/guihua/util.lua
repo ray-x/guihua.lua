@@ -142,19 +142,19 @@ function M.selcolor(Hl)
   return 'GHListHl'
 end
 
-function M.close_view_event(mode, key, winnr, bufnr, enter)
+function M.close_view_event(_, key, winnr, bufnr, enter)
   if winnr == nil then
-    winnr = vim.api.nvim_get_current_win()
+    winnr = api.nvim_get_current_win()
   end
   if bufnr == nil then
-    bufnr = vim.api.nvim_get_current_buf()
+    bufnr = api.nvim_get_current_buf()
   end
   local closer = ' <Cmd> lua pcall(vim.api.nvim_win_close, ' .. winnr .. ', true) <CR>'
   enter = enter or false
 
   -- log ("!! closer", winnr, bufnr, enter)
   if enter then
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', key, closer, {})
+    api.nvim_buf_set_keymap(bufnr, 'n', key, closer, {})
     -- cmd( mode .. "map <buffer> " .. key .. " <Cmd> lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true) <CR>" )
   end
 end
@@ -280,15 +280,16 @@ M.open_file_at = function(filename, line, col, split)
       vim.cmd(string.format('e  %s', filename))
     else
       vim.cmd(string.format('vsp! %s', filename))
+      vim.cmd([[e!]]) -- force reload so on_attach will work
     end
   elseif split == 's' then
     if M.split_existed() then
       vim.cmd(string.format('e  %s', filename))
     else
       vim.cmd(string.format('sp! %s', filename))
+      vim.cmd([[e!]]) -- force reload so on_attach will work
     end
   end
-  vim.cmd([[e]]) -- force reload so on_attach will work
   col = col or 1
   vim.fn.cursor(line, col)
   -- sometime highlight failed because lazyloading
@@ -326,9 +327,9 @@ M.map = function(modes, key, result, options)
 
   for i = 1, #modes do
     if buffer then
-      vim.api.nvim_buf_set_keymap(0, modes[i], key, result, options)
+      api.nvim_buf_set_keymap(0, modes[i], key, result, options)
     else
-      vim.api.nvim_set_keymap(modes[i], key, result, options)
+      api.nvim_set_keymap(modes[i], key, result, options)
     end
   end
 end

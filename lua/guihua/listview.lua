@@ -25,7 +25,7 @@ opts={
 function ListView:initialize(...)
   trace(debug.traceback())
 
-  if win and vim.api.nvim_win_is_valid(win) then
+  if ListView.win and vim.api.nvim_win_is_valid(ListView.win) then
     ListView.close()
   end
 
@@ -107,7 +107,7 @@ function ListView:bind_ctrl(opts)
   end
 end
 
-function ListView:unbind_ctrl(...)
+function ListView:unbind_ctrl()
   if self.super.unbind_ctrl then
     self.super.unbind_ctrl()
   end
@@ -148,7 +148,7 @@ function ListView.close()
   -- close mask
   local mask_closer = ListView.MaskCloser
   if mask_closer then
-    mask_closer(mask_win)
+    mask_closer(ListView.mask_win)
   else
     log('fallback mask closer')
     local mask_buf = ListView.MaskBufnr
@@ -176,7 +176,7 @@ function ListView.close()
   View.data = nil
   vim.cmd([[stopinsert]])
   -- ListView = class("ListView", View)
-  log('listview destroyed', win)
+  log('listview destroyed', ListView.win)
 end
 
 function ListView:set_pos(i)
@@ -210,7 +210,7 @@ function ListView:set_pos(i)
       return
     end
     vim.api.nvim_buf_clear_namespace(self.buf, selhighlight, 0, -1)
-    ListviewHl = 'GHListHl'
+    local ListviewHl = 'GHListHl'
     vim.api.nvim_buf_add_highlight(self.buf, selhighlight, ListviewHl, self.selected_line - 1, 0, -1)
   end)
 end

@@ -9,7 +9,7 @@ local function is_installed(bin)
   local env_path = os.getenv('PATH')
   local base_paths = vim.split(env_path, path_sep, true)
 
-  for key, value in pairs(base_paths) do
+  for _, value in pairs(base_paths) do
     if uv.fs_stat(value .. DIR_SEP .. bin .. exe) then
       return true
     end

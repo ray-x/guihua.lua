@@ -85,7 +85,7 @@ local function floating_buf_mask(transparency) -- win_width, win_height, x, y, l
   columns = api.nvim_get_option('columns')
   lines = api.nvim_get_option('lines')
   local loc = location.center
-  local row, col = loc(lines, columns)
+  -- local row, col = loc(lines, columns)
   local win_opts = {
     style = 'minimal',
     relative = 'editor',
@@ -108,7 +108,7 @@ local function floating_buf_mask(transparency) -- win_width, win_height, x, y, l
 
   return buf,
     win,
-    function(...)
+    function()
       if win == nil then
         -- already closed or not valid
         return
@@ -172,7 +172,7 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
 
   api.nvim_win_set_option(win, 'winhl', 'Normal:Normal')
 
-  local closer = function(...)
+  local closer = function()
     log('floatwin closing ', win)
 
     if opts.autoclose ~= false then
@@ -257,7 +257,7 @@ local term = function(opts)
     opts.autoclose = true
   end
 
-  opts.closer = function(args)
+  opts.closer = function()
     log('closer callback')
     vim.cmd('set noconfirm')
     vim.cmd('bufdo e!')

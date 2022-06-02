@@ -7,7 +7,7 @@ local View = class("View", Rect)
 
 local log = require"guihua.log".info
 local trace = require"guihua.log".trace
-
+local api = vim.api
 local word_find = require'guihua.util'.word_find
 -- Note, Support only one active view
 -- ActiveView = nil
@@ -26,7 +26,7 @@ function View:initialize(...)
   local opts = select(1, ...) or {}
   opts.data = opts.data or {}
 
-  _GH_SEARCH_NS = _GH_SEARCH_NS or vim.api.nvim_create_namespace("guihua_search_namespace")
+  _GH_SEARCH_NS = _GH_SEARCH_NS or api.nvim_create_namespace("guihua_search_namespace")
   log("ctor View start with #items", #opts.data)
   trace("ctor View items", opts)
   trace("view start opts", opts)
@@ -104,7 +104,7 @@ function View:set_hl(opts)
   if opts.border_hl ~= nil then
     cmd = cmd .. ",FloatBorder:" .. opts.border_hl
   end
-  vim.api.nvim_win_set_option(self.win, "winhl", cmd)
+  api.nvim_win_set_option(self.win, "winhl", cmd)
   -- def_icon = opts.finder_definition_icon or ' '
   -- self.prompt = opts.prompt or " "
   -- api.nvim_buf_add_highlight(self.contents_buf,-1,"TargetWord",0,#def_icon,self.param_length+#def_icon+3)
@@ -131,7 +131,7 @@ local function draw_table_item(buf, item, pos)
     return
   end
 
-  vim.api.nvim_buf_set_lines(buf, pos, pos, true, {item.text})
+  api.nvim_buf_set_lines(buf, pos, pos, true, {item.text})
   -- if item.symbol_name is not nil highlight it
   if item.symbol_name and #item.symbol_name > 0 then
     -- lets find all
@@ -139,26 +139,26 @@ local function draw_table_item(buf, item, pos)
     -- log('hl', pos, s, e, item.text, item.Symbol_name)
     while s ~= nil do
       -- vim.fn.matchaddpos("IncSearch", {{pos + 1, s, e - s + 1}})
-      vim.api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, s - 1,
+      api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, s - 1,
                                    {end_line = pos, end_col = e, hl_group = "Warnings"})
 
       s, e = word_find(item.text, item.sybol_name)
     end
   end
-  -- vim.api.nvim_buf_set_lines(buf, 0, 1, true, '{item.text}')
+  -- api.nvim_buf_set_lines(buf, 0, 1, true, '{item.text}')
   if item.pos ~= nil then
     for _, v in pairs(item.pos) do
       -- vim.fn.matchaddpos("IncSearch", {{pos + 1, v}})
 
       log('hl', pos, v)
-      vim.api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, v - 1,
+      api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, v - 1,
                                    {end_line = pos, end_col = v, hl_group = "IncSearch"})
     end
   end
   if item.fzy ~= nil then
     for _, v in pairs(item.fzy.pos) do
       -- vim.fn.matchaddpos("IncSearch", {{pos + 1, v}})
-      vim.api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, v - 1,
+      api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, v - 1,
                                    {end_line = pos, end_col = v, hl_group = "IncSearch"})
     end
   end
@@ -172,12 +172,12 @@ local function draw_lines(buf, start, end_at, data)
     return
   end
 
-  vim.api.nvim_buf_clear_namespace(0, _GH_SEARCH_NS, 0, -1)
+  api.nvim_buf_clear_namespace(0, _GH_SEARCH_NS, 0, -1)
   trace("draw_lines", buf, start, end_at, #data, data)
 
   vim.fn.clearmatches()
-  vim.api.nvim_buf_set_lines(buf, start, end_at, false, {})
-  -- vim.api.nvim_buf_set_lines(buf, start, end_at, true, data)
+  api.nvim_buf_set_lines(buf, start, end_at, false, {})
+  -- api.nvim_buf_set_lines(buf, start, end_at, true, data)
   local draw_end = math.min(end_at - 1, #data - 1)
   for i = start, draw_end, 1 do
     local l = data[i + 1]
@@ -185,15 +185,15 @@ local function draw_lines(buf, start, end_at, data)
       log("draw at failed ", i, data)
     end
     if type(l) == "string" then -- plain text display
-      vim.api.nvim_buf_set_lines(buf, i, i, true, {l})
+      api.nvim_buf_set_lines(buf, i, i, true, {l})
     elseif type(l) == "table" and l.text == nil then -- filtered text
       local line = l[1]
-      vim.api.nvim_buf_set_lines(buf, i, i, true, {line})
+      api.nvim_buf_set_lines(buf, i, i, true, {line})
       local pos = l[2]
       for _, v in pairs(pos) do
         -- vim.fn.matchaddpos("IncSearch", {{i + 1, v}})
 
-        vim.api.nvim_buf_set_extmark(0, _GH_SEARCH_NS, i, v, {
+        api.nvim_buf_set_extmark(0, _GH_SEARCH_NS, i, v, {
           end_line = i,
           end_col = v + 1,
           hl_group = "IncSearch"
@@ -210,7 +210,7 @@ function View:on_draw(data)
 
   trace(debug.traceback())
   trace("on_draw", data)
-  if not vim.api.nvim_buf_is_valid(self.buf) then
+  if not api.nvim_buf_is_valid(self.buf) then
     log("buf id invalid", self.buf)
     return
   end
@@ -222,7 +222,7 @@ function View:on_draw(data)
     data = self.display_data
   end
 
-  vim.api.nvim_buf_set_option(self.buf, "readonly", false)
+  api.nvim_buf_set_option(self.buf, "readonly", false)
   local content = {}
   if type(data) == "string" then
     content = {data}
@@ -239,10 +239,10 @@ function View:on_draw(data)
   if self.prompt == true then
     end_at = end_at - 1
   end
-  -- vim.api.nvim_buf_set_lines(self.buf, start, end_at, true, content)
+  -- api.nvim_buf_set_lines(self.buf, start, end_at, true, content)
   draw_lines(self.buf, start, end_at, content)
   if self.prompt ~= true then
-    vim.api.nvim_buf_set_option(self.buf, "readonly", true)
+    api.nvim_buf_set_option(self.buf, "readonly", true)
   end
   -- vim.fn.setpos(".", {0, 1, 1, 0})
 end
@@ -258,14 +258,14 @@ function View:close(...)
   if self == nil then
     return
   end
-  -- vim.api.nvim_win_close(self.win, true)
+  -- api.nvim_win_close(self.win, true)
   if self.closer ~= nil then
     -- vim.api.nvim_win_close
     self:closer()
     self.closer = nil
     self.win = nil
   else
-    vim.api.nvim_win_close(self.win, true)
+    api.nvim_win_close(self.win, true)
     self.win = nil
   end
 
@@ -275,7 +275,7 @@ function View:close(...)
     self.mask_win = nil
   else
     if self.mask_win ~= nil and self.mask_win ~= 0 then
-      vim.api.nvim_win_close(self.mask_win, true)
+      api.nvim_win_close(self.mask_win, true)
     end
     self.mask_win = nil
   end

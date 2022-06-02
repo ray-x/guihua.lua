@@ -14,18 +14,18 @@ if ListViewCtrl == nil then
   ListViewCtrl = class('ListViewCtrl', ViewController)
 end
 
-local function gh_jump_to_win()
-  local currentWinnr = vim.api.nvim_get_current_win()
-  local jumpto = TextView.ActiveTextView.win
-  if jumpto == currentWinnr then
-    jumpto = ListView.Winnr
-  end
-
-  if jumpto ~= nil and vim.api.nvim_win_is_valid(jumpto) then
-    log('jump from ', currentWinnr, 'to', jumpto)
-    vim.api.nvim_set_current_win(jumpto)
-  end
-end
+-- local function gh_jump_to_win()
+--   local currentWinnr = vim.api.nvim_get_current_win()
+--   local jumpto = TextView.ActiveTextView.win
+--   if jumpto == currentWinnr then
+--     jumpto = ListView.Winnr
+--   end
+--
+--   if jumpto ~= nil and vim.api.nvim_win_is_valid(jumpto) then
+--     log('jump from ', currentWinnr, 'to', jumpto)
+--     vim.api.nvim_set_current_win(jumpto)
+--   end
+-- end
 
 function _G.gh_jump_to_list()
   if ListView == nil then
@@ -51,7 +51,7 @@ function _G.gh_jump_to_preview()
   end
 end
 
-function on_preview()
+local function on_preview()
   if TextView == nil or TextView.ActiveTextView == nil then
     return false
   end
@@ -72,7 +72,7 @@ function ListViewCtrl:initialize(delegate, ...)
   self.prompt = opts.prompt
   self.display_height = self.m_delegate.display_height or 10
   self.display_start_at = 1
-  self.on_move = opts.on_move or function(...) end
+  self.on_move = opts.on_move or function(...) _ = {...} end
   self.on_confirm = opts.on_confirm
   if #self.data <= self.display_height then
     self.display_data = opts.data
@@ -90,7 +90,7 @@ function ListViewCtrl:initialize(delegate, ...)
   if delegate.buf == nil or delegate.buf == 0 then
     log('should not bind to current buffer')
   end
-  m = _GH_SETUP.maps
+  local m = _GH_SETUP.maps
   vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.prev, '<cmd> lua ListViewCtrl:on_prev()<CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'i', m.prev, '<cmd> lua ListViewCtrl:on_prev()<CR>', {})
   vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.next, '<cmd> lua ListViewCtrl:on_next()<CR>', {})
