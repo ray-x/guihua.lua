@@ -1,7 +1,7 @@
 local api = vim.api
 local location = require('guihua.location')
-local validate = vim.validate
-local utils = require('guihua.util')
+-- local validate = vim.validate
+-- local utils = require('guihua.util')
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 local columns = api.nvim_get_option('columns')
@@ -84,7 +84,7 @@ local function floating_buf_mask(transparency) -- win_width, win_height, x, y, l
   vim.validate({ transparency = { transparency, 'number' } })
   columns = api.nvim_get_option('columns')
   lines = api.nvim_get_option('lines')
-  local loc = location.center
+  -- local loc = location.center
   -- local row, col = loc(lines, columns)
   local win_opts = {
     style = 'minimal',
@@ -275,6 +275,16 @@ local term = function(opts)
   return buf, win, closer
 end
 
+--
+-- test_mask()
+-- test(true)
+-- test2(false)
+-- test_term(true)
+-- multigrid
+-- floating_term({ cmd = 'lazygit', border = 'single', external = true })
+-- floating_term({ cmd = 'pwd', border = 'single', external = false, autoclose = false })
+-- floating_term({ cmd = 'lazygit', border = 'single', external = false })
+-- term({ cmd = 'fish', border = 'single', external = false })
 local function test(prompt)
   local b, w, c = floating_buf({
     win_width = 30,
@@ -310,78 +320,18 @@ local function test_mask()
   local b, w, c = floating_buf_mask()
 end
 
-local input_ctx = {
-  opts = {},
-  on_confirm = function(text) end,
-  on_concel = function(...) end,
-}
-
-local function input_callback()
-  log(input_ctx)
-  local new_text = vim.trim(vim.fn.getline('.'):sub(#input_ctx.opts.prompt + 1, -1))
-  vim.cmd([[stopinsert]])
-  vim.cmd([[bd!]])
-  if #new_text == 0 or new_text == input_ctx.opts.default then
-    return
-  end
-  input_ctx.on_confirm(new_text)
-end
-
-local function input(opts, on_confirm)
-  local bufnr = vim.api.nvim_create_buf(false, true)
-
-  input_ctx.opts = opts
-  local prompt = opts.prompt
-  local placeholder = opts.default
-  input_ctx.on_confirm = on_confirm
-  vim.api.nvim_buf_set_option(bufnr, 'buftype', 'prompt')
-  vim.api.nvim_buf_set_option(bufnr, 'bufhidden', 'wipe')
-  vim.api.nvim_buf_add_highlight(bufnr, -1, 'NGPreviewTitle', 0, 0, #prompt)
-  vim.fn.prompt_setprompt(bufnr, prompt)
-  local width = #placeholder + #prompt + 10
-  local winnr = vim.api.nvim_open_win(bufnr, true, {
-    relative = 'cursor',
-    width = width,
-    height = 1,
-    row = -3,
-    col = 1,
-    style = 'minimal',
-    border = 'single',
-  })
-  vim.api.nvim_win_set_option(winnr, 'winhl', 'Normal:Floating')
-  vim.api.nvim_buf_set_option(bufnr, 'filetype', 'guihua')
-  utils.map('n', '<ESC>', '<cmd>bd!<CR>', { silent = true, buffer = true })
-  utils.map(
-    { 'n', 'i' },
-    '<CR>',
-    "<cmd>lua require('guihua.floating').input_callback()<CR>",
-    { silent = true, buffer = true }
-  )
-  utils.map({ 'n', 'i' }, '<BS>', [[<ESC>"_cl]], { silent = true, buffer = true })
-
-  vim.cmd(string.format('normal i%s', placeholder))
-end
-
--- input({ prompt = 'replace: ', placeholder = 'old' }, function(text)
---   print('replace old' .. 'with: ' .. text)
--- end)
-
--- test_mask()
--- test(true)
--- test2(false)
--- test_term(true)
--- multigrid
--- floating_term({ cmd = 'lazygit', border = 'single', external = true })
--- floating_term({ cmd = 'pwd', border = 'single', external = false, autoclose = false })
--- floating_term({ cmd = 'lazygit', border = 'single', external = false })
--- term({ cmd = 'fish', border = 'single', external = false })
-
 return {
   floating_buf = floating_buf,
   floating_term = floating_term,
   floating_buf_mask = floating_buf_mask,
-  input = input,
-  input_callback = input_callback,
+  input = function(o, confirm, change)
+    print("please use gui.input")
+    return require('guihua.gui').input(o, confirm, change)
+  end,
+  input_callback = function()
+    print("please use gui.input_callback")
+    return require('guihua.gui').input_callback()
+  end,
   gui_term = term,
   close = close_float_terminal,
 }

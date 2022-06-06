@@ -348,4 +348,21 @@ M.split_existed = function()
   return false
 end
 
+-- remove duplicate element in a table
+M.dedup = function(list, key1, key2)
+  local map = {}
+  local result = {}
+  if key2 == nil then
+    key2 = key1
+  end
+
+  for i = 1, #list do
+    local item = list[i]
+    if map[item[key1] .. tostring(item[key2])] == nil then
+      map[item[key1] .. tostring(item[key2])] = true
+      table.insert(result, item)
+    end
+  end
+  return result
+end
 return M

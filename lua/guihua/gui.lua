@@ -320,4 +320,6 @@ M.select = function(items, opts, on_choice)
   return listview
 end
 
+M.input = require('guihua.input').input
+M.input_callback = require('guihua.input').input_callback
 return M

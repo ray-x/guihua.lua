@@ -66,13 +66,16 @@ function ListViewCtrl:initialize(delegate, ...)
   self.selected_line = 1
   --
   local opts = select(1, ...) or {}
-  -- trace("listview ctrl opts", opts)
+  trace('listview ctrl opts', opts)
   self.data = opts.data or {}
   self.preview = opts.preview or false
   self.prompt = opts.prompt
+  self.on_input_filter = opts.on_input_filter
   self.display_height = self.m_delegate.display_height or 10
   self.display_start_at = 1
-  self.on_move = opts.on_move or function(...) _ = {...} end
+  self.on_move = opts.on_move or function(...)
+    _ = { ... }
+  end
   self.on_confirm = opts.on_confirm
   if #self.data <= self.display_height then
     self.display_data = opts.data
@@ -167,7 +170,7 @@ end
 function ListViewCtrl:on_next()
   local listobj = ListViewCtrl._viewctlobject
   if listobj == nil then
-    log("failed to find ListViewObject")
+    log('failed to find ListViewObject')
     return
   end
 
@@ -477,10 +480,16 @@ function ListViewCtrl:on_search()
   if listobj.m_delegate.prompt ~= true then
     return
   end
-  local fzy = require('fzy').fzy
-  if fzy == nil then
-    print('[ERR] fzy not found')
-    return
+
+  local filter = listobj.on_input_filter
+  if filter == nil then
+    filter = require('fzy').fzy
+    if filter == nil then
+      vim.notify('[ERR] fzy not found')
+      return
+    end
+  else
+    log('filter: ', listobj.on_input_filter, type(listobj.on_input_filter))
   end
 
   local listobj = ListViewCtrl._viewctlobject
@@ -516,7 +525,7 @@ function ListViewCtrl:on_search()
     return
   else
     log('filter applied ', filter_input_trim)
-    listobj.filtered_data = fzy(filter_input_trim, listobj.data)
+    listobj.filtered_data = filter(filter_input_trim, listobj.data)
   end
   trace('filtered data', listobj.filtered_data)
   listobj.display_data = { unpack(listobj.filtered_data, 1, listobj.display_height) }
@@ -585,7 +594,7 @@ function ListViewCtrl:on_leave(force)
         ListViewCtrl._viewctlobject.m_delegate.close()
       end
     end
-  end, 200)
+  end, 10)
 end
 
 function ListViewCtrl:on_data_update(data)
