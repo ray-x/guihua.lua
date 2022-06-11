@@ -272,23 +272,36 @@ end
 
 M.open_file_at = function(filename, line, col, split)
   log('open ' .. filename)
+  local need_reload = false
+
+  local bufnr = vim.uri_to_bufnr(vim.uri_from_fname(filename))
+  if not api.nvim_buf_is_loaded(bufnr) then
+    vim.fn.bufload(bufnr)
+    vim.api.nvim_buf_attach(bufnr, true, {})
+  end
+
+  local bufname = vim.fn.bufname(filename)
+  if bufname == '' then
+    need_reload = true
+  end
   if split == nil then
     -- code
-    vim.cmd(string.format('e  %s', filename))
+    vim.cmd(string.format('drop  %s', filename))
   elseif split == 'v' then
     if M.split_existed() then
-      vim.cmd(string.format('e  %s', filename))
+      vim.cmd(string.format('drop  %s', filename))
     else
       vim.cmd(string.format('vsp! %s', filename))
-      vim.cmd([[e!]]) -- force reload so on_attach will work
     end
   elseif split == 's' then
     if M.split_existed() then
-      vim.cmd(string.format('e  %s', filename))
+      vim.cmd(string.format('drop  %s', filename))
     else
       vim.cmd(string.format('sp! %s', filename))
-      vim.cmd([[e!]]) -- force reload so on_attach will work
     end
+  end
+  if need_reload then
+    vim.cmd('e!')
   end
   col = col or 1
   vim.fn.cursor(line, col)

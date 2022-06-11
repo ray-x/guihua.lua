@@ -34,7 +34,7 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
     syntax = syntax,
     width = opts.width,
     height = display_range['end'].line - display_range.start.line + 1,
-    preview_height = opts.height or opts.preview_height,
+    preview_height = opts.height,
     pos_x = opts.offset_x,
     pos_y = opts.offset_y,
     range = opts.range,
@@ -43,6 +43,7 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
     allow_edit = opts.enable_edit,
   }
 
+  log(win_opts)
   if opts.external then
     win_opts.external = true
     win_opts.relative = nil
@@ -94,14 +95,6 @@ function M.preview_uri(opts) -- uri, width, line, col, offset_x, offset_y
   end
   local loc = { uri = opts.uri, range = { start = { line = line_beg } } }
 
-  local wwidth = api.nvim_get_option('columns')
-
-  local mwidth = opts.min_width or 0.3
-  local width = math.floor(wwidth * mwidth)
-  if opts.width_ratio ~= nil and opts.width_ratio > 0.3 and opts.width_ratio < 0.99 then
-    width = math.floor(wwidth * opts.width_ratio)
-  end
-  opts.width = math.min(120, width, opts.width or 120)
   -- TODO: preview height
   loc.range['end'] = { line = opts.lnum + opts.preview_height }
   opts.location = loc
@@ -112,24 +105,22 @@ end
 
 function M.new_list_view(opts)
   local items = opts.items
-  local data = opts.data or {}
+  local data = opts.data or opts.items or {}
   log('total items:', #items, 'data: ', #data)
   opts.height_ratio = opts.height_ratio or 0.8
   opts.width_ratio = opts.width_ratio or 0.8
-  opts.preview_height_ratio = opts.preview_height_ratio or 0.5
+  opts.preview_height_ratio = opts.preview_height_ratio or 0.4
 
   local wwidth = api.nvim_get_option('columns')
+  local wheight = api.nvim_get_option('lines')
 
   local loc = 'top_center'
 
-  local mwidth = opts.min_width or 0.3
+  local mwidth = opts.width_ratio
   local width = math.floor(wwidth * mwidth)
-  if opts.width_ratio ~= nil and opts.width_ratio > 0.3 and opts.width_ratio < 0.99 then
-    width = math.floor(wwidth * opts.width_ratio)
-  end
-  width = math.min(120, width, opts.width or 120)
-  local wheight = math.floor(1 + api.nvim_get_option('lines') * (opts.height_ratio + opts.preview_height_ratio))
-  local pheight = math.max(#opts.data, math.floor(api.nvim_get_option('lines') * (opts.preview_height_ratio or 1)))
+  width = math.min(120, width)
+
+  local pheight = math.min(#opts.data, math.floor(api.nvim_get_option('lines') * opts.preview_height_ratio))
   local prompt = opts.prompt or false
   if opts.rawdata then
     data = items
@@ -148,24 +139,27 @@ function M.new_list_view(opts)
     prompt = true
   end
 
-  local lheight = math.min(#data, math.floor(wheight * (opts.min_height or 0.3)))
+  local lheight = math.min(#data, math.floor(wheight * opts.height_ratio))
 
   local r, _ = top_center(lheight, width)
 
   local offset_y = r + lheight
+
   -- style shadow took 1 lines
   if border ~= 'none' then
     if border == 'shadow' then
       offset_y = offset_y + 1
     else
-      offset_y = offset_y + 1 -- single?
+      offset_y = offset_y + 2 -- single?
     end
   end
   -- if border is not set, this should be r+lheigh
   if prompt then
     offset_y = offset_y + 1 -- need to check this out
   end
-  local idx = require('guihua.util').fzy_idx
+
+  log(r, lheight, #data, wheight, opts.height_ratio, offset_y)
+  local _ = require('guihua.util').fzy_idx
   local transparency = opts.transparency
   if transparency == 100 then
     transparency = nil
@@ -216,7 +210,6 @@ function M.new_list_view(opts)
         width_ratio = opts.width_ratio,
         preview_lines_before = opts.preview_lines_before or 3,
         width = width,
-        height = lheight, -- this is to cal offset
         preview_height = pheight,
         lnum = item.lnum,
         col = item.col,

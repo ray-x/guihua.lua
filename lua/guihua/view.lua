@@ -49,10 +49,19 @@ function View:initialize(...)
   self.syntax = opts.syntax or "guihua"
   self.display_height = self.rect.height
 
-  log("height: ", self.display_height)
 
   local floatbuf = require"guihua.floating".floating_buf
   local floatbuf_mask = require"guihua.floating".floating_buf_mask
+
+  local wheight = api.nvim_get_option('lines')
+  if wheight < self.rect.height + self.rect.pos_y + 2 then
+    self.rect.height = wheight - self.rect.pos_y - 2
+    self.display_height = self.rect.height
+
+    log("height offscreen: ", wheight, self.rect)
+  end
+
+  log("height: ", self.display_height, "rect", self.rect)
   -- listview should not have ft enabled
   self.buf, self.win, self.closer = floatbuf({
     win_width = self.rect.width,
