@@ -270,20 +270,24 @@ function M.fzy_idx(data_list, pos)
   return data_list[pos]
 end
 
+M.split_str = function(str)
+  local lines = {}
+  for s in str:gmatch("[^\r\n]+") do
+    table.insert(lines, s)
+  end
+  return lines
+end
+
+
 M.open_file_at = function(filename, line, col, split)
   log('open ' .. filename)
-  local need_reload = false
-
   local bufnr = vim.uri_to_bufnr(vim.uri_from_fname(filename))
   if not api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
     vim.api.nvim_buf_attach(bufnr, true, {})
   end
 
-  local bufname = vim.fn.bufname(filename)
-  if bufname == '' then
-    need_reload = true
-  end
+  -- local bufname = vim.fn.bufname(filename)
   if split == nil then
     -- code
     vim.cmd(string.format('drop  %s', filename))
@@ -300,9 +304,7 @@ M.open_file_at = function(filename, line, col, split)
       vim.cmd(string.format('sp! %s', filename))
     end
   end
-  if need_reload then
-    vim.cmd('e!')
-  end
+  vim.cmd('doautocmd FileType')
   col = col or 1
   vim.fn.cursor(line, col)
   -- sometime highlight failed because lazyloading
