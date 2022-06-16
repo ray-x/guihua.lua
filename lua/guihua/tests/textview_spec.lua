@@ -5,7 +5,6 @@ local cur_dir = vim.fn.expand('%:p:h')
 
 describe('should create view  ', function()
   package.loaded['guihua'] = nil
-  package.loaded['guihua'] = nil
   package.loaded['guihua.view'] = nil
   package.loaded['guihua.viewctrl'] = nil
   package.loaded['guihua.textview'] = nil

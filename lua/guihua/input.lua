@@ -33,7 +33,7 @@ local function input(opts, on_confirm, on_change)
   local bufnr = vim.api.nvim_create_buf(false, true)
 
   input_ctx.opts = opts
-  local prompt = opts.prompt
+  local prompt = opts.prompt or "﵀ "
   local placeholder = opts.default or ''
   input_ctx.on_confirm = on_confirm
   input_ctx.on_change = on_change
@@ -56,7 +56,7 @@ local function input(opts, on_confirm, on_change)
     vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, {
       buffer = bufnr,
       callback = function()
-        local new_text = vim.trim(vim.fn.getline('.'):sub(#input_ctx.opts.prompt + 1, -1))
+        local new_text = vim.trim(vim.fn.getline('.'):sub(#prompt + 1, -1))
         if #new_text == 0 or new_text == input_ctx.opts.default then
           return
         end

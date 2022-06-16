@@ -287,6 +287,7 @@ M.select = function(items, opts, on_choice)
 
   local divider = string.rep('─', width + 2)
   table.insert(data, 2, divider)
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<esc>", true, false, true), 'x', true)
   log(data)
   local listview = M.new_list_view({
     items = data,

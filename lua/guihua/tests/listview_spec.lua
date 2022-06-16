@@ -33,7 +33,7 @@ describe('should create view  ', function()
     -- display_data = {unpack(listobj.filtered_data, 1, listobj.display_height)}
     -- log("filter: ", display_data)
 
-    local win = ListView:new({
+    local listview = ListView:new({
       loc = 'up_left',
       prompt = true,
       rect = { height = 5 },
@@ -48,5 +48,6 @@ describe('should create view  ', function()
 
     vim.cmd('normal! zb')
     vim.cmd('startinsert!')
+    eq(true, vim.api.nvim_win_is_valid(listview.win))
   end)
 end)

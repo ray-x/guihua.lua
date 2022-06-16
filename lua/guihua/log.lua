@@ -15,9 +15,11 @@ local default_config = {
   highlights = true,
   -- Should write to a file
   use_file = true,
+  log_file = true,
   -- Any messages above this level will be logged.
   level = 'error',
   -- Level configuration
+  log_size = 10000000,
   modes = {
     { name = 'trace', hl = 'Comment' },
     { name = 'debug', hl = 'Comment' },
@@ -51,14 +53,17 @@ log.new = function(config, standalone)
   -- path ~/.local/share/nvim
 
   local cache_dir = vim.fn.stdpath('cache')
-  local outfile = string.format('%s%s%s.log', cache_dir, sep(), config.plugin or 'gh')
+  config.log_file = config.log_file or config.plugin or 'gh'
+  local outfile = string.format('%s%s%s.log', cache_dir, sep(), config.log_file)
 
-  local fp = io.open(outfile, 'r')
-  if fp then
-    local size = fp:seek('end')
-    fp:close()
-    if size > 1234567 then
-      os.remove(outfile)
+  if config.use_file then
+    local fp = io.open(outfile, 'r')
+    if fp then
+      local size = fp:seek('end')
+      fp:close()
+      if size > config.log_size then
+        os.remove(outfile)
+      end
     end
   end
 
@@ -131,7 +136,7 @@ log.new = function(config, standalone)
     if config.use_file then
       -- check file size
 
-      fp = io.open(outfile, 'a')
+      local fp = io.open(outfile, 'a')
       local str = string.format('[%-6s%s] %s: %s\n', nameupper, os.date(), lineinfo, msg)
       if fp then
         fp:write(str)
