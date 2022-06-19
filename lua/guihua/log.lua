@@ -15,7 +15,7 @@ local default_config = {
   highlights = true,
   -- Should write to a file
   use_file = true,
-  log_file = true,
+  log_file = 'gh',
   -- Any messages above this level will be logged.
   level = 'error',
   -- Level configuration
@@ -55,6 +55,7 @@ log.new = function(config, standalone)
   local cache_dir = vim.fn.stdpath('cache')
   config.log_file = config.log_file or config.plugin or 'gh'
   local outfile = string.format('%s%s%s.log', cache_dir, sep(), config.log_file)
+  -- print(config.log_size, config.log_file)
 
   if config.use_file then
     local fp = io.open(outfile, 'r')

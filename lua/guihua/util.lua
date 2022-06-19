@@ -363,6 +363,10 @@ M.split_existed = function()
   return false
 end
 
+M.trim = function(s)
+   return s:match( "^%s*(.-)%s*$" )
+end
+
 -- remove duplicate element in a table
 M.dedup = function(list, key1, key2)
   local map = {}
