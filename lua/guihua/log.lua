@@ -142,6 +142,8 @@ log.new = function(config, standalone)
       if fp then
         fp:write(str)
         fp:close()
+      else
+        print('Could not open log file')
       end
     end
   end

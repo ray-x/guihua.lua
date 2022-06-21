@@ -21,10 +21,11 @@ local function floating_buf(opts) -- win_width, win_height, x, y, loc, prompt, e
   -- if opts.border == "single" then
   --   opts.border = {}
   -- end
-  log('loc', opts.loc, opts.win_width, opts.win_height, x, y, enter, opts.ft)
   -- win_w, win_h, x, y should be passwd in from view
   local loc = opts.loc or location.center
   local row, col = loc(opts.win_height, opts.win_width)
+
+  log('loc', opts.loc, opts.win_width, opts.win_height, x, y, enter, col, row, opts.ft)
   local win_opts = {
     style = opts.style or 'minimal',
     width = opts.win_width or 80,

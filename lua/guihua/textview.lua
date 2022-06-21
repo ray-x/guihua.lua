@@ -54,6 +54,9 @@ function TextView:initialize(...)
     opts.rect = { widht = opts.widht or 60, height = opts.height or 30 }
   end
 
+  if  vim.fn.hlexists('GHListHl') == 0 then
+    vim.cmd([[highlight default link GHListHl PmenuSel]])
+  end
   if TextView.ActiveTextView ~= nil then
     if
       TextView.ActiveTextView.win ~= nil
@@ -127,7 +130,7 @@ function TextView:initialize(...)
     if opts.hl_line == 0 then
       opts.hl_line = 1
     end
-    log('buf', self.buf, 'l: ', opts.hl_line)
+    log('buf', self.buf, 'hl_line: ', opts.hl_line)
     TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, 'GHListHl', opts.hl_line - 1, 0, -1)
     TextView.static.hl_line = opts.hl_line
   end
@@ -156,7 +159,7 @@ function TextView:on_draw(opts)
     return
   end
   local data = {}
-  if not self or not vim.api.nvim_buf_is_valid(self.buf) then
+  if not self or not self.buf or not vim.api.nvim_buf_is_valid(self.buf) then
     log('buf id invalid', self)
     return
   end

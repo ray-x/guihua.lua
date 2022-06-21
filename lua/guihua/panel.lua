@@ -25,10 +25,15 @@ local tabs = {}
 
 local function entry_prefix(node, is_last_node)
   local prefix = ''
-  if is_last_node or node.indent_level == 0 then
-    prefix = string.rep(' ', node.indent_level * 2) .. panel_icons.outer_node .. ' '
+  local idl = node.indent_level
+  if not idl or idl < 1 then
+    log('indent level < 1')
+    idl = 1
+  end
+  if is_last_node or idl == 1 then
+    prefix = string.rep(' ', (idl - 1) * 2) .. panel_icons.outer_node .. ' '
   else
-    prefix = string.rep(' ', node.indent_level * 2) .. panel_icons.inner_node .. ' '
+    prefix = string.rep(' ', (idl - 1) * 2) .. panel_icons.inner_node .. ' '
   end
   return prefix
 end
@@ -36,6 +41,7 @@ end
 local function format_node(node)
   local is_last_node = false
   local last_leave_node = false
+  trace(node)
   if not node.next_indent_level then
     is_last_node = true
   elseif node.indent_level ~= node.next_indent_level then
@@ -46,11 +52,8 @@ local function format_node(node)
   end
   last_leave_node = last_leave_node and nil -- true/nil-> nil, false -> false
   local str = entry_prefix(node, is_last_node)
-  str = str
-    .. panel_icons.bracket_left
-    .. (syntax_icons[node.type] or str.sub(node.type, 0, 2))
-    .. panel_icons.bracket_right
-  str = str .. ' ' .. node.node_text
+  str = str .. panel_icons.bracket_left .. (syntax_icons[node.type] or node.type or '') .. panel_icons.bracket_right
+  str = str .. ' ' .. (node.node_text or node.text)
 
   str = str .. ' ' .. panel_icons.line_num_left .. tostring(node.lnum) .. panel_icons.line_num_right
   return str
@@ -66,7 +69,7 @@ function Panel:initialize(opts)
   self.icons = {}
   self.icons.panel_icons = opts.panel_icons
     or {
-      section_separator = '',
+      section_separator = '─', --'',
       line_num_left = ':', --'',
       line_num_right = '', --',
       inner_node = '', --├○',
@@ -95,16 +98,25 @@ function Panel:initialize(opts)
   -- set_highlights(self.icons)
 
   self:add_section(opts)
+  self.ft = vim.o.ft
   Panel.activePanel = self
   log('panel created', Panel)
   return self
   -- run_on_buf_enter()
 end
 
+local genheader = function(opt)
+  local sepr = panel_icons.section_separator
+  local width = opt.width or 35
+  local text = opt.header or 'outline'
+  local side_size = math.floor((width - #text) / 2)
+  return { string.rep(sepr, side_size) .. text .. string.rep(sepr, side_size) }
+end
+
 function Panel:add_section(opts)
   table.insert(self.sections, {
     nodes = opts.items,
-    header = opts.header or { '──────outline──────' },
+    header = genheader(opts),
     format = opts.format or format_node,
     render = opts.render,
   })
@@ -119,14 +131,23 @@ function Panel:animate_create(animate, fast)
   local speed = 10
   local set_text_fn = function()
     -- Display matches
-    for _, section in pairs(self.sections) do
-      log(section)
+    local offset = 0
+    if vim.api.nvim_buf_get_option(self.buf, 'filetype') ~= 'guihua' then
+      return
+    end
+    if vim.api.nvim_buf_get_option(self.buf, 'modifiable') ~= false then
+      return
+    end
+    for i, section in pairs(self.sections) do
       api.nvim_buf_set_option(self.buf, 'modifiable', true)
-      api.nvim_buf_set_lines(self.buf, 0, #section.header, false, section.header)
-      api.nvim_buf_set_lines(self.buf, #section.header, #section.header + #section.text, false, section.text)
+      api.nvim_buf_set_lines(self.buf, offset, offset + #section.header, false, section.header)
+      offset = offset + #section.header
+      api.nvim_buf_set_lines(self.buf, offset, offset + #section.text, false, section.text)
+      offset = offset + #section.text
       -- Apparently this needs to be set after we insert text.
       api.nvim_buf_set_option(self.buf, 'modifiable', false)
       api.nvim_win_set_width(self.win, final_width)
+      log('section rendered', i, section.header, #section.text)
     end
     -- Need this for smooth animation.
     api.nvim_command('redraw')
@@ -162,18 +183,25 @@ end
 
 function Panel:get_jump_info()
   local line = api.nvim_get_current_line()
-  log('curline', line)
+  if not self.activePanel then
+    return
+  end
   local scts = self.activePanel.sections
   for _, sct in pairs(scts) do
+    if vim.fn.empty(sct.nodes) == 1 then
+      log('no nodes', sct.header)
+      return
+    end
     for _, node in pairs(sct.nodes) do
-      log(node, sct.format(node), utils.trim(line))
+      -- log(node, sct.format(node), utils.trim(line))
       if utils.trim(sct.format(node)) == utils.trim(line) then
-        log('node found', node)
+        log('node found', node.node_text, 'line', line)
         return node
       end
     end
   end
 
+  log('node not found', 'line', line)
   return nil
 end
 
@@ -182,6 +210,7 @@ local function add_keymappings(bufnr)
   bufnr = bufnr or 0
   -- jump to definition on <CR> or double-click
   api.nvim_buf_set_keymap(bufnr, 'n', '<CR>', ':lua require "guihua.panel".jump_to_loc()<CR>', { silent = true })
+
   api.nvim_buf_set_keymap(
     bufnr,
     'n',
@@ -189,25 +218,38 @@ local function add_keymappings(bufnr)
     ':lua require "guihua.panel".jump_or_fold()<CR>',
     { silent = true }
   )
+
+  api.nvim_create_autocmd(
+    { 'CursorHold', 'CursorHoldI' },
+    { buffer = bufnr, command = ":lua require ('guihua.panel').on_hover()" }
+  )
+
+  api.nvim_create_autocmd(
+    { 'CursorMoved', 'CursorMovedI', 'TabLeave', 'FocusLost', 'BufRead', 'BufEnter', 'BufUnload', 'BufLeave' },
+    { buffer = bufnr, command = ":lua require ('guihua.panel').on_preview_close()" }
+  )
 end
 
 local function filepreview(node)
-  local fname = vim.fn.expand('%:p')
-  local uri = vim.uri_from_fname(fname)
+  local uri = node.uri
   local range = node.range
 
   local opts = {
     relative = 'cursor',
-    syntax = 'lua',
-    rect = { height = 5, width = 60, pos_x = 0, pos_y = 0 },
+    loc = 'none',
     uri = uri,
+    lnum = node.lnum or range.start.line,
+    filetype = Panel.activePanel.ft,
+    height = 5,
     range = range,
+    width = 60,
     edit = true,
   }
 
-  local win = TextView:new(opts)
-  log('draw data', opts)
-  win:on_draw(opts)
+  -- local win = TextView:new(opts)
+  -- log('draw data', opts)
+  -- win:on_draw(opts)
+  return require('guihua.gui').preview_uri(opts)
 end
 
 -- Re-run guihua if buffer is written to using autocommands.
@@ -216,9 +258,8 @@ local function run_on_buf_write(buf)
   local tabpage = api.nvim_get_current_tabpage()
   local augroup = _make_augroup_name(tabpage)
   vim.cmd('augroup ' .. augroup)
-  local lua_callback_cmd = "lua require('guihua').run(false)"
-  local full_cmd = 'autocmd! ' .. augroup .. ' BufWritePost <buffer=' .. tostring(buf) .. '> ' .. lua_callback_cmd
-  vim.cmd(full_cmd)
+  api.nvim_create_autocmd({ 'BufWritePost' }, { buffer = buf, command = ":lua require ('guihua.panel').redraw()" })
+
   vim.cmd('augroup END')
 end
 
@@ -261,15 +302,16 @@ end
 
 -- redraw if panel is open for the current tabpage and buffer can be parsed but
 -- hasn't been.
-function Panel:redraw(event)
-  local tabpage = api.nvim_get_current_tabpage()
-  if tabs[tabpage] and vim.bo.filetype ~= 'guihua' then
-    local buf = api.nvim_get_current_buf()
-    local win = api.nvim_get_current_win()
-    if Panel.activePanel.last_parsed_buf ~= buf then
-      Panel.activePanel:open(false, event)
-      api.nvim_set_current_win(win)
-    end
+function Panel:redraw()
+  if vim.bo.filetype == 'guihua' then
+    return
+  end
+
+  local buf = api.nvim_get_current_buf()
+  local win = api.nvim_get_current_win()
+  if Panel.activePanel.last_parsed_buf ~= buf then
+    Panel.activePanel:open(false, true)
+    api.nvim_set_current_win(win)
   end
 end
 
@@ -277,11 +319,8 @@ local function run_on_buf_enter()
   local tabpage = api.nvim_get_current_tabpage()
   local augroup = _make_augroup_name(tabpage)
   vim.cmd('augroup ' .. augroup)
-  for _, event in ipairs({ 'BufEnter', 'FileWritePost' }) do
-    local lua_callback_cmd = 'lua Panel:redraw("' .. event .. '")'
-    local full_cmd = 'autocmd! ' .. augroup .. ' ' .. event .. ' * ' .. lua_callback_cmd
-    vim.cmd(full_cmd)
-  end
+
+  api.nvim_create_autocmd({ 'BufEnter' }, { command = ":lua require ('guihua.panel').redraw()" })
   vim.cmd('augroup END')
 end
 
@@ -297,6 +336,7 @@ end
 
 local function make_panel_window(win_name)
   --local win_name = 'Guihua' .. tostring(api.nvim_get_current_buf())
+  log('make_panel_window', win_name)
   api.nvim_command('keepalt botright vertical 1 split ' .. win_name)
   local win = api.nvim_get_current_win()
   local buf = api.nvim_get_current_buf()
@@ -356,22 +396,14 @@ function Panel:draw()
   return self.win, self.buf
 end
 
--- function NG_custom_fold_text()
---   local line = vim.fn.getline(vim.v.foldstart)
---   local line_count = vim.v.foldend - vim.v.foldstart + 1
---   -- log("" .. line .. " // " .. line_count .. " lines")
---   return ' ⚡' .. line .. ': ' .. line_count .. ' lines'
--- end
 function Panel.foldtext()
   local foldstart = vim.v.foldstart
   log('foldstart', foldstart)
-  -- local foldend   = vim.v.foldend
-  -- Leaving this here just in case it's useful.
-  -- local winwidth  = api.nvim_win_get_width(0)
-  -- local line, _ = (api.nvim_buf_get_lines(0, foldstart , foldstart + 1, false)[1]):gsub('^"', ' ')
+
+  local line_count = vim.v.foldend - vim.v.foldstart + 1
   local line = api.nvim_buf_get_lines(0, foldstart - 1, foldstart, false)[1]
   local folded_icon = panel_icons.folded or ''
-  line = ' ' .. folded_icon .. line
+  line = ' ' .. folded_icon .. line .. ' ⚡' .. tostring(line_count)
   log(line, folded_icon)
   return line
 end
@@ -423,7 +455,7 @@ function Panel.foldexpr()
     level = '>' .. tostring(line_indent)
   elseif after_indent <= 1 or after_indent < line_indent then
     level = '<' .. tostring(line_indent)
-  elseif line_indent == before_indent then
+  elseif line_indent <= before_indent then
     level = tostring(line_indent)
   else
     log('unhandled case: ' .. line_num .. ' ' .. line_indent .. ' ' .. before_indent .. ' ' .. after_indent)
@@ -431,12 +463,12 @@ function Panel.foldexpr()
   end
 
   -- log('ind: ', level, line_num, before, before_indent, line, line_indent, after, after_indent)
-  log('ind: ', line_num, level, line, before_indent, line_indent, after_indent)
+  -- log('ind: ', line_num, level, line, before_indent, line_indent, after_indent)
   return level
 end
 
 local function enable_folding()
-  print('enable folding')
+  -- print('enable folding')
   vim.wo.foldtext = [[luaeval("require('guihua.panel').foldtext()")]]
   vim.wo.foldexpr = [[luaeval("require('guihua.panel').foldexpr()")]]
   vim.wo.foldmethod = 'expr'
@@ -449,12 +481,12 @@ function Panel.jump_or_fold(fold)
   local cursor_pos = api.nvim_win_get_cursor(0)
   local pos_y, pos_x = cursor_pos[1], cursor_pos[2]
 
-  line = api.nvim_get_current_line()
+  local line = api.nvim_get_current_line()
   local can_fold = string.find(line, panel_icons.folded)
   local spaces = get_indent_level(pos_y) * 2
 
   if can_fold or pos_x < spaces + 5 then
-    vim.cmd('silent! normal zm')
+    vim.cmd('silent! normal za')
   else
     Panel.jump_to_loc()
   end
@@ -467,6 +499,7 @@ function Panel.jump_to_loc()
     return
   end
   log(node.range, node.lnum)
+  Panel.on_preview_close()
   local win = find_win_for_buf(Panel.activePanel.last_parsed_buf)
   if win then
     api.nvim_set_current_win(win)
@@ -480,20 +513,46 @@ function Panel.on_hover()
     log('no hover info')
     return
   end
-  filepreview(node)
+  Panel.on_preview_close()
+  Panel.activePanel.preview_textview = filepreview(node)
 end
 
-function Panel:open(should_toggle)
+function Panel.on_preview_close()
+  local node = Panel:get_jump_info()
+  if node == nil then
+    log('no hover info')
+    return
+  end
+  local pa = Panel.activePanel
+  if not pa then
+    return
+  end
+  local p = pa.preview_textview
+  if p and p.buf and vim.api.nvim_buf_is_valid(p.buf) then
+    vim.api.nvim_buf_delete(p.buf, { force = true })
+    -- vim.api.nvim_win_close(p.win, true)
+    Panel.activePanel.preview_textview = nil
+  end
+end
+
+function Panel.on_move()
+  Panel.on_close()
+end
+
+function Panel.debug()
+  log(Panel)
+  log(active_windows)
+end
+
+function Panel:open(should_toggle, redraw)
   local buf = api.nvim_get_current_buf()
   if should_toggle and self:is_open() then
     Panel:close()
     return
   end
   for i, section in pairs(self.sections) do
-    local nodes = section.render(section, buf)
+    local nodes = section.render(buf)
     if vim.fn.empty(nodes) == 1 then
-      -- If we cannot modify it, it is likely a buffer belonging to some plugin
-      -- e.g. NERDTree, Startify
       local modifiable = vim.bo.modifiable
       local filetype = vim.bo.filetype
       local unparseable_buftype = vim.tbl_contains(skip_buf_types, vim.bo.buftype)
@@ -506,9 +565,16 @@ function Panel:open(should_toggle)
       local tabpage = api.nvim_get_current_tabpage()
       local win_name = _make_window_name(tabpage)
       if active_windows[win_name] then
+        local wid = active_windows[win_name]
+        if not vim.api.nvim_win_is_valid(wid) then
+          active_windows[win_name] = nil
+          self.activePanel = nil
+          active_windows = {}
+          return
+        end
         local header = self.header_text
         local msg = 'failed to generate pannel filetype: ' .. filetype
-        local guihua_buf = api.nvim_win_get_buf(active_windows[win_name])
+        local guihua_buf = api.nvim_win_get_buf(wid)
         api.nvim_buf_set_option(guihua_buf, 'modifiable', true)
         -- cleanup
         api.nvim_buf_set_lines(guihua_buf, 0, -1, false, {})
@@ -527,17 +593,13 @@ function Panel:open(should_toggle)
   end
 
   self.last_parsed_buf = buf
-  -- -- local processed_matches, hl_info, jump_info = get_outline()
-  -- -- self.per_buffer_jump_info[self.last_parsed_buf] = jump_info
-  -- self.draw(processed_matches, hl_info)
   self:draw()
-  if vim.g.guihua_update_on_buf_write == 1 then
+
+  if not redraw then
     run_on_buf_write(buf)
+    run_on_buf_enter()
+    close_on_buf_win_leave()
   end
-
-  run_on_buf_enter()
-  close_on_buf_win_leave()
-
   enable_folding()
 end
 

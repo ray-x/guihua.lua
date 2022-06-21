@@ -41,13 +41,22 @@ function M.bgcolor(delta, d2, d3)
 
   bg = string.sub(bg, 2)
   local bgi = tonumber(bg, 16)
+  local light = tonumber('a0a0a0', 16)
   if bgi == nil then
     return '#101b3f'
   end
-  if d2 == nil then
-    bgi = bgi + delta
+  if bgi > light then
+    if d2 == nil then
+      bgi = bgi - delta
+    else
+      bgi = bgi - delta * 65536 - d2 * 256 - (d3 or 16)
+    end
   else
-    bgi = bgi + delta * 65536 + d2 * 256 + d3
+    if d2 == nil then
+      bgi = bgi + delta
+    else
+      bgi = bgi + delta * 65536 + d2 * 256 + (d3 or 16)
+    end
   end
 
   log(string.format('#%06x', bgi))
@@ -80,6 +89,7 @@ function M.selcolor(Hl)
     or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'fg#'), 2), 16)
 
   if vim.fn.hlexists('GHListHl') and vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GHListHl')), 'bg#') ~= '' then
+    -- already defined
     return
   end
   local bgcolor = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GHListDark')), 'bg#'), 2), 16)
@@ -90,11 +100,11 @@ function M.selcolor(Hl)
   --   local sel = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("PmenuSel")), "bg#") default
   local sel = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID(Hl)), 'bg#') or '#434550'
 
-  local selfgstr = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID(Hl)), 'fg#') or '#EFEFEF'
+  local sel_gstr = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID(Hl)), 'fg#') or '#EFEFEF'
 
-  log('sel, ', sel, selfgstr)
+  log('sel, ', sel, sel_gstr)
   sel = tonumber(string.sub(sel, 2), 16)
-  local selfg = tonumber(string.sub(selfgstr, 2), 16)
+  local selfg = tonumber(string.sub(sel_gstr, 2), 16)
   log(sel, selfg)
   bg = bg or 0x303030
   if sel == nil then
@@ -121,8 +131,8 @@ function M.selcolor(Hl)
     log(diff, sel, bgcolor, Hl)
 
     local hi = [[hi default GHListHl cterm=Bold gui=Bold guibg=]] .. lbg
-    if vim.o.background == 'light' and selfgstr then
-      hi = hi .. ' guifg=' .. selfgstr
+    if vim.o.background == 'light' and sel_gstr then
+      hi = hi .. ' guifg=' .. sel_gstr
     end
 
     vim.cmd(hi)
@@ -272,12 +282,11 @@ end
 
 M.split_str = function(str)
   local lines = {}
-  for s in str:gmatch("[^\r\n]+") do
+  for s in str:gmatch('[^\r\n]+') do
     table.insert(lines, s)
   end
   return lines
 end
-
 
 M.open_file_at = function(filename, line, col, split)
   log('open ' .. filename)
@@ -364,7 +373,7 @@ M.split_existed = function()
 end
 
 M.trim = function(s)
-   return s:match( "^%s*(.-)%s*$" )
+  return s:match('^%s*(.-)%s*$')
 end
 
 -- remove duplicate element in a table

@@ -28,9 +28,23 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
   if syntax == nil or #syntax < 1 then
     syntax = 'c'
   end
+  local s = display_range.start.line
+  local e = display_range['end'].line
+  if e == s then
+    if s < 2 then
+      s = 0
+    else
+      s = s - 2
+    end
+    e = s + opts.rect.height
+  end
+  display_range.start.line = s
+  display_range['end'].line = e
 
   -- trace(syntax, contents)
   local win_opts = {
+    relative = opts.relative,
+    location = opts.loc or 'offset_center',
     syntax = syntax,
     width = opts.width,
     height = display_range['end'].line - display_range.start.line + 1,
@@ -43,24 +57,24 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
     allow_edit = opts.enable_edit,
   }
 
-  log(win_opts)
   if opts.external then
     win_opts.external = true
     win_opts.relative = nil
   end
+
   -- win_opts.items = contents
   win_opts.hl_line = opts.lnum - display_range.start.line
   if win_opts.hl_line < 0 then
     win_opts.hl_line = 1
   end
-  trace(opts.lnum, opts.range.start.line, win_opts.hl_line)
+  log(opts.lnum, opts.range.start.line, win_opts.hl_line)
   log(win_opts.uri, win_opts.syntax)
   local hl
   if vim.fn.hlID('TelescopePreviewBorder') > 0 then
     hl = 'TelescopePreviewBorder'
   end
-  local w = TextView:new({
-    loc = 'offset_center',
+  local text_view_opts = {
+    loc = win_opts.location,
     rect = {
       height = win_opts.height, -- opts.preview_heigh or 12, -- TODO 12
       width = win_opts.width,
@@ -81,7 +95,10 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
     allow_edit = win_opts.allow_edit,
     external = win_opts.external,
     border_hl = hl,
-  })
+  }
+
+  log(text_view_opts)
+  local w = TextView:new(text_view_opts)
   return w
 end
 
@@ -96,7 +113,7 @@ function M.preview_uri(opts) -- uri, width, line, col, offset_x, offset_y
   local loc = { uri = opts.uri, range = { start = { line = line_beg } } }
 
   -- TODO: preview height
-  loc.range['end'] = { line = opts.lnum + opts.preview_height }
+  loc.range['end'] = { line = opts.lnum + (opts.preview_height or opts.height) }
   opts.location = loc
 
   trace('uri', opts.uri, opts.lnum, opts.location.range.start.line, opts.location.range['end'].line)
@@ -287,7 +304,7 @@ M.select = function(items, opts, on_choice)
 
   local divider = string.rep('─', width + 2)
   table.insert(data, 2, divider)
-  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<esc>", true, false, true), 'x', true)
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<esc>', true, false, true), 'x', true)
   log(data)
   local listview = M.new_list_view({
     items = data,

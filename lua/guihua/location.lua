@@ -37,7 +37,10 @@ return {
   end,
   up_left = function(_, _)
     return 5, 5
-  end
+  end,
+  none = function(_, _)
+    return 0, 0
+  end,
 
   --   cur_pos = function(win_height, win_width, x, y)
   --     x = x or 10

@@ -82,8 +82,22 @@ function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
     print('error invalid range')
     return
   end
-  log(bufnr, range, uri)
-  local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range['end'].line, false)
+  log(bufnr, range.start.line, uri)
+  local s = range.start.line
+  local e = range['end'].line
+  if e == s then
+    if s < 2 then
+      s = 0
+    else
+      s = s - 2
+    end
+    e = s + opts.rect.height
+
+    log('not going to show 1 line range:', s, e)
+  end
+  range.start.line = s
+  range['end'].line = e
+  local contents = api.nvim_buf_get_lines(bufnr, s, e, false)
   local lines = #contents
   local syntax = opts.syntax
   if syntax == nil or #syntax < 1 then

@@ -46,11 +46,7 @@ function ListView:initialize(...)
     not vim.fn.hlexists('GHListDark') or vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GHListDark')), 'bg#') == ''
   then
     bg = util.bgcolor(0x051012)
-    local fg = '#e0d8f4'
-    if normalbg > 0xa00000 then
-      bg = util.bgcolor(normalbg)
-      fg = '#6f9d8e'
-    end
+    local fg = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'fg#')
     vim.cmd([[hi default GHListDark guifg=]] .. fg .. [[ guibg=]] .. bg)
   end
   opts.bg = opts.bg or 'GHListDark'
