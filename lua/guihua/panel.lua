@@ -237,7 +237,11 @@ local function filepreview(node)
   local range = node.range
   if not uri or not range then
     local ft = vim.api.nvim_buf_get_option(0, 'filetype')
-    vim.lsp.util.open_floating_preview({ node.hint }, ft, { border = 'single' })
+    local hint = node.hint
+    if type(hint) == 'string' then
+      hint = { hint }
+    end
+    vim.lsp.util.open_floating_preview(hint, ft, { border = 'single' })
     return
   end
 
@@ -335,22 +339,6 @@ function Panel:redraw(recreate)
     end
   end
 
-  -- if Panel.activePanel and Panel.activePanel.last_parsed_buf ~= buf then
-  --   vim.defer_fn(function()
-  --     local win = api.nvim_get_current_win()
-  --     if Panel.activePanel then
-  --       local bufc = Panel.activePanel.buf
-  --       if not api.nvim_buf_is_valid(bufc) then
-  --         log('panel closed')
-  --         Panel:close()
-  --         return
-  --       end
-  --     else
-  --       Panel.activePanel:open(false, true)
-  --       api.nvim_set_current_win(win)
-  --     end
-  --   end, 30)
-  -- end
 end
 
 local function run_on_buf_enter()
