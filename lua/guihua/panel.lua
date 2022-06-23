@@ -305,21 +305,52 @@ function Panel:close()
       active_windows[win_name] = nil
     end
   end
+  Panel.activePanel = nil
+  Panel:remove_tab_on_buf_leave()
 end
 
 -- redraw if panel is open for the current tabpage and buffer can be parsed but
 -- hasn't been.
-function Panel:redraw()
-  if vim.bo.filetype == 'guihua' then
+function Panel:redraw(recreate)
+  recreate = recreate or false
+  if vim.bo.filetype == 'guihua' or vim.bo.filetype == 'nofile' then
     return
   end
 
   local buf = api.nvim_get_current_buf()
+
   local win = api.nvim_get_current_win()
-  if Panel.activePanel.last_parsed_buf ~= buf then
-    Panel.activePanel:open(false, true)
-    api.nvim_set_current_win(win)
+  if Panel:is_open() then
+    if recreate then
+      Panel.activePanel:open(false, true)
+      api.nvim_set_current_win(win)
+      return
+    end
+    if Panel.activePanel == nil then
+      Panel:close()
+    end
+    if Panel.activePanel.last_parsed_buf ~= buf then
+      Panel.activePanel:open(false, true)
+      api.nvim_set_current_win(win)
+    end
   end
+
+  -- if Panel.activePanel and Panel.activePanel.last_parsed_buf ~= buf then
+  --   vim.defer_fn(function()
+  --     local win = api.nvim_get_current_win()
+  --     if Panel.activePanel then
+  --       local bufc = Panel.activePanel.buf
+  --       if not api.nvim_buf_is_valid(bufc) then
+  --         log('panel closed')
+  --         Panel:close()
+  --         return
+  --       end
+  --     else
+  --       Panel.activePanel:open(false, true)
+  --       api.nvim_set_current_win(win)
+  --     end
+  --   end, 30)
+  -- end
 end
 
 local function run_on_buf_enter()
@@ -327,7 +358,7 @@ local function run_on_buf_enter()
   local augroup = _make_augroup_name(tabpage)
   vim.cmd('augroup ' .. augroup)
 
-  api.nvim_create_autocmd({ 'BufEnter' }, { command = ":lua require ('guihua.panel').redraw()" })
+  api.nvim_create_autocmd({ 'BufEnter' }, { command = ":lua require ('guihua.panel').redraw(false)" })
   vim.cmd('augroup END')
 end
 
@@ -344,7 +375,7 @@ end
 local function make_panel_window(win_name)
   --local win_name = 'Guihua' .. tostring(api.nvim_get_current_buf())
   log('make_panel_window', win_name)
-  api.nvim_command('keepalt botright vertical 1 split ' .. win_name)
+  api.nvim_command('keepalt botright vertical 1 split! ' .. win_name)
   local win = api.nvim_get_current_win()
   local buf = api.nvim_get_current_buf()
 
@@ -501,10 +532,11 @@ end
 
 function Panel.jump_to_loc()
   local node = Panel:get_jump_info()
-  if node == nil then
+  if node == nil or (node.range == nil and node.lnum == nil) then
     log('no jump info')
     return
   end
+  node.range = node.range or { start = { character = 1 } }
   log(node.range, node.lnum)
   Panel.on_preview_close()
   local win = find_win_for_buf(Panel.activePanel.last_parsed_buf)
