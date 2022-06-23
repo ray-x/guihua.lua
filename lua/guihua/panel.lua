@@ -55,7 +55,9 @@ local function format_node(node)
   str = str .. panel_icons.bracket_left .. (syntax_icons[node.type] or node.type or '') .. panel_icons.bracket_right
   str = str .. ' ' .. (node.node_text or node.text)
 
-  str = str .. ' ' .. panel_icons.line_num_left .. tostring(node.lnum) .. panel_icons.line_num_right
+  if node.lnum then
+    str = str .. ' ' .. panel_icons.line_num_left .. tostring(node.lnum) .. panel_icons.line_num_right
+  end
   return str
 end
 
@@ -233,12 +235,17 @@ end
 local function filepreview(node)
   local uri = node.uri
   local range = node.range
+  if not uri or not range then
+    local ft = vim.api.nvim_buf_get_option(0, 'filetype')
+    vim.lsp.util.open_floating_preview({ node.hint }, ft, { border = 'single' })
+    return
+  end
 
   local opts = {
     relative = 'cursor',
     loc = 'none',
     uri = uri,
-    lnum = node.lnum or range.start.line,
+    lnum = node.lnum or (range.start and range.start.line) or nil,
     filetype = Panel.activePanel.ft,
     height = 5,
     range = range,
