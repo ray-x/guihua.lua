@@ -3,6 +3,7 @@ local class = require('middleclass')
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 local utils = require('guihua.util')
+local vfn = vim.fn
 local api = vim.api
 local skip_buf_types = { 'quickfix', 'nofile', 'terminal', 'prompt', 'help', 'vista' }
 local TextView = require('guihua.textview')
@@ -93,6 +94,7 @@ function Panel:initialize(opts)
       namespace = '🚀',
       type = ' ',
       field = '🏈',
+      interface = '蘒',
       module = '📦',
       flag = '🎏',
     }
@@ -102,7 +104,7 @@ function Panel:initialize(opts)
   self:add_section(opts)
   self.ft = vim.o.ft
   Panel.activePanel = self
-  log('panel created', Panel)
+  trace('panel created', Panel)
   return self
   -- run_on_buf_enter()
 end
@@ -121,6 +123,7 @@ function Panel:add_section(opts)
     header = genheader(opts),
     format = opts.format or format_node,
     render = opts.render,
+    on_confirm = opts.on_confirm, -- on_confirm must return true/false to indicate success
   })
 end
 
@@ -190,7 +193,7 @@ function Panel:get_jump_info()
   end
   local scts = self.activePanel.sections
   for _, sct in pairs(scts) do
-    if vim.fn.empty(sct.nodes) == 1 then
+    if vfn.empty(sct.nodes) == 1 then
       log('no nodes', sct.header)
       return
     end
@@ -211,7 +214,7 @@ end
 local function add_keymappings(bufnr)
   bufnr = bufnr or 0
   -- jump to definition on <CR> or double-click
-  api.nvim_buf_set_keymap(bufnr, 'n', '<CR>', ':lua require "guihua.panel".jump_to_loc()<CR>', { silent = true })
+  api.nvim_buf_set_keymap(bufnr, 'n', '<CR>', ':lua require "guihua.panel".jump_or_fold()<CR>', { silent = true })
 
   api.nvim_buf_set_keymap(
     bufnr,
@@ -269,7 +272,7 @@ local function run_on_buf_write(buf)
   local tabpage = api.nvim_get_current_tabpage()
   local augroup = _make_augroup_name(tabpage)
   vim.cmd('augroup ' .. augroup)
-  api.nvim_create_autocmd({ 'BufWritePost' }, { buffer = buf, command = ":lua require ('guihua.panel').redraw()" })
+  api.nvim_create_autocmd({ 'BufWritePost' }, { buffer = buf, command = ":lua require ('guihua.panel').redraw(false)" })
 
   vim.cmd('augroup END')
 end
@@ -318,15 +321,17 @@ end
 function Panel:redraw(recreate)
   recreate = recreate or false
   if vim.bo.filetype == 'guihua' or vim.bo.filetype == 'nofile' then
+    log('redrawing ignored for ft', vim.bo.filetype)
     return
   end
 
   local buf = api.nvim_get_current_buf()
+  log(vfn.expand('<afile>'), vfn.expand('<amatch>'), vfn.bufname(buf))
 
   local win = api.nvim_get_current_win()
   if Panel:is_open() then
     if recreate then
-      Panel.activePanel:open(false, true)
+      Panel.activePanel:open(false, true, buf)
       api.nvim_set_current_win(win)
       return
     end
@@ -334,11 +339,11 @@ function Panel:redraw(recreate)
       Panel:close()
     end
     if Panel.activePanel.last_parsed_buf ~= buf then
-      Panel.activePanel:open(false, true)
+      log('swap buffer')
+      Panel.activePanel:open(false, true, buf)
       api.nvim_set_current_win(win)
     end
   end
-
 end
 
 local function run_on_buf_enter()
@@ -401,7 +406,7 @@ function Panel:draw()
   -- log(self)
   local tabpage = api.nvim_get_current_tabpage()
   local win_name = _make_window_name(tabpage)
-  if not active_windows[win_name] or vim.fn.win_id2win(active_windows[win_name]) == 0 then
+  if not active_windows[win_name] or vfn.win_id2win(active_windows[win_name]) == 0 then
     self.win, self.buf = make_panel_window(win_name)
     active_windows[win_name] = self.win
   else
@@ -511,7 +516,7 @@ function Panel.jump_or_fold(fold)
   local can_fold = string.find(line, panel_icons.folded)
   local spaces = get_indent_level(pos_y) * 2
 
-  if can_fold or pos_x < spaces + 5 then
+  if can_fold or pos_x < spaces + 3 then
     vim.cmd('silent! normal za')
   else
     Panel.jump_to_loc()
@@ -520,11 +525,24 @@ end
 
 function Panel.jump_to_loc()
   local node = Panel:get_jump_info()
-  if node == nil or (node.range == nil and node.lnum == nil) then
+  if node == nil then
     log('no jump info')
     return
   end
+  if node.range == nil or node.lnum == nil then
+    -- check if on_confirm is set
+    log('incorrect node info to jump', node)
+    for _, sct in pairs(Panel.activePanel.sections) do
+      if sct.on_confirm ~= nil then
+        log('on_confirm', node)
+        if sct.on_confirm(node) then
+          return
+        end
+      end
+    end
+  end
   node.range = node.range or { start = { character = 1 } }
+  node.lnmu = node.lnum or 1
   log(node.range, node.lnum)
   Panel.on_preview_close()
   local win = find_win_for_buf(Panel.activePanel.last_parsed_buf)
@@ -571,15 +589,17 @@ function Panel.debug()
   log(active_windows)
 end
 
-function Panel:open(should_toggle, redraw)
-  local buf = api.nvim_get_current_buf()
+function Panel:open(should_toggle, redraw, buf)
+  local buf = buf or api.nvim_get_current_buf()
   if should_toggle and self:is_open() then
     Panel:close()
     return
   end
+  trace(debug.traceback())
   for i, section in pairs(self.sections) do
     local nodes = section.render(buf)
-    if vim.fn.empty(nodes) == 1 then
+    if vfn.empty(nodes) == 1 then
+      log('nothing to display')
       local modifiable = vim.bo.modifiable
       local filetype = vim.bo.filetype
       local unparseable_buftype = vim.tbl_contains(skip_buf_types, vim.bo.buftype)

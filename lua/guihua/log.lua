@@ -52,10 +52,9 @@ log.new = function(config, standalone)
   config = vim.tbl_deep_extend('force', default_config, config)
   -- path ~/.local/share/nvim
 
-  local cache_dir = vim.fn.stdpath('cache')
+  local cache_dir = vim.fn.stdpath('cache') -- ' stdpath('log') '
   config.log_file = config.log_file or config.plugin or 'gh'
   local outfile = string.format('%s%s%s.log', cache_dir, sep(), config.log_file)
-  -- print(config.log_size, config.log_file)
 
   if config.use_file then
     local fp = io.open(outfile, 'r')
@@ -113,11 +112,11 @@ log.new = function(config, standalone)
 
     local msg = message_maker(...)
     local info = debug.getinfo(2, 'Sl')
-    local lineinfo = info.short_src .. ':' .. info.currentline
+    local lineinfo = string.format('[%s]%s:%s', level, info.short_src, info.currentline)
 
     -- Output to console
     if config.use_console then
-      local console_string = string.format('[%-6s%s] %s: %s', nameupper, os.date('%H:%M:%S'), lineinfo, msg)
+      local console_string = string.format('[%-4s][%s] %s: %s', nameupper, os.date('%H:%M:%S'), lineinfo, msg)
 
       if config.highlights and level_config.hl then
         vim.cmd(string.format('echohl %s', level_config.hl))
@@ -137,10 +136,11 @@ log.new = function(config, standalone)
     if config.use_file then
       -- check file size
 
-      local fp = io.open(outfile, 'a')
-      local str = string.format('[%-6s%s] %s: %s\n', nameupper, os.date(), lineinfo, msg)
+      local fp = io.open(outfile, 'a+')
+      local str = string.format('[%-4s][%s] %s: %s\n', nameupper, os.date(), lineinfo, msg)
       if fp then
-        fp:write(str)
+        fp:write(str) -- return true if successful
+        fp:flush()
         fp:close()
       else
         print('Could not open log file')
@@ -164,6 +164,10 @@ log.new = function(config, standalone)
         return string.format(fmt, unpack(inspected))
       end)
     end
+  end
+
+  obj.config = function()
+    return config
   end
   return obj
 end
@@ -202,6 +206,4 @@ log.new(default_config, true)
 
 -- local l = log.new ({level = "info"}, true)
 --
--- l.info("kkkk")
-
 return log

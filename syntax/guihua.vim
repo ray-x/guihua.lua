@@ -26,7 +26,7 @@ syntax keyword GuihuaBufferLogic and bitor or xor compl bitand and_eq or_eq xor_
 syntax match GuihuaBufferPath '\(\.\)*\(\/\S\+\)\{1}\.*\S*'
 
 syntax keyword GuihuaNerdfont     𝔉 ⓕ    ﴲ    ﰮ     𝕰   ﬌             ﳅ     ∑  
-syntax keyword GuihuaNerdfont2  ƒ         pkg 
+syntax keyword GuihuaNerdfont2  ƒ         蘒 
 
 hi default link GuihuaBufferNumber Number
 hi default link GuihuaBufferHex Number
