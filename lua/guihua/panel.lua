@@ -54,11 +54,15 @@ local function format_node(node)
   last_leave_node = last_leave_node and nil -- true/nil-> nil, false -> false
   local str = entry_prefix(node, is_last_node)
   str = str .. panel_icons.bracket_left .. (syntax_icons[node.type] or node.type or '') .. panel_icons.bracket_right
-  str = str .. ' ' .. (node.node_text or node.text)
+  str = str .. ' ' .. (node.node_text or node.text or '')
+  if node.node_text == nil and node.text == nil then
+    log('node text is empty', node)
+  end
 
   if node.lnum then
     str = str .. ' ' .. panel_icons.line_num_left .. tostring(node.lnum) .. panel_icons.line_num_right
   end
+  trace('format:', str)
   return str
 end
 
@@ -123,6 +127,7 @@ function Panel:add_section(opts)
     header = genheader(opts),
     format = opts.format or format_node,
     render = opts.render,
+    fold = opts.fold,
     on_confirm = opts.on_confirm, -- on_confirm must return true/false to indicate success
   })
 end
@@ -198,6 +203,7 @@ function Panel:get_jump_info()
       return
     end
     for _, node in pairs(sct.nodes) do
+      trace(node.text or node.node_text)
       -- log(node, sct.format(node), utils.trim(line))
       if utils.trim(sct.format(node)) == utils.trim(line) then
         log('node found', node.node_text, 'line', line)
@@ -240,7 +246,7 @@ local function filepreview(node)
   local range = node.range
   if not uri or not range then
     local ft = vim.api.nvim_buf_get_option(0, 'filetype')
-    local hint = node.hint
+    local hint = node.hint or node.text or node.node_text or node.name or 'unknown'
     if type(hint) == 'string' then
       hint = { hint }
     end
@@ -320,7 +326,7 @@ end
 -- hasn't been.
 function Panel:redraw(recreate)
   recreate = recreate or false
-  if vim.bo.filetype == 'guihua' or vim.bo.filetype == 'nofile' then
+  if vim.bo.filetype == 'nofile' then
     log('redrawing ignored for ft', vim.bo.filetype)
     return
   end
@@ -338,7 +344,7 @@ function Panel:redraw(recreate)
     if Panel.activePanel == nil then
       Panel:close()
     end
-    if Panel.activePanel.last_parsed_buf ~= buf then
+    if Panel.activePanel.last_parsed_buf ~= buf or vim.bo.filetype == 'guihua' then
       log('swap buffer')
       Panel.activePanel:open(false, true, buf)
       api.nvim_set_current_win(win)
@@ -517,10 +523,28 @@ function Panel.jump_or_fold(fold)
   local spaces = get_indent_level(pos_y) * 2
 
   if can_fold or pos_x < spaces + 3 then
-    vim.cmd('silent! normal za')
+    Panel.fold()
   else
     Panel.jump_to_loc()
   end
+end
+
+function Panel.fold()
+  local node = Panel:get_jump_info()
+  if node == nil then
+    return log('no node found')
+  end
+  for _, sct in pairs(Panel.activePanel.sections) do
+    if sct.fold ~= nil then
+      log('on_fold')
+      if sct.fold(Panel.activePanel, node) then
+        return true
+      end
+    end
+  end
+
+  log('fallback za')
+  vim.cmd('silent! normal za')
 end
 
 function Panel.jump_to_loc()
@@ -542,13 +566,20 @@ function Panel.jump_to_loc()
     end
   end
   node.range = node.range or { start = { character = 1 } }
-  node.lnmu = node.lnum or 1
-  log(node.range, node.lnum)
+  node.lnum = node.lnum or node.range.start.line or 1
   Panel.on_preview_close()
-  local win = find_win_for_buf(Panel.activePanel.last_parsed_buf)
+  local fileuri = node.uri
+  local bufnr = vim.uri_to_bufnr(fileuri)
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
+    vfn.bufload(bufnr)
+  end
+  local win = find_win_for_buf(bufnr)
+  trace(node.range, node.lnum, win)
   if win then
     api.nvim_set_current_win(win)
     api.nvim_win_set_cursor(0, { node.lnum, node.range.start.character })
+  else
+    log('no win found for', fileuri)
   end
 end
 
@@ -563,11 +594,6 @@ function Panel.on_hover()
 end
 
 function Panel.on_preview_close()
-  local node = Panel:get_jump_info()
-  if node == nil then
-    log('no hover info')
-    return
-  end
   local pa = Panel.activePanel
   if not pa then
     return
@@ -590,14 +616,16 @@ function Panel.debug()
 end
 
 function Panel:open(should_toggle, redraw, buf)
-  local buf = buf or api.nvim_get_current_buf()
+  buf = buf or api.nvim_get_current_buf()
+  log('buf:', vfn.bufname(buf or 0))
   if should_toggle and self:is_open() then
     Panel:close()
     return
   end
-  trace(debug.traceback())
+  -- trace(debug.traceback())
   for i, section in pairs(self.sections) do
     local nodes = section.render(buf)
+    trace(nodes)
     if vfn.empty(nodes) == 1 then
       log('nothing to display')
       local modifiable = vim.bo.modifiable
@@ -639,9 +667,13 @@ function Panel:open(should_toggle, redraw, buf)
     end
   end
 
-  self.last_parsed_buf = buf
+  -- redraw the panel
   self:draw()
 
+  local ft = vim.api.nvim_buf_get_option(buf, 'filetype')
+  if ft ~= '' and ft ~= 'guihua' and ft ~= 'nofile' then
+    self.last_parsed_buf = buf
+  end
   if not redraw then
     run_on_buf_write(buf)
     run_on_buf_enter()
