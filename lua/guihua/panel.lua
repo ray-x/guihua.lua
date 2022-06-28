@@ -650,6 +650,10 @@ function Panel:open(should_toggle, redraw, buf)
         local header = self.header_text
         local msg = 'failed to generate pannel filetype: ' .. filetype
         local guihua_buf = api.nvim_win_get_buf(wid)
+        if header == nil or guihua_buf == nil then
+          log('header or guihua_buf is nil')
+          return
+        end
         api.nvim_buf_set_option(guihua_buf, 'modifiable', true)
         -- cleanup
         api.nvim_buf_set_lines(guihua_buf, 0, -1, false, {})
