@@ -29,7 +29,7 @@ local function floating_buf(opts) -- win_width, win_height, x, y, loc, prompt, e
   local win_opts = {
     style = opts.style or 'minimal',
     width = opts.win_width or 80,
-    height = opts.win_height or 20,
+    height = opts.win_height or 23,
     border = opts.border or 'single', -- "shadow"
   }
 
@@ -44,6 +44,11 @@ local function floating_buf(opts) -- win_width, win_height, x, y, loc, prompt, e
     win_opts.row = row + y
     win_opts.col = col + x
   end
+
+  if win_opts.relative == 'cursor' and y ~= 0 then
+    win_opts.row = y
+  end
+
   log('floating size', win_opts.height, win_opts.width)
   trace('floating opts: ', win_opts, opts)
   local buf = api.nvim_create_buf(false, true)
@@ -326,11 +331,11 @@ return {
   floating_term = floating_term,
   floating_buf_mask = floating_buf_mask,
   input = function(o, confirm, change)
-    print("please use gui.input")
+    print('please use gui.input')
     return require('guihua.gui').input(o, confirm, change)
   end,
   input_callback = function()
-    print("please use gui.input_callback")
+    print('please use gui.input_callback')
     return require('guihua.gui').input_callback()
   end,
   gui_term = term,
