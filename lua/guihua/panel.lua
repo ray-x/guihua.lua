@@ -39,7 +39,13 @@ local function entry_prefix(node, is_last_node)
   return prefix
 end
 
-local function format_node(node)
+local function func_type(node)
+  if node.type == 'function' or node.type == 'method' or node.kind == 12 or node.kind == 5 or node.kind == 6 then
+    return true
+  end
+end
+
+local function format_node(node, section)
   local is_last_node = false
   local last_leave_node = false
   trace(node)
@@ -59,8 +65,18 @@ local function format_node(node)
     log('node text is empty', node)
   end
 
+  local scope = ''
+  if section and section.scope and node[section.scope] then
+    if func_type(node) then
+      local s = node[section.scope]['start'].line
+      local e = node[section.scope]['end'].line
+      if s and e then
+        scope = ' ' .. panel_icons.range_left .. s + 1 .. '-' .. e + 1 .. panel_icons.range_right
+      end
+    end
+  end
   if node.lnum then
-    str = str .. ' ' .. panel_icons.line_num_left .. tostring(node.lnum) .. panel_icons.line_num_right
+    str = str .. ' ' .. panel_icons.line_num_left .. tostring(node.lnum) .. panel_icons.line_num_right .. scope
   end
   trace('format:', str)
   return str
@@ -79,6 +95,9 @@ function Panel:initialize(opts)
       section_separator = '─', --'',
       line_num_left = ':', --'',
       line_num_right = '', --',
+
+      range_left = '', --'',
+      range_right = '',
       inner_node = '', --├○',
       folded = '◉',
       unfolded = '○',
@@ -128,6 +147,7 @@ function Panel:add_section(opts)
     format = opts.format or format_node,
     render = opts.render,
     fold = opts.fold,
+    scope = opts.scope,
     on_confirm = opts.on_confirm, -- on_confirm must return true/false to indicate success
   })
 end
@@ -667,7 +687,7 @@ function Panel:open(should_toggle, redraw, buf)
     self.sections[i].text = {}
     self.sections[i].nodes = nodes
     for _, node in ipairs(nodes) do
-      table.insert(self.sections[i].text, self.sections[i].format(node))
+      table.insert(self.sections[i].text, self.sections[i].format(node, self.sections[i]))
     end
   end
 
