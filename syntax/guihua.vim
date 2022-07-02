@@ -25,6 +25,7 @@ syntax keyword GuihuaBufferLogic and bitor or xor compl bitand and_eq or_eq xor_
 
 syntax match GuihuaBufferPath '\(\.\)*\(\/\S\+\)\{1}\.*\S*'
 syntax match GuihuaRange '[<|⟪|⟬||]\(\S\+\)[⟫|⟭|>||]'
+syntax match GuihuaPanelLineNr '\(:\d\+\)\{1}'
 
 syntax keyword GuihuaNerdfont     𝔉 ⓕ    ﴲ    ﰮ     𝕰   ﬌             ﳅ     ∑  
 syntax keyword GuihuaNerdfont2  ƒ         蘒 
@@ -48,6 +49,7 @@ hi default link GuihuaNerdfont2 Function
 hi default link GuihuaBufferField2 Function
 hi default link GuihuaBufferLogic Boolean
 hi default link GuihuaRange Comment
+hi default link GuihuaPanelLineNr LineNr
 " path match
 "  /abc/def_m1/gh_a.lua   :3
 " /abc/defm/gha.lua
