@@ -633,6 +633,7 @@ end
 function Panel.debug()
   log(Panel)
   log(active_windows)
+  return Panel, active_windows
 end
 
 function Panel:open(should_toggle, redraw, buf)
