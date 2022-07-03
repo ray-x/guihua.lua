@@ -91,7 +91,7 @@ function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
     else
       s = s - 2
     end
-    e = s + opts.rect.height
+    e = math.max(e + 2, s + opts.rect.height)
 
     log('not going to show 1 line range:', s, e)
   end

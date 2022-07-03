@@ -137,7 +137,6 @@ function M.new_list_view(opts)
   local width = math.floor(wwidth * mwidth)
   width = math.min(120, width)
 
-  local pheight = math.min(#opts.data, math.floor(api.nvim_get_option('lines') * opts.preview_height_ratio))
   local prompt = opts.prompt or false
   if opts.rawdata then
     data = items
@@ -161,7 +160,7 @@ function M.new_list_view(opts)
   local r, _ = top_center(lheight, width)
 
   local offset_y = r + lheight
-
+  local pheight = math.min(wheight - lheight - 3, math.floor(wheight * opts.preview_height_ratio))
   -- style shadow took 1 lines
   if border ~= 'none' then
     if border == 'shadow' then
