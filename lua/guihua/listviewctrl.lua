@@ -94,61 +94,54 @@ function ListViewCtrl:initialize(delegate, ...)
     log('should not bind to current buffer')
   end
   local m = _GH_SETUP.maps
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.prev, '<cmd> lua ListViewCtrl:on_prev()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', m.prev, '<cmd> lua ListViewCtrl:on_prev()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.next, '<cmd> lua ListViewCtrl:on_next()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', m.next, '<cmd> lua ListViewCtrl:on_next()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<Enter>', '<cmd> lua ListViewCtrl:on_confirm()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<Enter>', '<cmd> lua ListViewCtrl:on_confirm() <CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-w>j', '<cmd> lua gh_jump_to_preview()<CR>', {})
-
-  -- vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<Enter>",
-  --                             "<cmd> lua ListViewCtrl:on_search()<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<Up>', '<cmd> lua ListViewCtrl:on_prev()<CR>', {})
-  -- vim.api.nvim_buf_set_keymap(delegate.buf, 'n', 'k', '<cmd> lua ListViewCtrl:on_prev()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<Down>', '<cmd> lua ListViewCtrl:on_next()<CR>', {})
-  -- vim.api.nvim_buf_set_keymap(delegate.buf, 'n', 'j', '<cmd> lua ListViewCtrl:on_next()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<Up>', '<cmd> lua ListViewCtrl:on_prev()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<Down>', '<cmd> lua ListViewCtrl:on_next()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', m.pageup, '<cmd> lua ListViewCtrl:on_pageup()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', m.pagedown, '<cmd> lua ListViewCtrl:on_pagedown()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<PageUp>', '<cmd> lua ListViewCtrl:on_pageup()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<PageDown>', '<cmd> lua ListViewCtrl:on_pagedown()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.pageup, '<cmd> lua ListViewCtrl:on_pageup()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.pagedown, '<cmd> lua ListViewCtrl:on_pagedown()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<PageUp>', '<cmd> lua ListViewCtrl:on_pageup()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<PageDown>', '<cmd> lua ListViewCtrl:on_pagedown()<CR>', {})
-
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.confirm, '<cmd> lua ListViewCtrl:on_confirm()<CR>', {})
-
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.vsplit, "<cmd> lua ListViewCtrl:on_confirm({split='v'})<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.split, "<cmd> lua ListViewCtrl:on_confirm({split='s'})<CR>", {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', m.confirm, '<cmd> lua ListViewCtrl:on_confirm()<CR>', {})
-
-  log('bind close', self.m_delegate.win, delegate.buf)
-
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.close_view, '<cmd> lua ListViewCtrl:on_close() <CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<C-c>', '<cmd> lua ListViewCtrl:on_close() <CR>', {})
-
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', '<ESC>', '<cmd> lua ListViewCtrl:on_close() <CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<BS>', '<cmd> lua ListViewCtrl:on_backspace() <CR>', {})
-
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'i', '<C-W>', '<cmd> lua ListViewCtrl:on_backspace(true) <CR>', {})
+  --  stylua: ignore start
+  local keymaps = {
+    { mode = 'n', key = m.prev, cmd = function() ListViewCtrl:on_prev() end, desc = 'ListViewCtrl:on_prev()' },
+    { mode = 'i', key = m.prev, cmd = function() ListViewCtrl:on_prev() end, desc = 'ListViewCtrl:on_prev()' },
+    { mode = 'n', key = m.next, cmd = function() ListViewCtrl:on_next() end, desc = 'ListViewCtrl:on_next()' },
+    { mode = 'i', key = m.next, cmd = function() ListViewCtrl:on_next() end, desc = 'ListViewCtrl:on_next()' },
+    { mode = 'n', key = '<Enter>', cmd = function() ListViewCtrl:on_confirm() end, desc = 'ListViewCtrl:on_confirm()' },
+    { mode = 'i', key = '<Enter>', cmd = function() ListViewCtrl:on_confirm() end, desc = 'ListViewCtrl:on_confirm()' },
+    { mode = 'n', key = '<C-w>j', cmd = _G.gh_jump_to_preview, desc = 'jump to preview' },
+    { mode = 'n', key = '<Up>', cmd = function() ListViewCtrl:on_prev() end, desc = 'ListViewCtrl:on_prev()' },
+    { mode = 'n', key = '<Down>', cmd = function() ListViewCtrl:on_next() end, desc = 'ListViewCtrl:on_next()' },
+    { mode = 'i', key = '<Up>', cmd = function() ListViewCtrl:on_prev() end, desc = 'ListViewCtrl:on_prev()' },
+    { mode = 'i', key = '<Down>', cmd = function() ListViewCtrl:on_next() end, desc = 'ListViewCtrl:on_next()' },
+    { mode = 'i', key = m.pageup, cmd = function() ListViewCtrl:on_pageup() end, desc = 'ListViewCtrl:on_pageup()' },
+    { mode = 'i', key = m.pagedown, cmd = function() ListViewCtrl:on_pagedown() end, desc = 'ListViewCtrl:on_pagedown()' },
+    { mode = 'i', key = '<PageUp>', cmd = function() ListViewCtrl:on_pageup() end, desc = 'ListViewCtrl:on_pageup()' },
+    { mode = 'i', key = '<PageDown>', cmd = function() ListViewCtrl:on_pagedown() end, desc = 'ListViewCtrl:on_pagedown()' },
+    { mode = 'n', key = m.pageup, cmd = function() ListViewCtrl:on_pageup() end, desc = 'ListViewCtrl:on_pageup()' },
+    { mode = 'n', key = m.pagedown, cmd = function() ListViewCtrl:on_pagedown() end, desc = 'ListViewCtrl:on_pagedown()' },
+    { mode = 'n', key = '<PageUp>', cmd = function() ListViewCtrl:on_pageup() end, desc = 'ListViewCtrl:on_pageup()' },
+    { mode = 'n', key = '<PageDown>', cmd = function() ListViewCtrl:on_pagedown() end, desc = 'ListViewCtrl:on_pagedown()' },
+    { mode = 'n', key = m.confirm, cmd = function() ListViewCtrl:on_confirm() end, desc = 'ListViewCtrl:on_confirm()' },
+    { mode = 'n', key = m.vsplit, cmd = function() ListViewCtrl:on_confirm({ split = 'v' }) end, desc = 'ListViewCtrl:on_confirm {split = v}'},
+    { mode = 'n', key = m.split, cmd = function() ListViewCtrl:on_confirm({ split = 's' }) end, desc = 'ListViewCtrl:on_confirm {split = s}'},
+    { mode = 'i', key = m.confirm, cmd = function() ListViewCtrl:on_confirm() end, desc = 'ListViewCtrl:on_confirm()' },
+    { mode = 'n', key = m.close_view, cmd = function() ListViewCtrl:on_close() end, desc = 'ListViewCtrl:on_close()' },
+    { mode = 'n', key = '<C-c>', cmd = function() ListViewCtrl:on_close() end, desc = 'ListViewCtrl:on_close()' },
+    { mode = 'n', key = '<ESC>', cmd = function() ListViewCtrl:on_close() end, desc = 'ListViewCtrl:on_close()' },
+    { mode = 'i', key = '<BS>', cmd = function() ListViewCtrl:on_backspace() end, desc = 'ListViewCtrl:on_backspace()' },
+    { mode = 'i', key = '<C-W>', cmd = function() ListViewCtrl:on_backspace(true) end, desc = 'ListViewCtrl:on_backspace()' },
+  }
 
   for i = 1, 9 do
-    local cmd = string.format('<cmd> lua ListViewCtrl:on_item(%i)<CR>', i)
-    vim.api.nvim_buf_set_keymap(delegate.buf, 'n', tostring(i), cmd, {})
-    -- vim.api.nvim_buf_set_keymap(delegate.buf, 'i', tostring(i), cmd, {})
+    keymaps[#keymaps + 1] = {
+      -- stylua: ignore
+      mode = 'n', key = tostring(i), cmd = function() ListViewCtrl:on_item(i) end, desc = 'list on item num'}
   end
 
+  for _, v in ipairs(keymaps) do
+    vim.keymap.set(v.mode, v.key, v.cmd, { desc = v.desc, noremap = true, silent = true, buffer = delegate.buf })
+  end
+
+  -- stylua: ignore end
   vim.cmd([[ autocmd TextChangedI,TextChanged <buffer> lua  ListViewCtrl:on_search() ]])
   vim.cmd([[ autocmd WinLeave <buffer> ++once lua  ListViewCtrl:on_leave() ]])
 
   --
   ListViewCtrl._viewctlobject = self
-  -- self:on_draw(self.display_data)
-  -- self.m_delegate:set_pos(self.selected_line)
-  -- trace("listview ctrl created ", self)
   log('listview ctrl created ')
 end
 
@@ -195,19 +188,11 @@ function ListViewCtrl:on_next()
   trace('next: ', listobj.selected_line, listobj.display_start_at, listobj.display_height, l, disp_h)
 
   if l > #data_collection then
-    -- listobj.m_delegate:set_pos(disp_h) -- do not move to next
-    -- listobj.on_move(data_collection[#data_collection])
+    -- stylua: ignore
     log(
       'out of boundary next should show at: ',
-      #listobj.data,
-      'set: l',
-      l,
-      'collection',
-      #data_collection,
-      'disp_h',
-      disp_h,
-      listobj.display_height
-    )
+      #listobj.data, 'set: l', l, 'collection', #data_collection,
+      'disp_h', disp_h, listobj.display_height)
     return {}
   end
   local skipped_fn = 1
@@ -574,9 +559,12 @@ end
 
 function ListViewCtrl:on_close()
   log('closer listview') -- , ListViewCtrl._viewctlobject.m_delegate)
+  if ListViewCtrl._viewctlobject == nil then
+    log('closer listview', debug.traceback()) --  ListViewCtrl._viewctlobject.m_delegate)
+    return
+  end
   ListViewCtrl._viewctlobject.m_delegate.close()
 
-  --  log("closer ", ListViewCtrl)
   ListViewCtrl._viewctlobject.m_delegate:on_close()
   ListViewCtrl:on_leave(true)
   ListViewCtrl._viewctlobject = nil
