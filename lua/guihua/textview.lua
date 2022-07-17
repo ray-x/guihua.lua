@@ -50,7 +50,7 @@ function TextView:initialize(...)
     vim.cmd([[hi default GuihuaTextViewDark guifg=#e0d8f4  guibg=]] .. bg)
   end
 
-  opts.bg = opts.bg or 'GHTextViewDark'
+  opts.bg = opts.bg or 'GuihuaTextViewDark'
 
   if opts.width or opts.height then
     opts.rect = { widht = opts.widht or 60, height = opts.height or 30 }
