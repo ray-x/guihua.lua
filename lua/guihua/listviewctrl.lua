@@ -132,6 +132,10 @@ function ListViewCtrl:initialize(delegate, ...)
       mode = 'n', key = tostring(i), cmd = function() ListViewCtrl:on_item(i) end, desc = 'list on item num'}
   end
 
+  if vim.keymap == nil then
+    vim.notify('please use neovim 0.7 or later')
+    return
+  end
   for _, v in ipairs(keymaps) do
     vim.keymap.set(v.mode, v.key, v.cmd, { desc = v.desc, noremap = true, silent = true, buffer = delegate.buf })
   end
