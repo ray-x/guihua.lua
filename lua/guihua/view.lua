@@ -106,8 +106,10 @@ function View.Active()
 end
 
 function View:set_hl(opts)
-  local bg = opts.bg or 'GHBgDark'
-  vim.cmd([[hi default GHBgDark guifg=#d0c8e4 guibg=#1a101f]])
+  local bg = opts.bg or 'GuihuaBgDark'
+  if vim.fn.hlexists('GuihuaBgDark') == 0 then
+    vim.cmd([[hi default GuihuaBgDark guifg=#d0c8e4 guibg=#1a101f]])
+  end
 
   local cmd = 'Normal:' .. bg .. ',NormalNC:' .. bg
   if opts.border_hl ~= nil then

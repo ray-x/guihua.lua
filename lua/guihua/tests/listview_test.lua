@@ -365,7 +365,7 @@ local function test_list_one_item_symbol()
 
   local opt = {
     api = ' ',
-    bg = 'GHListDark',
+    bg = 'GuihuaListDark',
     data = data,
     enter = true,
     ft = 'go',
@@ -395,7 +395,7 @@ end
 local function test_list_two_item_symbol()
   local opt = {
     api = ' ',
-    bg = 'GHListDark',
+    bg = 'GuihuaListDark',
     data = {
       {
         detail = 'func',
@@ -433,7 +433,7 @@ end
 local function test_list_page()
   local opt = {
     api = ' ',
-    bg = 'GHListDark',
+    bg = 'GuihuaListDark',
     data = data,
     enter = true,
     ft = 'go',
@@ -472,7 +472,7 @@ local function test_list_page_customer_filter()
   end
   local opt = {
     api = ' ',
-    bg = 'GHListDark',
+    bg = 'GuihuaListDark',
     data = data,
     enter = true,
     ft = 'go',

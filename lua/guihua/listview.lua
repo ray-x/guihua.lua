@@ -32,8 +32,8 @@ function ListView:initialize(...)
   log('listview ctor ') -- , self)
   local opts = select(1, ...) or {}
 
-  -- vim.cmd([[hi default GHListDark guifg=#e0d8f4 guibg=#272755]])
-  -- vim.cmd([[hi default GHListDark guifg=#e0d8f4 guibg=#103234]])
+  -- vim.cmd([[hi default GuihuaListDark guifg=#e0d8f4 guibg=#272755]])
+  -- vim.cmd([[hi default GuihuaListDark guifg=#e0d8f4 guibg=#103234]])
 
   local listviewHl = self.hl_group or 'PmenuSel'
   util.selcolor(listviewHl)
@@ -43,13 +43,13 @@ function ListView:initialize(...)
 
   local bg
   if
-    not vim.fn.hlexists('GHListDark') or vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GHListDark')), 'bg#') == ''
+    not vim.fn.hlexists('GuihuaListDark') or vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GuihuaListDark')), 'bg#') == ''
   then
     bg = util.bgcolor(0x051012)
     local fg = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'fg#')
-    vim.cmd([[hi default GHListDark guifg=]] .. fg .. [[ guibg=]] .. bg)
+    vim.cmd([[hi default GuihuaListDark guifg=]] .. fg .. [[ guibg=]] .. bg)
   end
-  opts.bg = opts.bg or 'GHListDark'
+  opts.bg = opts.bg or 'GuihuaListDark'
 
   opts.enter = true
   View.initialize(self, opts)
@@ -206,7 +206,7 @@ function ListView:set_pos(i)
       return
     end
     vim.api.nvim_buf_clear_namespace(self.buf, selhighlight, 0, -1)
-    local ListviewHl = 'GHListHl'
+    local ListviewHl = 'GuihuaListHl'
     vim.api.nvim_buf_add_highlight(self.buf, selhighlight, ListviewHl, self.selected_line - 1, 0, -1)
   end)
 end

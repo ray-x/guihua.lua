@@ -78,7 +78,7 @@ local function diff_color(bgcolor, sel)
   return diff, t
 end
 
--- offset the GHListHl based on GHListDark
+-- offset the GuihuaListHl based on GuihuaListDark
 function M.selcolor(Hl)
   vim.validate({ Hl = { Hl, 'string' } })
   log(Hl)
@@ -88,11 +88,11 @@ function M.selcolor(Hl)
   local fg = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'fg#'), 2), 16)
     or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'fg#'), 2), 16)
 
-  if vim.fn.hlexists('GHListHl') and vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GHListHl')), 'bg#') ~= '' then
+  if vim.fn.hlexists('GuihuaListHl') == 1 and vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GuihuaListHl')), 'bg#') ~= '' then
     -- already defined
     return
   end
-  local bgcolor = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GHListDark')), 'bg#'), 2), 16)
+  local bgcolor = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GuihuaListDark')), 'bg#'), 2), 16)
     or bg
     or 0x303030
 
@@ -130,7 +130,7 @@ function M.selcolor(Hl)
     local lbg = string.format('#%06x', sel)
     log(diff, sel, bgcolor, Hl)
 
-    local hi = [[hi default GHListHl cterm=Bold gui=Bold guibg=]] .. lbg
+    local hi = [[hi default GuihuaListHl cterm=Bold gui=Bold guibg=]] .. lbg
     if vim.o.background == 'light' and sel_gstr then
       hi = hi .. ' guifg=' .. sel_gstr
     end
@@ -146,10 +146,10 @@ function M.selcolor(Hl)
       sel = bgcolor + 0x23202a
     end
     local lbg = string.format('#%6x', sel)
-    vim.cmd('hi default GHListHl cterm=Bold gui=Bold guibg=' .. lbg)
+    vim.cmd('hi default GuihuaListHl cterm=Bold gui=Bold guibg=' .. lbg)
   end
 
-  return 'GHListHl'
+  return 'GuihuaListHl'
 end
 
 function M.close_view_event(_, key, winnr, bufnr, enter)
