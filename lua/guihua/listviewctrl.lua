@@ -8,7 +8,7 @@ local trace = require('guihua.log').trace
 _GH_SETUP = _GH_SETUP or require('guihua.maps').setup()
 LaistView = ListView or nil
 if _GH_SETUP == nil then
-  require('guihua.maps').setup()
+  _GH_SETUP = require('guihua.maps').setup()
 end
 TextView = TextView or require('guihua.textview')
 if ListViewCtrl == nil then
