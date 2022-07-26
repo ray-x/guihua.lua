@@ -95,6 +95,9 @@ function ListViewCtrl:initialize(delegate, ...)
     log('should not bind to current buffer')
   end
   local m = _GH_SETUP.maps
+  if m == nil then
+    return
+  end
   --  stylua: ignore start
   local keymaps = {
     { mode = 'n', key = m.prev, cmd = function() ListViewCtrl:on_prev() end, desc = 'ListViewCtrl:on_prev()' },
