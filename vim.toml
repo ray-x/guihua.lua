@@ -9,6 +9,21 @@ any = true
 property = true
 writable = "new-fields"
 
+[Panel]
+any = true
+[View]
+any = true
+[ListView]
+any = true
+[ListViewCtrl]
+any = true
+[ViewCtrl]
+any = true
+[TextView]
+any = true
+[TextViewCtrl]
+any = true
+
 [bit]
 any = true
 

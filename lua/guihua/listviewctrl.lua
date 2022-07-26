@@ -470,6 +470,11 @@ function ListViewCtrl:on_search()
   -- trace = log
 
   local listobj = ListViewCtrl._viewctlobject
+  if listobj == nil then
+    log('on search failed, no listviewCTRL')
+    -- why on_search bind here?
+    return
+  end
   if listobj.m_delegate.prompt ~= true then
     return
   end
@@ -485,12 +490,6 @@ function ListViewCtrl:on_search()
     log('filter: ', listobj.on_input_filter, type(listobj.on_input_filter))
   end
 
-  local listobj = ListViewCtrl._viewctlobject
-  if listobj == nil then
-    log('on search failed, no listviewCTRL')
-    -- why on_search bind here?
-    return
-  end
   local buf = listobj.m_delegate.buf
   if not vim.api.nvim_buf_is_valid(buf) then
     return

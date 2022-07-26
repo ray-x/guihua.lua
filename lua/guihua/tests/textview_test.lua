@@ -93,7 +93,7 @@ s not guarantee which.\n\nDate panics if loc is nil.\n]],
 }
 
 local function test_signature()
-  lines = { signature.signatures[1].label }
+  local lines = { signature.signatures[1].label }
   local i = 1
   local doc = ''
   local util = require('vim.lsp.util')

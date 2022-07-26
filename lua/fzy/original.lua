@@ -197,7 +197,7 @@ function fzy.get_score_floor()
 end
 
 function fzy.filter(needle, lines)
-  results = {}
+  local results = {}
   for i = 1, #lines do
     local line = lines[i]
     if fzy.has_match(needle, line) then
