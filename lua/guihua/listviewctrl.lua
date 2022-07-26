@@ -6,7 +6,7 @@ local error = require('guihua.log').error
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 _GH_SETUP = _GH_SETUP or require('guihua.maps').setup()
-ListView = ListView or require('guihua.listview')
+ListView = ListView or nil
 if _GH_SETUP == nil then
   _GH_SETUP = require('guihua.maps').setup()
 end
