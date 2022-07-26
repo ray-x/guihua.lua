@@ -36,8 +36,8 @@ end
 -- print_table(orderd)
 
 
-lines = {{text="Lua 5.4 was release on 29 Jun 2020", meta={uri='http://www.lua.org/versions.html#5.4'}}, {text="Lua 5.3 was released on 12 Jan 2015", meta={uri='http://www.lua.org/versions.html#5.3'}}, {text="Lua 5.2 was released on 16 Dec 2011",  meta={uri='http://www.lua.org/versions.html#5.2'}}, {text="Lua 5.1 was released on 21 Feb 2006",  meta={uri='http://www.lua.org/versions.html#5.1'}}}
+local lines = {{text="Lua 5.4 was release on 29 Jun 2020", meta={uri='http://www.lua.org/versions.html#5.4'}}, {text="Lua 5.3 was released on 12 Jan 2015", meta={uri='http://www.lua.org/versions.html#5.3'}}, {text="Lua 5.2 was released on 16 Dec 2011",  meta={uri='http://www.lua.org/versions.html#5.2'}}, {text="Lua 5.1 was released on 21 Feb 2006",  meta={uri='http://www.lua.org/versions.html#5.1'}}}
 
-filtered = export.filter_table_ordered("released", lines)
+local filtered = export.filter_table_ordered("released", lines)
 print("result: ")
 print(vim.inspect(filtered))
