@@ -11,6 +11,7 @@ if TextView == nil then
   TextView = class('TextView', View)
 end
 
+_GH_SETUP = _GH_SETUP or nil
 if _GH_SETUP == nil then
   require('guihua.maps').setup()
 end

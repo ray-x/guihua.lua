@@ -8,6 +8,7 @@ local columns = api.nvim_get_option('columns')
 local lines = api.nvim_get_option('lines')
 local shell = api.nvim_get_option('shell')
 local shellcmdflag = api.nvim_get_option('shellcmdflag')
+_GH_SETUP = _GH_SETUP or nil
 if _GH_SETUP == nil then
   require('guihua').setup()
 end

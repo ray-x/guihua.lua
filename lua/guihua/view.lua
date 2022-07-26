@@ -21,6 +21,7 @@ opts={
 }
 
 --]]
+_GH_SEARCH_NS = _GH_SEARCH_NS or nil
 function View:initialize(...)
   trace(debug.traceback())
   local opts = select(1, ...) or {}

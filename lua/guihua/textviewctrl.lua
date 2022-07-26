@@ -6,7 +6,7 @@ local api = vim.api
 local log = require('guihua.log').info
 
 local trace = require('guihua.log').trace
-
+_GH_SETUP = _GH_SETUP or nil
 if _GH_SETUP == nil then
   require('guihua.maps').setup()
 end

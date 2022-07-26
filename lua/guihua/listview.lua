@@ -4,6 +4,8 @@ local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 local util = require('guihua.util')
 local ListViewCtrl = require('guihua.listviewctrl')
+
+_GH_SETUP = _GH_SETUP or nil
 if _GH_SETUP == nil then
   require('guihua').setup()
 end

@@ -9,8 +9,14 @@ any = true
 property = true
 writable = "new-fields"
 
+[bit]
+any = true
+
 [debug]
-property = true
+any = true
+
+[jit]
+any = true
 
 [[describe.args]]
 type = "string"
@@ -28,6 +34,12 @@ type = "function"
 type = "function"
 
 [assert.is_not]
+any = true
+
+[assert.are.same]
+any = true
+
+[package.config]
 any = true
 
 [[assert.equals.args]]

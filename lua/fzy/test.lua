@@ -13,6 +13,7 @@ local function print_table(tbl)
     print(tbl)
     return
   end
+  local i = 1
   local result = '{ '
   for k, v in pairs(tbl) do
     result = result .. k .. ' = ' .. tostring(v) .. (i == #tbl and '' or ', ')

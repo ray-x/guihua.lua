@@ -27,7 +27,7 @@ describe('should create view  ', function()
       rect = { height = 5, pos_x = 0, pos_y = 10 },
       data = data,
       hl_line = 1,
-      enter = enter,
+      enter = true,
     })
     log('draw data', data)
     win:on_draw(data)

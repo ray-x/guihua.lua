@@ -5,7 +5,8 @@ local error = require('guihua.log').error
 
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
-
+_GH_SETUP = _GH_SETUP or {}
+ListView = ListView or nil
 if _GH_SETUP == nil then
   require('guihua.maps').setup()
 end
@@ -510,6 +511,10 @@ function ListViewCtrl:on_search()
     listobj.display_data = { unpack(listobj.filtered_data, 1, listobj.display_height) }
     listobj.display_start_at = 1 -- reset
     listobj:on_draw(listobj.display_data)
+    _GH_SEARCH_NS = _GH_SEARCH_NS or nil
+    if _GH_SEARCH_NS == nil then
+      return
+    end
     vim.api.nvim_buf_clear_namespace(buf, _GH_SEARCH_NS, 0, -1)
     return
   else

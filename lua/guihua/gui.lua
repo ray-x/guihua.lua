@@ -1,5 +1,6 @@
 local M = {}
 local ListView = require('guihua.listview')
+local ListViewCtrl = require('guihua.listviewctrl')
 local TextView = require('guihua.textview')
 local util = require('guihua.util')
 local log = require('guihua.log').info
