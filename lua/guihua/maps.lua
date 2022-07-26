@@ -17,8 +17,9 @@ local M = {}
 M.setup = function(opts)
   opts = opts or {}
   if opts.maps then
-    vim.tbl_extend('force', _GH_SETUP.maps, opts.maps)
+    _GH_SETUP.maps = vim.tbl_extend('force', _GH_SETUP.maps, opts.maps)
   end
+  return _GH_SETUP
 end
 
 return M
