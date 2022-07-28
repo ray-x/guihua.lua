@@ -43,7 +43,7 @@ function M.bgcolor(delta, d2, d3)
   local bgi = tonumber(bg, 16)
   local light = tonumber('a0a0a0', 16)
   if bgi == nil then
-    return '#101b3f'
+    return 'None' -- '#101b1f' -> None  in case bg is None maybe user want it to be transparent
   end
   if bgi > light then
     if d2 == nil then
@@ -88,7 +88,10 @@ function M.selcolor(Hl)
   local fg = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'fg#'), 2), 16)
     or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'fg#'), 2), 16)
 
-  if vim.fn.hlexists('GuihuaListHl') == 1 and vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GuihuaListHl')), 'bg#') ~= '' then
+  if
+    vim.fn.hlexists('GuihuaListHl') == 1
+    and vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GuihuaListHl')), 'bg#') ~= ''
+  then
     -- already defined
     return
   end
