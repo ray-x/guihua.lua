@@ -183,7 +183,7 @@ local function draw_lines(buf, start, end_at, data)
   end
 
   api.nvim_buf_clear_namespace(0, _GH_SEARCH_NS, 0, -1)
-  trace('draw_lines', buf, start, end_at, #data, data)
+  -- trace('draw_lines', buf, start, end_at, #data, data)
 
   vim.fn.clearmatches()
   api.nvim_buf_set_lines(buf, start, end_at, false, {})
@@ -201,13 +201,11 @@ local function draw_lines(buf, start, end_at, data)
       api.nvim_buf_set_lines(buf, i, i, true, { line })
       local pos = l[2]
       for _, v in pairs(pos) do
-        -- vim.fn.matchaddpos("IncSearch", {{i + 1, v}})
-
-        api.nvim_buf_set_extmark(0, _GH_SEARCH_NS, i, v, {
+        -- trace(i, v, l, line)
+        api.nvim_buf_set_extmark(0, _GH_SEARCH_NS, i, v - 1, {
           end_line = i,
-          end_col = v + 1,
+          end_col = v,
           hl_group = 'IncSearch',
-          -- hl_group = _LSP_SIG_CFG.hint_scheme
         })
       end
     else
