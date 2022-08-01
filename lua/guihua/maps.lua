@@ -1,6 +1,7 @@
 _GH_SETUP = {
   maps = {
     close_view = '<C-e>',
+    send_qf = '<C-q>',
     save = '<C-s>',
     jump_to_list = '<C-w>k',
     jump_to_preview = '<C-w>j',

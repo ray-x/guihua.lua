@@ -396,4 +396,39 @@ M.dedup = function(list, key1, key2)
   end
   return result
 end
+
+local protocol = require('vim.lsp.protocol')
+function M._get_symbol_kind_name(symbol_kind)
+  return protocol.SymbolKind[symbol_kind] or 'Unknown'
+end
+function M.symbols_to_items(symbols, bufnr)
+  ---@private
+  local function _symbols_to_items(_symbols, _items, _bufnr)
+    for _, symbol in ipairs(_symbols) do
+      local range = symbol.range or symbol.selectionRange
+      local kind = M._get_symbol_kind_name(symbol.kind)
+      local kind_text = ""
+      if kind ~= 'Unknown' then
+        kind_text='[' .. kind .. ']'
+      end
+      table.insert(_items, {
+        filename = vim.uri_to_fname(symbol.uri),
+        lnum = range.start.line + 1,
+        col = range.start.character + 1,
+        kind = kind,
+        text = kind_text .. (symbol.text or symbol.symbol_name),
+      })
+      if symbol.children then
+        for _, v in ipairs(_symbols_to_items(symbol.children, _items, _bufnr)) do
+          for _, s in ipairs(v) do
+            table.insert(_items, s)
+          end
+        end
+      end
+    end
+    return _items
+  end
+  return _symbols_to_items(symbols, {}, bufnr or 0)
+end
+
 return M

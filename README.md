@@ -42,6 +42,7 @@ Plugin has implementation of fzy with both ffi and native lua. If you like to tr
   -- default mapping
   maps = {
     close_view = '<C-e>',
+    send_qf = '<C-q>',
     save = '<C-s>',
     jump_to_list = '<C-w>k',
     jump_to_preview = '<C-w>j',

@@ -124,6 +124,7 @@ function ListViewCtrl:initialize(delegate, ...)
     { mode = 'n', key = m.split, cmd = function() ListViewCtrl:on_confirm({ split = 's' }) end, desc = 'ListViewCtrl:on_confirm {split = s}'},
     { mode = 'i', key = m.confirm, cmd = function() ListViewCtrl:on_confirm() end, desc = 'ListViewCtrl:on_confirm()' },
     { mode = 'n', key = m.close_view, cmd = function() ListViewCtrl:on_close() end, desc = 'ListViewCtrl:on_close()' },
+    { mode = 'n', key = m.send_qf, cmd = function() ListViewCtrl:on_quickfix() end, desc = 'ListViewCtrl:on_quickfix()' },
     { mode = 'n', key = '<C-c>', cmd = function() ListViewCtrl:on_close() end, desc = 'ListViewCtrl:on_close()' },
     { mode = 'n', key = '<ESC>', cmd = function() ListViewCtrl:on_close() end, desc = 'ListViewCtrl:on_close()' },
     { mode = 'i', key = '<BS>', cmd = function() ListViewCtrl:on_backspace() end, desc = 'ListViewCtrl:on_backspace()' },
@@ -567,6 +568,22 @@ function ListViewCtrl:on_backspace(deleteword)
   -- log(filter_input)
   -- log("on search ends")
 end
+
+function ListViewCtrl:on_quickfix()
+  local listobj = ListViewCtrl._viewctlobject
+  local data = listobj.filtered_data or listobj.data
+
+  log(data)
+  local qf = require('guihua.util').symbols_to_items(data)
+  if qf == nil or next(qf) == nil then
+    return
+  end
+  log(qf)
+  vim.fn.setqflist(qf)
+  ListViewCtrl:on_close()
+  vim.cmd('copen')
+end
+
 
 function ListViewCtrl:on_close()
   log('closer listview') -- , ListViewCtrl._viewctlobject.m_delegate)
