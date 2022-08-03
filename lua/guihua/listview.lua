@@ -37,20 +37,12 @@ function ListView:initialize(...)
   -- vim.cmd([[hi default GuihuaListDark guifg=#e0d8f4 guibg=#272755]])
   -- vim.cmd([[hi default GuihuaListDark guifg=#e0d8f4 guibg=#103234]])
 
-  local listviewHl = self.hl_group or 'PmenuSel'
+  local listviewHl = self.list_hl or 'PmenuSel'
   util.selcolor(listviewHl)
   local normalbg = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'bg#'), 2), 16)
     or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'bg#'), 2), 16)
     or 0x232323
 
-  local bg
-  if
-    not vim.fn.hlexists('GuihuaListDark') or vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GuihuaListDark')), 'bg#') == ''
-  then
-    bg = util.bgcolor(0x051012)
-    local fg = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'fg#')
-    vim.cmd([[hi default GuihuaListDark guifg=]] .. fg .. [[ guibg=]] .. bg)
-  end
   opts.bg = opts.bg or 'GuihuaListDark'
 
   opts.enter = true
@@ -208,7 +200,7 @@ function ListView:set_pos(i)
       return
     end
     vim.api.nvim_buf_clear_namespace(self.buf, selhighlight, 0, -1)
-    local ListviewHl = 'GuihuaListHl'
+    local ListviewHl = 'GuihuaListSelHl'
     vim.api.nvim_buf_add_highlight(self.buf, selhighlight, ListviewHl, self.selected_line - 1, 0, -1)
   end)
 end

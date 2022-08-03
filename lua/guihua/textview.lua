@@ -47,19 +47,12 @@ function TextView:initialize(...)
   trace(opts)
   local bg = util.bgcolor(0x050812)
 
-  if vim.fn.hlexists('GuihuaTextViewDark') == 0 then
-    vim.cmd([[hi default GuihuaTextViewDark guifg=#e0d8f4  guibg=]] .. bg)
-  end
-
   opts.bg = opts.bg or 'GuihuaTextViewDark'
 
   if opts.width or opts.height then
     opts.rect = { widht = opts.widht or 60, height = opts.height or 30 }
   end
 
-  if vim.fn.hlexists('GuihuaListHl') == 0 then
-    vim.cmd([[highlight default link GuihuaListHl PmenuSel]])
-  end
   if TextView.ActiveTextView ~= nil then
     if
       TextView.ActiveTextView.win ~= nil
@@ -129,13 +122,13 @@ function TextView:initialize(...)
     self:on_draw(content)
   end
 
-  if opts.hl_line ~= nil then
-    if opts.hl_line == 0 then
-      opts.hl_line = 1
+  if opts.sel_line_hl ~= nil then
+    if opts.sel_line_hl == 0 then
+      opts.sel_line_hl = 1
     end
-    log('buf', self.buf, 'hl_line: ', opts.hl_line)
-    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListHl', opts.hl_line - 1, 0, -1)
-    TextView.static.hl_line = opts.hl_line
+    log('buf', self.buf, 'sel_line_hl: ', opts.sel_line_hl)
+    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', opts.sel_line_hl - 1, 0, -1)
+    TextView.static.sel_line_hl = opts.sel_line_hl
   end
 
   if opts.allow_edit then
@@ -202,8 +195,9 @@ function TextView:on_draw(opts)
   vim.api.nvim_buf_set_lines(bufnr, start, end_at, true, content)
   -- vim.api.nvim_buf_set_option(bufnr, "readonly", true)
   vim.api.nvim_buf_set_option(bufnr, 'bufhidden', 'wipe')
-  if TextView.hl_line ~= nil then
-    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListHl', TextView.hl_line - 1, 0, -1)
+  if TextView.sel_line_hl ~= nil then
+    TextView.static.hl_id =
+      vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', TextView.sel_line_hl - 1, 0, -1)
   end
   -- vim.fn.setpos(".", {0, 1, 1, 0})
 

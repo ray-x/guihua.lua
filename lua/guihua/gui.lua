@@ -70,7 +70,6 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
   end
   log(opts.lnum, opts.range.start.line, win_opts.hl_line)
   log(win_opts.uri, win_opts.syntax)
-  local hl
   if vim.fn.hlID('TelescopePreviewBorder') > 0 then
     hl = 'TelescopePreviewBorder'
   end
@@ -92,10 +91,8 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
     range = win_opts.range,
     border = opts.border,
     display_range = win_opts.display_range,
-    hl_line = win_opts.hl_line,
     allow_edit = win_opts.allow_edit,
     external = win_opts.external,
-    border_hl = hl,
   }
 
   log(text_view_opts)
@@ -185,10 +182,7 @@ function M.new_list_view(opts)
   if ext then
     opts.relative = nil
   end
-  local hl
-  if vim.fn.hlID('TelescopePromptBorder') > 0 then
-    hl = 'TelescopePromptBorder'
-  end
+
   return ListView:new({
     loc = loc,
     prompt = prompt,
@@ -205,7 +199,9 @@ function M.new_list_view(opts)
     data = data,
     border = border,
     external = ext,
-    border_hl = hl,
+    border_hl = opts.border_hl,
+    bg_hl = opts.bg_hl,
+    sel_line_hl = opts.sel_line_hl,
     on_confirm = opts.on_confirm or function(item, split_opts)
       log(split_opts)
       split_opts = split_opts or {}
@@ -215,29 +211,30 @@ function M.new_list_view(opts)
       end
     end,
     transparency = transparency,
-    on_move = opts.on_move or function(item)
-      trace('on move', item)
-      trace('on move', item.text or item, item.uri, item.filename)
-      -- todo fix
-      if item.uri == nil then
-        item.uri = 'file:///' .. item.filename
-      end
-      return M.preview_uri({
-        uri = item.uri,
-        width_ratio = opts.width_ratio,
-        preview_lines_before = opts.preview_lines_before or 3,
-        width = width,
-        preview_height = pheight,
-        lnum = item.lnum,
-        col = item.col,
-        range = item.range,
-        offset_x = 0,
-        offset_y = offset_y,
-        border = border,
-        external = ext,
-        enable_edit = opts.enable_preview_edit or false,
-      })
-    end,
+    on_move = opts.on_move
+      or function(item)
+        trace('on move', item)
+        trace('on move', item.text or item, item.uri, item.filename)
+        -- todo fix
+        if item.uri == nil then
+          item.uri = 'file:///' .. item.filename
+        end
+        return M.preview_uri({
+          uri = item.uri,
+          width_ratio = opts.width_ratio,
+          preview_lines_before = opts.preview_lines_before or 3,
+          width = width,
+          preview_height = pheight,
+          lnum = item.lnum,
+          col = item.col,
+          range = item.range,
+          offset_x = 0,
+          offset_y = offset_y,
+          border = border,
+          external = ext,
+          enable_edit = opts.enable_preview_edit or false,
+        })
+      end,
   })
 end
 

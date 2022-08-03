@@ -26,6 +26,7 @@ function View:initialize(...)
   trace(debug.traceback())
   local opts = select(1, ...) or {}
   opts.data = opts.data or {}
+  require('guihua.highlight').setup(opts)
 
   _GH_SEARCH_NS = _GH_SEARCH_NS or api.nvim_create_namespace('guihua_search_namespace')
   log('ctor View start with #items', #opts.data)
@@ -76,6 +77,7 @@ function View:initialize(...)
     allow_edit = opts.allow_edit,
     external = opts.external,
     border_hl = opts.border_hl,
+    bg_hl = opts.bg_hl,
   }
   trace('height: ', self.display_height, 'rect', self.rect, float_opts)
   -- listview should not have ft enabled
@@ -96,7 +98,7 @@ function View:initialize(...)
   View.static.ActiveView = self
   self:bind_ctrl(opts)
 
-  log('ctor View: end') -- , View.ActiveView)--, self)
+  log('ctor View: end')
 end
 
 function View.Active()
@@ -107,19 +109,12 @@ function View.Active()
 end
 
 function View:set_hl(opts)
-  local bg = opts.bg or 'GuihuaBgDark'
-  if vim.fn.hlexists('GuihuaBgDark') == 0 then
-    vim.cmd([[hi default GuihuaBgDark guifg=#d0c8e4 guibg=#1a101f]])
-  end
-
+  local bg = opts.bg_hl or 'GuihuaBgDark'
   local cmd = 'Normal:' .. bg .. ',NormalNC:' .. bg
   if opts.border_hl ~= nil then
     cmd = cmd .. ',FloatBorder:' .. opts.border_hl
   end
   api.nvim_win_set_option(self.win, 'winhl', cmd)
-  -- def_icon = opts.finder_definition_icon or ' '
-  -- self.prompt = opts.prompt or " "
-  -- api.nvim_buf_add_highlight(self.contents_buf,-1,"TargetWord",0,#def_icon,self.param_length+#def_icon+3)
 end
 
 function View:bind_ctrl(opts)
@@ -151,13 +146,11 @@ local function draw_table_item(buf, item, pos)
     local s, e = word_find(item.text, item.symbol_name)
     -- log('hl', pos, s, e, item.text, item.Symbol_name)
     while s ~= nil do
-      -- vim.fn.matchaddpos("IncSearch", {{pos + 1, s, e - s + 1}})
       api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, s - 1, { end_line = pos, end_col = e, hl_group = 'Warnings' })
 
       s, e = word_find(item.text, item.sybol_name)
     end
   end
-  -- api.nvim_buf_set_lines(buf, 0, 1, true, '{item.text}')
   if item.pos ~= nil then
     for _, v in pairs(item.pos) do
       -- vim.fn.matchaddpos("IncSearch", {{pos + 1, v}})
@@ -168,7 +161,6 @@ local function draw_table_item(buf, item, pos)
   end
   if item.fzy ~= nil then
     for _, v in pairs(item.fzy.pos) do
-      -- vim.fn.matchaddpos("IncSearch", {{pos + 1, v}})
       api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, v - 1, { end_line = pos, end_col = v, hl_group = 'IncSearch' })
     end
   end
@@ -187,7 +179,6 @@ local function draw_lines(buf, start, end_at, data)
 
   vim.fn.clearmatches()
   api.nvim_buf_set_lines(buf, start, end_at, false, {})
-  -- api.nvim_buf_set_lines(buf, start, end_at, true, data)
   local draw_end = math.min(end_at - 1, #data - 1)
   for i = start, draw_end, 1 do
     local l = data[i + 1]
@@ -246,7 +237,6 @@ function View:on_draw(data)
   if self.prompt == true then
     end_at = end_at - 1
   end
-  -- api.nvim_buf_set_lines(self.buf, start, end_at, true, content)
   draw_lines(self.buf, start, end_at, content)
   if self.prompt ~= true then
     api.nvim_buf_set_option(self.buf, 'readonly', true)
@@ -267,7 +257,6 @@ function View:close(...)
   end
   -- api.nvim_win_close(self.win, true)
   if self.closer ~= nil then
-    -- vim.api.nvim_win_close
     self:closer()
     self.closer = nil
     self.win = nil
@@ -288,8 +277,6 @@ function View:close(...)
   end
 
   self:unbind_ctrl()
-  -- View = class("View", Rect)
-  -- View.ActiveView = nil
   View.static.ActiveView = nil
   log('view closed ')
   -- trace("Viewobj after close", View)
