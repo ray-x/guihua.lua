@@ -91,6 +91,7 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
     range = win_opts.range,
     border = opts.border,
     display_range = win_opts.display_range,
+    hl_line = win_opts.hl_line,
     allow_edit = win_opts.allow_edit,
     external = win_opts.external,
   }

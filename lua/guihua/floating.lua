@@ -14,14 +14,12 @@ if _GH_SETUP == nil then
 end
 
 -- Create a simple floating terminal.
-local function floating_buf(opts) -- win_width, win_height, x, y, loc, prompt, enter, ft)
+ -- options: win_width, win_height, x, y, loc, prompt, enter, ft
+local function floating_buf(opts)
   local prompt = opts.prompt or false
   local enter = opts.enter or false
   local x = opts.x or 0
   local y = opts.y or 0
-  -- if opts.border == "single" then
-  --   opts.border = {}
-  -- end
   -- win_w, win_h, x, y should be passwd in from view
   local loc = opts.loc or location.center
   local row, col = loc(opts.win_height, opts.win_width)
@@ -68,9 +66,7 @@ local function floating_buf(opts) -- win_width, win_height, x, y, loc, prompt, e
   log('creating win', win, 'buf', buf)
 
   -- note: if failed to focus on the view, you can add to the caller
-  -- vim.fn.win_gotoid(win)
 
-  -- api.nvim_buf_set_option(buf, "nobuflisted")
   return buf,
     win,
     function()
@@ -104,11 +100,9 @@ local function floating_buf_mask(transparency) -- win_width, win_height, x, y, l
 
   local buf = api.nvim_create_buf(false, true)
   api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
-  -- api.nvim_buf_set_option(buf, 'buftype', 'guihua_input')
   api.nvim_buf_set_option(buf, 'readonly', true)
   api.nvim_buf_set_option(buf, 'buflisted', false)
   vim.api.nvim_buf_set_option(buf, 'filetype', 'guihua') -- default ft for all buffers. do not use specific ft e.g
-  -- javascript as it may cause lsp loading
   local win = api.nvim_open_win(buf, false, win_opts)
   api.nvim_win_set_option(win, 'winblend', transparency)
   log('creating win', win, 'buf', buf)

@@ -122,13 +122,13 @@ function TextView:initialize(...)
     self:on_draw(content)
   end
 
-  if opts.sel_line_hl ~= nil then
-    if opts.sel_line_hl == 0 then
-      opts.sel_line_hl = 1
+  if opts.hl_line ~= nil then
+    if opts.hl_line == 0 then
+      opts.hl_line = 1
     end
-    log('buf', self.buf, 'sel_line_hl: ', opts.sel_line_hl)
-    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', opts.sel_line_hl - 1, 0, -1)
-    TextView.static.sel_line_hl = opts.sel_line_hl
+    log('buf', self.buf, 'hl_line: ', opts.hl_line)
+    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', opts.hl_line - 1, 0, -1)
+    TextView.static.hl_line = opts.hl_line
   end
 
   if opts.allow_edit then
