@@ -79,7 +79,7 @@ function TextView:initialize(...)
           opts.hl_line = 1
         end
         log('hl buf', self.buf, 'l ', opts.hl_line)
-        TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListHl', opts.hl_line - 1, 0, -1)
+        TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', opts.hl_line - 1, 0, -1)
         TextView.static.hl_line = opts.hl_line
       end
       log('ctor TextView: end, already existed') -- , View.ActiveView)--, self)
@@ -87,7 +87,6 @@ function TextView:initialize(...)
     end
   end
   if opts.allow_edit then
-    -- log("map au Insert")
     vim.api.nvim_command('autocmd InsertEnter ' .. " <buffer> ++once echo 'use <C-s> to save your changes'")
   end
 
@@ -195,9 +194,8 @@ function TextView:on_draw(opts)
   vim.api.nvim_buf_set_lines(bufnr, start, end_at, true, content)
   -- vim.api.nvim_buf_set_option(bufnr, "readonly", true)
   vim.api.nvim_buf_set_option(bufnr, 'bufhidden', 'wipe')
-  if TextView.sel_line_hl ~= nil then
-    TextView.static.hl_id =
-      vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', TextView.sel_line_hl - 1, 0, -1)
+  if TextView.hl_line ~= nil then
+    TextView.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', TextView.hl_line - 1, 0, -1)
   end
   -- vim.fn.setpos(".", {0, 1, 1, 0})
 

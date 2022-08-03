@@ -70,9 +70,6 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
   end
   log(opts.lnum, opts.range.start.line, win_opts.hl_line)
   log(win_opts.uri, win_opts.syntax)
-  if vim.fn.hlID('TelescopePreviewBorder') > 0 then
-    hl = 'TelescopePreviewBorder'
-  end
   local text_view_opts = {
     loc = win_opts.location,
     rect = {
