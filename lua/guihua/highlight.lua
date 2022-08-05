@@ -1,5 +1,6 @@
 return {
   setup = function(opts)
+    opts = opts or {}
     local highlights = {
       -- Sets the highlight for selected items within the picker.
       GuihuaListSelHl = { default = true, link = opts.list_sel_hl or 'Visual' },
