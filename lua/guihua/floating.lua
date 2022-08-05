@@ -122,7 +122,6 @@ local function floating_buf_mask(transparency) -- win_width, win_height, x, y, l
     end
 end
 
--- prepare buf and win for floatterm
 local function floatterm(opts)
   local buf = api.nvim_create_buf(false, true)
   api.nvim_buf_set_keymap(buf, 't', '<ESC>', '<C-\\><C-c>', {})
@@ -277,8 +276,6 @@ local term = function(opts)
 end
 
 --
--- test_mask()
--- test(true)
 -- test2(false)
 -- test_term(true)
 -- multigrid
@@ -317,9 +314,11 @@ local function test2(prompt)
   end
 end
 
-local function test_mask()
-  local b, w, c = floating_buf_mask()
+local function test_mask(t)
+  local b, w, c = floating_buf_mask(t)
 end
+
+-- test_mask(60)
 
 return {
   floating_buf = floating_buf,

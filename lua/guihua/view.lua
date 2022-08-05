@@ -83,7 +83,20 @@ function View:initialize(...)
   -- listview should not have ft enabled
   self.buf, self.win, self.closer = floatbuf(float_opts)
   if opts.transparency and not opts.external then
-    self.mask_buf, self.mask_win, self.mask_closer = floatbuf_mask(opts.transparency)
+    if vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'bg#') ~= '' then
+      self.mask_buf, self.mask_win, self.mask_closer = floatbuf_mask(opts.transparency)
+    end
+  end
+
+  if opts.transparency then
+    api.nvim_win_set_option(self.win, 'winblend', math.min(opts.transparency, 15))
+  end
+  if
+    vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'bg#') == ''
+    or vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'bg#') == ''
+  then
+    -- prevent you get black ground
+    api.nvim_win_set_option(self.win, 'winblend', 0)
   end
   log('floatbuf created ', self.buf, self.win)
   self:set_hl(opts)
