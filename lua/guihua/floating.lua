@@ -14,7 +14,7 @@ if _GH_SETUP == nil then
 end
 
 -- Create a simple floating terminal.
- -- options: win_width, win_height, x, y, loc, prompt, enter, ft
+-- options: win_width, win_height, x, y, loc, prompt, enter, ft
 local function floating_buf(opts)
   local prompt = opts.prompt or false
   local enter = opts.enter or false
@@ -325,11 +325,11 @@ return {
   floating_term = floating_term,
   floating_buf_mask = floating_buf_mask,
   input = function(o, confirm, change)
-    print('please use gui.input')
+    -- print('please use gui.input')
     return require('guihua.gui').input(o, confirm, change)
   end,
   input_callback = function()
-    print('please use gui.input_callback')
+    -- print('please use gui.input_callback')
     return require('guihua.gui').input_callback()
   end,
   gui_term = term,
