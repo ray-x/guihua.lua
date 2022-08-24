@@ -112,6 +112,7 @@ function Panel:initialize(opts)
       var = ' ', -- "👹", -- Vampaire
       method = 'ƒ ', --  "🍔", -- mac
       ['function'] = ' ', -- "🤣", -- Fun
+      ['arrow_function'] = ' ', -- "🤣", -- Fun
       parameter = '  ', -- Pi
       associated = '🤝',
       namespace = '🚀',
