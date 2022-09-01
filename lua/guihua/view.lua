@@ -152,7 +152,11 @@ local function draw_table_item(buf, item, pos)
   end
 
   item.text = item.text:gsub('\n', '->')
-  api.nvim_buf_set_lines(buf, pos, pos, true, { item.text })
+  local head = ''
+  if item.selected then
+    head = ''
+  end
+  api.nvim_buf_set_lines(buf, pos, pos, true, { head .. item.text })
   -- if item.symbol_name is not nil highlight it
   if item.symbol_name and #item.symbol_name > 0 then
     -- lets find all

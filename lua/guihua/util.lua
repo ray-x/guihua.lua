@@ -397,6 +397,16 @@ M.dedup = function(list, key1, key2)
   return result
 end
 
+-- remove item from list based on value
+M.tbl_remove = function(input, val)
+  for i = #input, 1, -1 do
+    if input[i] == val then
+      table.remove(input, i)
+    end
+  end
+  return input
+end
+
 local protocol = require('vim.lsp.protocol')
 function M._get_symbol_kind_name(symbol_kind)
   return protocol.SymbolKind[symbol_kind] or 'Unknown'
@@ -407,9 +417,9 @@ function M.symbols_to_items(symbols, bufnr)
     for _, symbol in ipairs(_symbols) do
       local range = symbol.range or symbol.selectionRange
       local kind = M._get_symbol_kind_name(symbol.kind)
-      local kind_text = ""
+      local kind_text = ''
       if kind ~= 'Unknown' then
-        kind_text='[' .. kind .. ']'
+        kind_text = '[' .. kind .. ']'
       end
       table.insert(_items, {
         filename = vim.uri_to_fname(symbol.uri),

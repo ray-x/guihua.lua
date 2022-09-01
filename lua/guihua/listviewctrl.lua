@@ -1,7 +1,7 @@
 local class = require('middleclass')
 local ViewController = require('guihua.viewctrl')
 local error = require('guihua.log').error
--- local util = require('guihua.util')
+local util = require('guihua.util')
 
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
@@ -65,6 +65,7 @@ function ListViewCtrl:initialize(delegate, ...)
   ViewController:initialize(delegate, ...)
   self.m_delegate = delegate
   self.selected_line = 1
+  self.selected_lines = {}
   --
   local opts = select(1, ...) or {}
   trace('listview ctrl opts', opts)
@@ -111,6 +112,8 @@ function ListViewCtrl:initialize(delegate, ...)
     { mode = 'n', key = 'j', cmd = function() ListViewCtrl:on_next() end, desc = 'ListViewCtrl:on_next()' },
     { mode = 'i', key = 'k', cmd = function() ListViewCtrl:on_prev() end, desc = 'ListViewCtrl:on_prev()' },
     { mode = 'i', key = 'j', cmd = function() ListViewCtrl:on_next() end, desc = 'ListViewCtrl:on_next()' },
+    { mode = 'n', key = '<Tab>', cmd = function() ListViewCtrl:on_toggle() end, desc = 'ListViewCtrl:on_toggle()' },
+    { mode = 'i', key = '<Tab>', cmd = function() ListViewCtrl:on_toggle() end, desc = 'ListViewCtrl:on_toggle()' },
     { mode = 'n', key = '<Up>', cmd = function() ListViewCtrl:on_prev() end, desc = 'ListViewCtrl:on_prev()' },
     { mode = 'n', key = '<Down>', cmd = function() ListViewCtrl:on_next() end, desc = 'ListViewCtrl:on_next()' },
     { mode = 'i', key = '<Up>', cmd = function() ListViewCtrl:on_prev() end, desc = 'ListViewCtrl:on_prev()' },
@@ -357,7 +360,6 @@ function ListViewCtrl:on_prev()
     listobj.m_delegate:on_draw(listobj.display_data)
     listobj.m_delegate:set_pos(1)
   else
-    -- listobj:on_draw(listobj.display_data)
     log('move to', l, listobj.display_start_at, l - listobj.display_start_at + 1)
     listobj.m_delegate:set_pos(l - listobj.display_start_at + 1)
   end
@@ -369,52 +371,18 @@ function ListViewCtrl:on_prev()
 end
 
 function ListViewCtrl:on_pagedown()
-  local listobj = ListViewCtrl._viewctlobject
-
-  if listobj.selected_line == nil then
-    listobj.selected_line = 1
-  end
-  local data_collection = listobj.data
-  if listobj.filter_applied == true then
-    data_collection = listobj.filtered_data
-  end
-  local disp_h = listobj.display_height
-  if listobj.m_delegate.prompt == true then
-    disp_h = disp_h - 1
-  end
-
-  local l = listobj.display_start_at + disp_h
-
-  trace('pagedown: ', listobj.selected_line, listobj.display_start_at, listobj.display_height, l, disp_h)
-
-  if #data_collection == 0 then
-    return {}
-  end
-  if l > #data_collection then
-    listobj.m_delegate:set_pos(disp_h)
-    listobj.on_move(data_collection[#data_collection])
-    log('next should show at: ', #listobj.data, 'set: ', disp_h, listobj.display_height)
-    return
-  end
-
-  -- if l > listobj.display_start_at + disp_h - 1 then
-  -- need to scroll next
-  listobj.display_start_at = listobj.display_start_at + disp_h
-  listobj.display_data = {
-    unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1),
-  }
-  trace('disp', listobj.display_data, disp_h, listobj.display_start_at)
-  listobj.m_delegate:on_draw(listobj.display_data)
-  listobj.m_delegate:set_pos(disp_h)
-
-  -- log("next should show: ", listobj.display_data[l].text or listobj.display_data[l], listobj.display_start_at)
-  listobj.selected_line = l
-  self:wrap_closer(listobj.on_move(data_collection[l]))
-  return data_collection[listobj.selected_line]
+  ListViewCtrl:draw_page(1)
 end
 
 function ListViewCtrl:on_pageup()
+  ListViewCtrl:draw_page(-1)
+end
+
+-- offset can be 1: page down, -1: page up or 0: doing nothing and redraw
+function ListViewCtrl:draw_page(offset_direction)
   local listobj = ListViewCtrl._viewctlobject
+
+  local disp_h = listobj.display_height
 
   if listobj.selected_line == nil then
     listobj.selected_line = 1
@@ -423,12 +391,12 @@ function ListViewCtrl:on_pageup()
   if listobj.filter_applied == true then
     data_collection = listobj.filtered_data
   end
-  local disp_h = listobj.display_height
+  -- local disp_h = listobj.display_height
   if listobj.m_delegate.prompt == true then
     disp_h = disp_h - 1
   end
 
-  local l = listobj.display_start_at - disp_h
+  local l = listobj.display_start_at + offset_direction * disp_h
 
   trace('pagedown: ', listobj.selected_line, listobj.display_start_at, listobj.display_height, l, disp_h)
 
@@ -439,20 +407,51 @@ function ListViewCtrl:on_pageup()
     return
   end
 
-  -- if l > listobj.display_start_at + disp_h - 1 then
-  -- need to scroll next
-  listobj.display_start_at = listobj.display_start_at - disp_h
+  if l > #data_collection then
+    listobj.m_delegate:set_pos(disp_h)
+    listobj.on_move(data_collection[#data_collection])
+    log('next should show at: ', #listobj.data, 'set: ', disp_h, listobj.display_height)
+    return
+  end
+
+  listobj.display_start_at = l
   listobj.display_data = {
     unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1),
   }
   trace('disp', listobj.display_data, disp_h, listobj.display_start_at)
   listobj.m_delegate:on_draw(listobj.display_data)
-  listobj.m_delegate:set_pos(disp_h)
+  if offset_direction ~= 0 then
+    listobj.m_delegate:set_pos(disp_h)
+    listobj.selected_line = l
+    self:wrap_closer(listobj.on_move(data_collection[l]))
+  end
 
   -- log("next should show: ", listobj.display_data[l].text or listobj.display_data[l], listobj.display_start_at)
-  listobj.selected_line = l
-  self:wrap_closer(listobj.on_move(data_collection[l]))
   return data_collection[listobj.selected_line]
+end
+
+function ListViewCtrl:on_toggle()
+  local listobj = ListViewCtrl._viewctlobject
+  -- local data_collection = listobj.data
+  if listobj.selected_lines == nil then
+    listobj.selected_lines = {}
+  end
+  local on = false
+  if vim.tbl_contains(listobj.selected_lines, listobj.selected_line) then
+    util.tbl_remove(listobj.selected_lines, listobj.selected_line)
+  else
+    on = true
+  end
+
+  if listobj.filter_applied == true then
+    listobj.filtered_data[listobj.selected_line].selected = on
+  else
+    listobj.data[listobj.selected_line].selected = on
+  end
+
+  listobj.selected_lines[#listobj.selected_lines + 1] = listobj.selected_line
+  log('selected lines: ', listobj.selected_lines, listobj.data[listobj.selected_line])
+  listobj:draw_page(0)
 end
 
 function ListViewCtrl:on_confirm(opts)
@@ -464,6 +463,7 @@ function ListViewCtrl:on_confirm(opts)
   listobj.m_delegate:close()
   -- trace(listobj.m_delegate)
   if listobj.on_confirm == ListViewCtrl.on_confirm then
+    log('no on_confirm listobj and listviewctl is same')
     return
   end
   listobj.on_confirm(data_collection[listobj.selected_line], opts)
@@ -577,6 +577,16 @@ function ListViewCtrl:on_quickfix()
   local listobj = ListViewCtrl._viewctlobject
   local data = listobj.filtered_data or listobj.data
 
+  if listobj.selected_lines and next(listobj.selected_lines) then
+    local data_sel = {}
+    for i in ipairs(data) do
+      if data[i].selected then
+        data_sel[#data_sel + 1] = data[i]
+      end
+    end
+    data = data_sel
+  end
+
   log(data)
   local qf = require('guihua.util').symbols_to_items(data)
   if qf == nil or next(qf) == nil then
@@ -587,7 +597,6 @@ function ListViewCtrl:on_quickfix()
   ListViewCtrl:on_close()
   vim.cmd('copen')
 end
-
 
 function ListViewCtrl:on_close()
   log('closer listview') -- , ListViewCtrl._viewctlobject.m_delegate)
