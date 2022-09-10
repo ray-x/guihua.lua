@@ -110,8 +110,6 @@ function ListViewCtrl:initialize(delegate, ...)
     { mode = 'n', key = '<C-w>j', cmd = _G.gh_jump_to_preview, desc = 'jump to preview' },
     { mode = 'n', key = 'k', cmd = function() ListViewCtrl:on_prev() end, desc = 'ListViewCtrl:on_prev()' },
     { mode = 'n', key = 'j', cmd = function() ListViewCtrl:on_next() end, desc = 'ListViewCtrl:on_next()' },
-    { mode = 'i', key = 'k', cmd = function() ListViewCtrl:on_prev() end, desc = 'ListViewCtrl:on_prev()' },
-    { mode = 'i', key = 'j', cmd = function() ListViewCtrl:on_next() end, desc = 'ListViewCtrl:on_next()' },
     { mode = 'n', key = '<Tab>', cmd = function() ListViewCtrl:on_toggle() end, desc = 'ListViewCtrl:on_toggle()' },
     { mode = 'i', key = '<Tab>', cmd = function() ListViewCtrl:on_toggle() end, desc = 'ListViewCtrl:on_toggle()' },
     { mode = 'n', key = '<Up>', cmd = function() ListViewCtrl:on_prev() end, desc = 'ListViewCtrl:on_prev()' },
