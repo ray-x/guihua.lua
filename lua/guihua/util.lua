@@ -411,6 +411,22 @@ local protocol = require('vim.lsp.protocol')
 function M._get_symbol_kind_name(symbol_kind)
   return protocol.SymbolKind[symbol_kind] or 'Unknown'
 end
+
+M.home = vim.loop.os_homedir()
+
+M.sep = (function()
+  if jit then
+    local os = string.lower(jit.os)
+    if os == "linux" or os == "osx" or os == "bsd" then
+      return "/"
+    else
+      return "\\"
+    end
+  else
+    return package.config:sub(1, 1)
+  end
+end)()
+
 function M.symbols_to_items(symbols, bufnr)
   ---@private
   local function _symbols_to_items(_symbols, _items, _bufnr)
@@ -440,5 +456,81 @@ function M.symbols_to_items(symbols, bufnr)
   end
   return _symbols_to_items(symbols, {}, bufnr or 0)
 end
+
+
+-- shorten_len shorten the filename to a given length
+-- this part is copied from plenary.nvim
+function M.shorten_len(filename, len, exclude)
+  len = len or 1
+  exclude = exclude or { -1 }
+  local exc = {}
+
+  -- get parts in a table
+  local parts = {}
+  local empty_pos = {}
+  for m in (filename .. M.sep):gmatch("(.-)" .. M.sep) do
+    if m ~= "" then
+      parts[#parts + 1] = m
+    else
+      table.insert(empty_pos, #parts + 1)
+    end
+  end
+
+  for _, v in pairs(exclude) do
+    if v < 0 then
+      exc[v + #parts + 1] = true
+    else
+      exc[v] = true
+    end
+  end
+
+  local final_path_components = {}
+  local count = 1
+  for _, match in ipairs(parts) do
+    if not exc[count] and #match > len then
+      table.insert(final_path_components, string.sub(match, 1, len))
+    else
+      table.insert(final_path_components, match)
+    end
+    table.insert(final_path_components, M.sep)
+    count = count + 1
+  end
+
+  local l = #final_path_components -- so that we don't need to keep calculating length
+  table.remove(final_path_components, l) -- remove final slash
+
+  -- add back empty positions
+  for i = #empty_pos, 1, -1 do
+    table.insert(final_path_components, empty_pos[i], M.sep)
+  end
+
+  return table.concat(final_path_components)
+end
+local is_uri = function(filename)
+  return string.match(filename, "^%w+://") ~= nil
+end
+
+M.shorten = (function()
+  if jit and M.sep ~= "\\" then
+    local ffi = require "ffi"
+    ffi.cdef [[
+    typedef unsigned char char_u;
+    void shorten_dir(char_u *str);
+    ]]
+    return function(filename)
+      if not filename or is_uri(filename) then
+        return filename
+      end
+
+      local c_str = ffi.new("char[?]", #filename + 1)
+      ffi.copy(c_str, filename)
+      ffi.C.shorten_dir(c_str)
+      return ffi.string(c_str)
+    end
+  end
+  return function(filename)
+    return M.shorten_len(filename, 1)
+  end
+end)()
 
 return M
