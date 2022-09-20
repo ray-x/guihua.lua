@@ -130,8 +130,7 @@ function M.new_list_view(opts)
   local loc = 'top_center'
 
   local mwidth = opts.width_ratio
-  local width = math.floor(wwidth * mwidth)
-  width = math.min(120, width)
+  local width = opts.width or math.floor(wwidth * mwidth)
 
   local prompt = opts.prompt or false
   if opts.rawdata then
