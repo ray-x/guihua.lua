@@ -3,8 +3,7 @@ if exists("b:current_syntax")
 endif
 let b:current_syntax = 'guihua'
 
-syntax match GuihuaBufferNumber '\W\d\+'
-
+syntax match GuihuaBufferNumber "\<-\=\(0\|[1-9]_\?\(\d\|\d\+_\?\d\+\)*\)\%([Ee][-+]\=\d\+\)\=\>"
 syn match    GuihuaBufferHex display "\<0x[a-fA-F0-9_]\+\%([iu]\%(size\|8\|16\|32\|64\|128\)\)\="
 syn match    GuihuaBufferFloat       display "\<[0-9][0-9_]*\.\%([^[:cntrl:][:space:][:punct:][:digit:]]\|_\|\.\)\@!"
 syntax match GuihuaBufferField '\.\h\+'
@@ -27,8 +26,8 @@ syntax keyword GuihuaBufferLogic true false
 syntax keyword GuihuaBufferFunction  Copy Send Sized Sync
 syntax match GuihuaBufferPath '\(\.\)*\(\/\S\+\)\{1}\.*\S*'
 
-syntax keyword GuihuaNerdfont     𝔉 ⓕ    ﴲ    ﰮ     𝕰   ﬌             ﳅ     ∑  
-syntax keyword GuihuaNerdfont2  ƒ  
+syntax keyword GuihuaNerdfont     𝔉 ⓕ    ﴲ    ﰮ     𝕰   ﬌             ﳅ     ∑   
+syntax keyword GuihuaNerdfont2  ƒ          蘒 
 
 hi default link GuihuaBufferNumber Number
 hi default link GuihuaBufferHex Number
@@ -51,7 +50,10 @@ hi default link GuihuaNerdfont2 Function
 hi default link GuihuaBufferField2 Function
 hi default link GuihuaBufferFunction Function
 hi default link GuihuaBufferLogic Boolean
-
+hi default link GuihuaRange Comment
+hi default link GuihuaPanelLineNr LineNr
+hi default link GuihuaPanelHeader Label
+hi default link GuihuaPanelHeaderText Identifier
 " path match
 "  /abc/def_m1/gh_a.lua   :3
 " /abc/defm/gha.lua

@@ -3,7 +3,7 @@ if exists("b:current_syntax")
 endif
 let b:current_syntax = "guihua"
 
-syntax match GuihuaBufferNumber '\W\d\+'
+syntax match GuihuaBufferNumber "\<-\=\(0\|[1-9]_\?\(\d\|\d\+_\?\d\+\)*\)\%([Ee][-+]\=\d\+\)\=\>"
 syntax match GuihuaBufferField '\.\h\+'
 syntax match GuihuaBufferField2 '->\h\+'
 syn match    GuihuaBufferHex display "\<0x[a-fA-F0-9_]\+\%([iu]\%(size\|8\|16\|32\|64\|128\)\)\="
@@ -25,7 +25,7 @@ syntax keyword GuihuaBufferLogic and bitor or xor compl bitand and_eq or_eq xor_
 
 syntax match GuihuaBufferPath '\(\.\)*\(\/\S\+\)\{1}\.*\S*'
 syntax match GuihuaRange '[<|⟪|⟬||]\(\S\+\)[⟫|⟭|>||]'
-syntax match GuihuaPanelLineNr '\(:\d\+\)\{1}'
+syntax match GuihuaPanelLineNr  "\<-\=\(0\|[1-9]_\?\(\d\|\d\+_\?\d\+\)*\)\%([Ee][-+]\=\d\+\)\=\>\s*:"
 syntax match GuihuaPanelHeader '\(─\)\+\S\+\(─\)\+'
 syntax match GuihuaPanelHeaderText '─\+\(\S\+\)─\+'
 
@@ -51,7 +51,7 @@ hi default link GuihuaNerdfont2 Function
 hi default link GuihuaBufferField2 Function
 hi default link GuihuaBufferLogic Boolean
 hi default link GuihuaRange Comment
-hi default link GuihuaPanelLineNr Ignore
+hi default link GuihuaPanelLineNr LineNr
 hi default link GuihuaPanelHeader Label
 hi default link GuihuaPanelHeaderText Identifier
 " path match
