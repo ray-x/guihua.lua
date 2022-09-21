@@ -12,7 +12,7 @@ syn region      GuihuaBufferComment           start="//" end="$"
 syntax match GuihuaBufferColon '[:|:=|<|>|"|'|{|}|\||=|&|%|\*|(|)|\[|\]|\+|\-|\/]'
 syn region   GuihuaBufferString            start=+"+ skip=+\\\\\|\\"+ end=+"+
 syn region   GuihuaBufferString2            start=+'+ skip=+\\\\\|\\'+ end=+'+
-syntax keyword GuihuaBufferKeyword func function fn local begin end  let const defer map goto type range delete self this new delete malloc free include  def null nil as any private number module yield go typedef asm static register volatile extern const assert await with async global lambda pass import all any bytes tuple type filter format print box pub unsafe where mod trait move mut ref crate
+syntax keyword GuihuaBufferKeyword func function fn local begin end  let const defer map goto type range delete self this new delete malloc free include  def null nil as any private number module yield go typedef asm static register volatile extern const assert await with async global lambda pass import all any bytes tuple type filter format print box pub unsafe where mod trait move mut ref create
 
 
 syntax keyword GuihuaBufferCondition if else break switch throw try catch return finally default case select match in
