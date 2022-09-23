@@ -14,7 +14,7 @@ syn region   GuihuaBufferString            start=+"+ skip=+\\\\\|\\"+ end=+"+
 syn region   GuihuaBufferString2           start=+b"+ skip=+\\\\\|\\"+ end=+"+
 syn region   GuihuaBufferString3           start='b\?r\z(#*\)"' end='"\z1'
 " syn match    GuihuaBufferRustLftm           "[<|&]'"
-syntax keyword GuihuaBufferKeyword  type struct enum union as break filter format print box pub unsafe where mod trait move mut ref create extern fn in impl let pub return super unsafe where use move static const
+syntax keyword GuihuaBufferKeyword  type struct enum union as break filter format print box pub unsafe where mod trait move mut ref crate extern fn in impl let pub return super unsafe where use move static const
 
 
 syntax keyword GuihuaBufferCondition if else break switch throw try catch return finally default case select match in
