@@ -144,6 +144,7 @@ end
 function Panel:add_section(opts)
   table.insert(self.sections, {
     nodes = opts.items,
+    name = opts.name,
     header = genheader(opts),
     format = opts.format or format_node,
     render = opts.render,
@@ -279,7 +280,9 @@ local function filepreview(node)
     if type(hint) == 'string' then
       hint = { hint }
     end
-    vim.lsp.util.open_floating_preview(hint, ft, { border = 'single' })
+    if next(hint) and #hint[1] > 0 then
+      vim.lsp.util.open_floating_preview(hint, ft, { border = 'single' })
+    end
     return
   end
 
@@ -646,12 +649,13 @@ function Panel.debug()
 end
 
 function Panel:open(should_toggle, redraw, buf)
-  buf = buf or api.nvim_get_current_buf()
-  log('buf:', vfn.bufname(buf or 0))
   if should_toggle and self:is_open() then
     Panel:close()
     return
   end
+
+  buf = buf or api.nvim_get_current_buf()
+  log('buf:', vfn.bufname(buf or 0))
   -- trace(debug.traceback())
   for i, section in pairs(self.sections) do
     local nodes = section.render(buf)
