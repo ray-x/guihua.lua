@@ -228,7 +228,7 @@ function Panel:get_jump_info()
       trace(node.text or node.node_text)
       log(node, sct.format(node), utils.trim(line))
       if utils.trim(sct.format(node)) == utils.trim(line) then
-        log('node found', node.node_text, 'line', line)
+        log('node found', node.node_text or node.text, 'line', line, node.uri)
         return node
       end
     end
@@ -612,6 +612,10 @@ function Panel.jump_to_loc()
     api.nvim_win_set_cursor(0, { node.lnum, node.range.start.character })
   else
     log('no win found for', fileuri)
+    -- has not been loaded
+    api.nvim_set_current_win(vfn.win_getid(1))
+    vim.cmd('buffer ' .. tostring(bufnr))
+    api.nvim_win_set_cursor(0, { node.lnum, node.range.start.character })
   end
 end
 
