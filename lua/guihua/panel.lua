@@ -601,7 +601,11 @@ function Panel.jump_to_loc()
   node.lnum = node.lnum or node.range.start.line or 1
   Panel.on_preview_close()
   local fileuri = node.uri
-  local bufnr = vim.uri_to_bufnr(fileuri)
+  local bufnr = node.bufnr or vim.uri_to_bufnr(fileuri)
+  if fileuri == nil and (bufnr == nil or bufnr < 0) then
+    log('no fileuri found')
+    return
+  end
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     vfn.bufload(bufnr)
   end
