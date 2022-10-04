@@ -626,8 +626,9 @@ end
 
 function ListViewCtrl:on_data_update(data)
   local listobj = ListViewCtrl._viewctlobject
-  listobj.data = data
-  -- disable data
+  if listobj then
+    listobj.data = data
+  end
 end
 
 return ListViewCtrl
