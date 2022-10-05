@@ -226,7 +226,8 @@ function Panel:get_jump_info()
     end
     for _, node in pairs(sct.nodes) do
       trace(node.text or node.node_text)
-      log(node, sct.format(node), utils.trim(line))
+      trace(node, sct.format(node), utils.trim(line))
+      log(node.text)
       if utils.trim(sct.format(node)) == utils.trim(line) then
         log('node found', node.node_text or node.text, 'line', line, node.uri)
         return node
