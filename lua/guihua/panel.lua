@@ -76,7 +76,7 @@ local function format_node(node, section)
     end
   end
   if node.lnum then
-    str = str .. ' ' .. panel_icons.line_num_left .. tostring(node.lnum) .. panel_icons.line_num_right .. scope
+    str = str .. ' ' .. scope
   end
   trace('format:', str)
   return str
