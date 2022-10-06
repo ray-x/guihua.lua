@@ -213,7 +213,7 @@ function fzy.filter_table_ordered(needle, items)
 
   for i = 1, #items do
     local line = items[i].text
-    if fzy.has_match(needle, line) then
+    if line and fzy.has_match(needle, line) then
       local positions, score = fzy.positions(needle, line)
       items[i].fzy={pos=positions, score = score}
       table.insert(results,  items[i])
