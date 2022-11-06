@@ -18,17 +18,6 @@ local setup = function(opts)
   end
 end
 
-local function input_callback()
-  -- log(input_ctx)
-  local new_text = vim.trim(vim.fn.getline('.'):sub(#input_ctx.opts.prompt + 1, -1))
-  vim.cmd([[stopinsert]])
-  vim.cmd([[bd!]])
-  if #new_text == 0 or new_text == input_ctx.opts.default then
-    return
-  end
-  input_ctx.on_confirm(new_text)
-end
-
 local function onchange_callback()
   -- log(input_ctx)
   local new_text = vim.trim(vim.fn.getline('.'):sub(#input_ctx.opts.prompt + 1, -1))
@@ -48,7 +37,11 @@ local function input(opts, on_confirm)
   input_ctx.opts = opts
   local prompt = opts.prompt or '﵀ '
   local placeholder = opts.default or ''
-  input_ctx.on_confirm = on_confirm or input_ctx.on_confirm
+  local setup_confirm = input_ctx.on_confirm
+  input_ctx.on_confirm = function(new_name)
+    setup_confirm(new_name)
+    on_confirm(new_name)
+  end
   input_ctx.on_change = opts.on_change or input_ctx.on_change
   vim.api.nvim_buf_set_option(bufnr, 'buftype', 'prompt')
   vim.api.nvim_buf_set_option(bufnr, 'bufhidden', 'wipe')
@@ -74,7 +67,6 @@ local function input(opts, on_confirm)
         if #new_text == 0 or new_text == input_ctx.opts.default then
           return
         end
-        print(new_text)
         input_ctx.on_change(new_text)
       end,
     })
@@ -86,7 +78,16 @@ local function input(opts, on_confirm)
   vim.api.nvim_buf_set_option(bufnr, 'filetype', 'guihua')
   utils.map('n', '<ESC>', '<cmd>bd!<CR>', { silent = true, buffer = true })
   utils.map({ 'n', 'i' }, '<CR>', function()
-    require('guihua.input').input_callback()
+    log('confirm_callback')
+    local new_text = vim.trim(vim.fn.getline('.'):sub(#input_ctx.opts.prompt + 1, -1))
+    vim.cmd([[stopinsert]])
+    vim.cmd([[bd!]])
+    if #new_text == 0 or new_text == input_ctx.opts.default then
+      log('no change')
+      return
+    end
+    log('on_confirm: new text: ' .. new_text)
+    input_ctx.on_confirm(new_text)
   end, { silent = true, buffer = true })
 
   utils.map({ 'n' }, '<ESC>', function()
@@ -114,6 +115,5 @@ end
 return {
   setup = setup,
   input = input,
-  input_callback = input_callback,
   onchange_callback = onchange_callback,
 }
