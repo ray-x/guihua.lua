@@ -29,7 +29,8 @@ syntax match GuihuaPanelLineNr  "\<-\=\(0\|[1-9]_\?\(\d\|\d\+_\?\d\+\)*\)\%([Ee]
 syntax match GuihuaPanelHeader '\(─\)\+\S\+\(─\)\+'
 syntax match GuihuaPanelHeaderText '─\+\(\S\+\)─\+'
 
-syntax keyword GuihuaNerdfont     𝔉 ⓕ    ﴲ    ﰮ     𝕰   ﬌             ﳅ     ∑   
+syntax keyword GuihuaNerdfont     𝔉 ⓕ    ﴲ    ﰮ     𝕰   ﬌             ﳅ     ∑    ✓
+" ❌
 syntax keyword GuihuaNerdfont2  ƒ          蘒 
 
 hi default link GuihuaBufferNumber Number
