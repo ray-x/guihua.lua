@@ -36,10 +36,10 @@ local function onchange_callback()
     return
   end
   log(new_text)
-  -- input_ctx.on_change(new_text)
+  input_ctx.on_change(new_text)
 end
 
-local function input(opts, on_confirm, on_change)
+local function input(opts, on_confirm)
   log(opts)
   -- local preview_buf = vim.api.nvim_get_current_buf()
   -- local preview_ns = vim.api.nvim_create_namespace('guihua_input')
@@ -49,7 +49,7 @@ local function input(opts, on_confirm, on_change)
   local prompt = opts.prompt or '﵀ '
   local placeholder = opts.default or ''
   input_ctx.on_confirm = on_confirm or input_ctx.on_confirm
-  input_ctx.on_change = on_change or input_ctx.on_change
+  input_ctx.on_change = opts.on_change or input_ctx.on_change
   vim.api.nvim_buf_set_option(bufnr, 'buftype', 'prompt')
   vim.api.nvim_buf_set_option(bufnr, 'bufhidden', 'wipe')
   vim.api.nvim_buf_add_highlight(bufnr, -1, 'NGPreviewTitle', 0, 0, #prompt)
@@ -75,7 +75,7 @@ local function input(opts, on_confirm, on_change)
           return
         end
         print(new_text)
-        input_ctx.on_confirm(new_text)
+        input_ctx.on_change(new_text)
       end,
     })
     -- vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, { buffer = bufnr, callback = function() end })
@@ -92,6 +92,8 @@ local function input(opts, on_confirm, on_change)
   utils.map({ 'n' }, '<ESC>', function()
     local new_text = vim.trim(vim.fn.getline('.'):sub(#prompt + 1, -1))
     input_ctx.on_cancel(new_text)
+    -- close current floatwindow
+    vim.api.nvim_win_close(0, true)
   end, { silent = true, buffer = true })
   utils.map({ 'n', 'i' }, '<BS>', [[<ESC>"_cl]], { silent = true, buffer = true })
 
