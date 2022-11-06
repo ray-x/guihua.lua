@@ -343,21 +343,24 @@ M.merge = function(t1, t2)
   return t1
 end
 
-M.map = function(modes, key, result, options)
+M.map = function(modes, key, rhs, options)
   options = M.merge({ noremap = true, silent = false, expr = false, nowait = false }, options or {})
-  local buffer = options.buffer
-  options.buffer = nil
 
+  if options.buffer == true then
+    options.buffer = vim.api.nvim_get_current_buf()
+  elseif options.buffer == false then
+    options.buffer = nil
+  end
   if type(modes) ~= 'table' then
     modes = { modes }
   end
 
-  for i = 1, #modes do
-    if buffer then
-      api.nvim_buf_set_keymap(0, modes[i], key, result, options)
-    else
-      api.nvim_set_keymap(modes[i], key, result, options)
-    end
+  if options.callback then
+    local fn = options.callback
+    options.callback = nil
+    vim.keymap.set(modes, key, fn, options)
+  else
+    vim.keymap.set(modes, key, rhs, options)
   end
 end
 
@@ -417,10 +420,10 @@ M.home = vim.loop.os_homedir()
 M.sep = (function()
   if jit then
     local os = string.lower(jit.os)
-    if os == "linux" or os == "osx" or os == "bsd" then
-      return "/"
+    if os == 'linux' or os == 'osx' or os == 'bsd' then
+      return '/'
     else
-      return "\\"
+      return '\\'
     end
   else
     return package.config:sub(1, 1)
@@ -457,7 +460,6 @@ function M.symbols_to_items(symbols, bufnr)
   return _symbols_to_items(symbols, {}, bufnr or 0)
 end
 
-
 -- shorten_len shorten the filename to a given length
 -- this part is copied from plenary.nvim
 function M.shorten_len(filename, len, exclude)
@@ -468,8 +470,8 @@ function M.shorten_len(filename, len, exclude)
   -- get parts in a table
   local parts = {}
   local empty_pos = {}
-  for m in (filename .. M.sep):gmatch("(.-)" .. M.sep) do
-    if m ~= "" then
+  for m in (filename .. M.sep):gmatch('(.-)' .. M.sep) do
+    if m ~= '' then
       parts[#parts + 1] = m
     else
       table.insert(empty_pos, #parts + 1)
@@ -507,22 +509,22 @@ function M.shorten_len(filename, len, exclude)
   return table.concat(final_path_components)
 end
 local is_uri = function(filename)
-  return string.match(filename, "^%w+://") ~= nil
+  return string.match(filename, '^%w+://') ~= nil
 end
 
 M.shorten = (function()
-  if jit and M.sep ~= "\\" then
-    local ffi = require "ffi"
-    ffi.cdef [[
+  if jit and M.sep ~= '\\' then
+    local ffi = require('ffi')
+    ffi.cdef([[
     typedef unsigned char char_u;
     void shorten_dir(char_u *str);
-    ]]
+    ]])
     return function(filename)
       if not filename or is_uri(filename) then
         return filename
       end
 
-      local c_str = ffi.new("char[?]", #filename + 1)
+      local c_str = ffi.new('char[?]', #filename + 1)
       ffi.copy(c_str, filename)
       ffi.C.shorten_dir(c_str)
       return ffi.string(c_str)

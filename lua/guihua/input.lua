@@ -9,7 +9,7 @@ local input_ctx = {
   on_change = function(_, _, _)
     log('default on change')
   end,
-  on_concel = function(_) end,
+  on_cancel = function(_) end,
 }
 
 local setup = function(opts)
@@ -41,8 +41,8 @@ end
 
 local function input(opts, on_confirm, on_change)
   log(opts)
-  local preview_buf = vim.api.nvim_get_current_buf()
-  local preview_ns = vim.api.nvim_create_namespace('guihua_input')
+  -- local preview_buf = vim.api.nvim_get_current_buf()
+  -- local preview_ns = vim.api.nvim_create_namespace('guihua_input')
   local bufnr = vim.api.nvim_create_buf(false, true)
 
   input_ctx.opts = opts
@@ -85,12 +85,14 @@ local function input(opts, on_confirm, on_change)
 
   vim.api.nvim_buf_set_option(bufnr, 'filetype', 'guihua')
   utils.map('n', '<ESC>', '<cmd>bd!<CR>', { silent = true, buffer = true })
-  utils.map(
-    { 'n', 'i' },
-    '<CR>',
-    "<cmd>lua require('guihua.input').input_callback()<CR>",
-    { silent = true, buffer = true }
-  )
+  utils.map({ 'n', 'i' }, '<CR>', function()
+    require('guihua.input').input_callback()
+  end, { silent = true, buffer = true })
+
+  utils.map({ 'n' }, '<ESC>', function()
+    local new_text = vim.trim(vim.fn.getline('.'):sub(#prompt + 1, -1))
+    input_ctx.on_cancel(new_text)
+  end, { silent = true, buffer = true })
   utils.map({ 'n', 'i' }, '<BS>', [[<ESC>"_cl]], { silent = true, buffer = true })
 
   vim.cmd(string.format('normal i%s', placeholder))
