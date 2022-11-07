@@ -48,7 +48,7 @@ local function input(opts, on_confirm)
   vim.api.nvim_buf_add_highlight(bufnr, -1, 'NGPreviewTitle', 0, 0, #prompt)
   vim.fn.prompt_setprompt(bufnr, prompt)
   local width = #placeholder + #prompt + 10
-  local winnr = vim.api.nvim_open_win(bufnr, true, {
+  local wopts = {
     relative = 'cursor',
     width = width,
     height = 1,
@@ -56,7 +56,11 @@ local function input(opts, on_confirm)
     col = 1,
     style = 'minimal',
     border = 'single',
-  })
+  }
+  if vim.fn.has('nvim-0.9') == 1 then
+    wopts.title = opts.title or input_ctx.title
+  end
+  local winnr = vim.api.nvim_open_win(bufnr, true, wopts)
   vim.api.nvim_win_set_option(winnr, 'winhl', 'Normal:Floating')
   if input_ctx.on_change then
     vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, {
