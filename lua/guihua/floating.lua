@@ -49,6 +49,10 @@ local function floating_buf(opts)
   end
 
   log('floating size', win_opts.height, win_opts.width)
+
+  if vim.fn.has('nvim-0.9') == 1 then
+    win_opts.title = opts.title
+  end
   trace('floating opts: ', win_opts, opts)
   local buf = api.nvim_create_buf(false, true)
   api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
