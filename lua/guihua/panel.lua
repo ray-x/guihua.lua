@@ -281,7 +281,7 @@ local function filepreview(node)
     if type(hint) == 'string' then
       hint = { hint }
     end
-    if next(hint) and #hint[1] > 0 then
+    if next(hint) and #hint[1] > 0 or hint[2] and #hint[2] > 0 then
       vim.lsp.util.open_floating_preview(hint, ft, { border = 'single' })
     end
     return
