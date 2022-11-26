@@ -120,8 +120,8 @@ function M.new_list_view(opts)
   local items = opts.items
   local data = opts.data or opts.items or {}
   log('total items:', #items, 'data: ', #data)
-  opts.height_ratio = opts.height_ratio or 0.8
-  opts.width_ratio = opts.width_ratio or 0.8
+  opts.height_ratio = opts.height_ratio or 0.9
+  opts.width_ratio = opts.width_ratio or 0.9
   opts.preview_height_ratio = opts.preview_height_ratio or 0.4
 
   local wwidth = api.nvim_get_option('columns')
@@ -240,6 +240,7 @@ M.select = function(items, opts, on_choice)
   local data = { { text = '  select ' .. opts.prompt .. ' <C-o> Apply <C-e> Exit' } }
 
   local width = #data[1].text + 4
+  local max_width = math.floor(api.nvim_get_option('columns') * (opts.width or 0.9))
   opts.format_item = opts.format_item or function(item)
     return item
   end
@@ -259,18 +260,19 @@ M.select = function(items, opts, on_choice)
         for _, change in pairs(changes or {}) do
           -- trace(change)
           if change.edits then
-            title = title .. ' [newText:]'
             for _, ed in pairs(change.edits) do
               -- trace(ed)
               if ed.newText and ed.newText ~= '' then
                 local newText = ed.newText:gsub('\n\t', ' ↳ ')
                 newText = newText:gsub('\n', '↳')
                 newText = newText:gsub('↳↳', '↳')
-                title = title .. ' (' .. newText
-                if ed.range then
-                  title = title .. ' line: ' .. tostring(ed.range.start.line) .. ')'
-                else
-                  title = title .. ')'
+                if #newText > 1 then
+                  title = title .. ' (add ' .. newText
+                  if ed.range then
+                    title = title .. ' line: ' .. tostring(ed.range.start.line) .. ')'
+                  else
+                    title = title .. ')'
+                  end
                 end
               end
             end
@@ -298,12 +300,12 @@ M.select = function(items, opts, on_choice)
 
   local divider = string.rep('─', width + 2)
   table.insert(data, 2, divider)
-  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<esc>', true, false, true), 'x', true)
-  log(data)
+  -- vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<esc>', true, false, true), 'x', true)
+  width = math.min(width + 4, max_width)
   local listview = M.new_list_view({
     items = data,
     border = 'single',
-    width = width + 4,
+    width = width,
     loc = 'top_center',
     relative = 'cursor',
     rawdata = true,
@@ -319,6 +321,7 @@ M.select = function(items, opts, on_choice)
   })
 
   vim.api.nvim_buf_add_highlight(listview.buf, -1, 'Title', 0, 0, -1)
+  -- move to 1st tiem
   ListViewCtrl:on_next()
   ListViewCtrl:on_next()
 
