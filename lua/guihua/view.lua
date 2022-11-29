@@ -56,7 +56,7 @@ function View:initialize(...)
 
   local wheight = api.nvim_get_option('lines')
   if wheight < self.rect.height + self.rect.pos_y + 2 then
-    self.rect.height = wheight - self.rect.pos_y - 2
+    self.rect.height = math.max(1, wheight - self.rect.pos_y - 2)
     self.display_height = self.rect.height
 
     log('height offscreen: ', wheight, self.rect)
@@ -278,7 +278,9 @@ function View:close(...)
     self.closer = nil
     self.win = nil
   else
-    api.nvim_win_close(self.win, true)
+    if self.win and api.nvim_win_is_valid(self.win) then
+      api.nvim_win_close(self.win, true)
+    end
     self.win = nil
   end
 
