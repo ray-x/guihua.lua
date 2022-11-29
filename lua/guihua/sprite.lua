@@ -83,13 +83,12 @@ function Sprite:initialize(...)
   self.data = opts.data or { '' }
   self.is_run = true
   self.delay = opts.delay or 100
-  self.interval = opts.delay or 200
+  self.interval = opts.interval or 200
   self.frame = 1
   self.timeout = opts.timeout or 10000
   self.spinner = opts.spinner or moon
-  opts.rect.pos_x = opts.rect.pos_x or w - #self.data[1] - 2
+  opts.rect.pos_x = math.max(1, opts.rect.pos_x or w - #self.data[1] - 2)
   opts.rect.pos_y = opts.rect.pos_y or h
-  log(opts.rect)
   if Sprite.ActiveSprite ~= nil then
     if
       Sprite.ActiveSprite.win ~= nil
