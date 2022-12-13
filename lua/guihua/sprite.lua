@@ -216,16 +216,18 @@ function Sprite.on_close()
   log('Sprite onclose ', Sprite.ActiveSprite.win)
 
   Sprite.ActiveSprite.is_run = false
-  if Sprite.ActiveSprite.__timer then
-    Sprite.ActiveSprite.__timer:stop()
-    vim.loop.timer_stop(Sprite.ActiveSprite.__timer)
-  end
-  Sprite.ActiveSprite.__timer = nil
-  if Sprite.ActiveSprite.__stop then
-    Sprite.ActiveSprite.__stop(Sprite.ActiveSprite)
-  end
-  Sprite.ActiveSprite:close()
-  Sprite.static.ActiveView = nil
+  vim.schedule(function()
+    if Sprite.ActiveSprite.__timer then
+      Sprite.ActiveSprite.__timer:stop()
+      vim.loop.timer_stop(Sprite.ActiveSprite.__timer)
+    end
+    Sprite.ActiveSprite.__timer = nil
+    if Sprite.ActiveSprite.__stop then
+      Sprite.ActiveSprite.__stop(Sprite.ActiveSprite)
+    end
+    Sprite.ActiveSprite:close()
+    Sprite.static.ActiveView = nil
+  end)
 end
 
 return Sprite
