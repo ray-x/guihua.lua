@@ -269,6 +269,7 @@ end
 
 function View:close(...)
   log('close View ', self.class.name)
+  trace(debug.traceback())
   if self == nil then
     return
   end

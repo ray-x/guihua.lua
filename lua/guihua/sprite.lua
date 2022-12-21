@@ -108,7 +108,9 @@ function Sprite:initialize(...)
       end
       return Sprite.ActiveSprite
     else
-      Sprite.on_close()
+      -- Sprite.on_close()
+      log('active view not valid')
+      Sprite.ActiveSprite = nil
     end
   end
 
@@ -136,7 +138,7 @@ function Sprite:initialize(...)
       end
       local ctime = vim.loop.hrtime()
       if self.timeout and ctime > start_time + self.timeout * 1000000 then
-        log(self.timeout, ctime - start_time)
+        log("timeout", self.timeout, ctime - start_time)
         self:on_close()
         return
       end
