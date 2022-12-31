@@ -179,6 +179,9 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
   local closer = function(code, data, ev)
     log('floatwin closing ', win, code, data, ev)
 
+    if opts.closer then
+      opts.closer(code, data, ev, buf, win)
+    end
     if opts.autoclose ~= false then
       if vim.api.nvim_buf_is_valid(buf) then
         vim.api.nvim_buf_delete(buf, { force = true })
@@ -187,9 +190,6 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
         vim.api.nvim_win_close(win, true)
         win = nil
       end
-    end
-    if opts.closer then
-      opts.closer(opts.closer_args)
     end
     if opts.on_exit then
       opts.on_exit(code, data, ev)
@@ -206,9 +206,12 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
 
   vim.fn.termopen(args, {
     on_exit = function(code, data, event)
+      closer(code, data, event)
       if opts.autoclose ~= false then
-        vim.api.nvim_set_current_win(current_window)
-        closer(code, data, event)
+        log('floatwin closing ', win, current_window, code, data, event)
+        if current_window ~= vim.api.nvim_get_current_win() then
+          vim.api.nvim_set_current_win(current_window)
+        end
       end
     end,
     on_stdout = opts.on_stdout,
