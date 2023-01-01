@@ -181,18 +181,7 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
 
     if opts.closer then
       opts.closer(code, data, ev, buf, win)
-    end
-    if opts.autoclose ~= false then
-      if vim.api.nvim_buf_is_valid(buf) then
-        vim.api.nvim_buf_delete(buf, { force = true })
-      end
-      if vim.api.nvim_win_is_valid(win) then
-        vim.api.nvim_win_close(win, true)
-        win = nil
-      end
-    end
-    if opts.on_exit then
-      opts.on_exit(code, data, ev)
+      opts.closer = nil
     end
   end
   vim.api.nvim_buf_set_option(buf, 'filetype', 'guihua') -- default ft for all buffers. do not use specific ft e.g
@@ -206,20 +195,27 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
 
   vim.fn.termopen(args, {
     on_exit = function(code, data, event)
-      closer(code, data, event)
-      if opts.autoclose ~= false then
+      -- closer(code, data, event)
+      if opts.autoclose == true then
+        if vim.api.nvim_buf_is_valid(buf) then
+          vim.api.nvim_buf_delete(buf, { force = true })
+        end
+        if vim.api.nvim_win_is_valid(win) then
+          vim.api.nvim_win_close(win, true)
+          win = nil
+        end
         log('floatwin closing ', win, current_window, code, data, event)
         if current_window ~= vim.api.nvim_get_current_win() then
           vim.api.nvim_set_current_win(current_window)
         end
       end
+
+      if opts.on_exit then
+        opts.on_exit(code, data, event)
+      end
     end,
     on_stdout = opts.on_stdout,
   })
-
-  if opts.autoclose ~= false then
-    vim.cmd('startinsert!')
-  end
 
   return buf, win, closer
 end
@@ -268,13 +264,6 @@ local term = function(opts)
     opts.autoclose = true
   end
 
-  opts.closer = function()
-    log('closer callback')
-    vim.cmd('set noconfirm')
-    vim.cmd('bufdo e!')
-    vim.cmd('set confirm')
-  end
-  opts.closer_args = {}
   local buf, win, closer = floating_term(opts)
   api.nvim_command('setlocal nobuflisted')
   local var_key = opts.term_name or 'guihua_floating_term'
@@ -293,7 +282,9 @@ end
 -- floating_term({ cmd = 'lazygit', border = 'single', external = true })
 -- floating_term({ cmd = 'pwd', border = 'single', external = false, autoclose = false })
 -- floating_term({ cmd = 'lazygit', border = 'single', external = false })
--- term({ cmd = 'fish', border = 'single', external = false })
+-- term({ cmd = 'lazygit', border = 'single', external = false })
+-- term({ cmd = 'git diff --', border = 'single', external = false })
+
 local function test(prompt)
   local b, w, c = floating_buf({
     win_width = 30,
