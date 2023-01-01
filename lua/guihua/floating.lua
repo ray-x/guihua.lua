@@ -212,10 +212,14 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
 
       if opts.on_exit then
         opts.on_exit(code, data, event)
+        opts.on_exit = nil
       end
     end,
     on_stdout = opts.on_stdout,
   })
+  if opts.autoclose ~= false then
+    vim.cmd('startinsert!')
+  end
 
   return buf, win, closer
 end
