@@ -194,8 +194,8 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
   end
 
   vim.fn.termopen(args, {
-    on_exit = function(code, data, event)
-      log('exit', code, data, event)
+    on_exit = function(jobid, data, event)
+      log('exit', jobid, data, event)
       if opts.autoclose == true then
         if vim.api.nvim_buf_is_valid(buf) then
           vim.api.nvim_buf_delete(buf, { force = true })
@@ -204,19 +204,22 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
           vim.api.nvim_win_close(win, true)
           win = nil
         end
-        log('floatwin closing ', win, current_window, code, data, event)
+        log('floatwin closing ', win, current_window, jobid, data, event)
         if current_window ~= vim.api.nvim_get_current_win() then
           vim.api.nvim_set_current_win(current_window)
+        end
+        if data ~= 0 then
+          log('failed to run command', vim.inspect(args))
         end
       end
 
       if opts.on_exit then
-        opts.on_exit(code, data, event)
+        opts.on_exit(jobid, data, event)
         opts.on_exit = nil
       end
 
       if opts.closer then
-        opt.closer(code, data, event, buf, win)
+        opts.closer(jobid, data, event, buf, win)
       end
     end,
     on_stdout = opts.on_stdout,
