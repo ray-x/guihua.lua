@@ -111,7 +111,7 @@ function View:initialize(...)
   View.static.ActiveView = self
   self:bind_ctrl(opts)
 
-  log('ctor View: end')
+  trace('ctor View: end')
 end
 
 function View.Active()

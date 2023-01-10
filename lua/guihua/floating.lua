@@ -196,7 +196,7 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
   vim.fn.termopen(args, {
     on_exit = function(jobid, data, event)
       log('exit', jobid, data, event)
-      if opts.autoclose == true then
+      if opts.autoclose == true and data == 0 then
         if vim.api.nvim_buf_is_valid(buf) then
           vim.api.nvim_buf_delete(buf, { force = true })
         end
@@ -211,6 +211,25 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
         if data ~= 0 then
           log('failed to run command', vim.inspect(args))
         end
+      else
+        vim.defer_fn(function()
+          vim.schedule(function()
+            if vim.api.nvim_buf_is_valid(buf) then
+              vim.api.nvim_buf_delete(buf, { force = true })
+            end
+            if vim.api.nvim_win_is_valid(win) then
+              vim.api.nvim_win_close(win, true)
+              win = nil
+            end
+            log('floatwin closing ', win, current_window, jobid, data, event)
+            if current_window ~= vim.api.nvim_get_current_win() then
+              vim.api.nvim_set_current_win(current_window)
+            end
+            if data ~= 0 then
+              log('failed to run command', vim.inspect(args))
+            end
+          end)
+        end, 3000)
       end
 
       if opts.on_exit then

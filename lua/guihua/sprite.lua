@@ -120,7 +120,7 @@ function Sprite:initialize(...)
   self.cursor_pos = { 1, 1 }
   if opts.syntax then
     self.syntax = opts.syntax
-    log('hl ', self.buf, opts.syntax)
+    trace('hl ', self.buf, opts.syntax)
     require('guihua.util').highlighter(self.buf, opts.syntax, opts.lnum)
   end
 
@@ -148,7 +148,7 @@ function Sprite:initialize(...)
   )
   self.__timer = timer
   trace(self)
-  log('ctor Sprite: end') -- , View.ActiveView)--, self)
+  trace('ctor Sprite: end') -- , View.ActiveView)--, self)
   Sprite.static.ActiveSprite = self
   return self
 end
@@ -184,9 +184,9 @@ function Sprite:on_draw(data)
   local spinner = self.spinner[self.frame % #self.spinner + 1]
   content[1] = spinner .. content[1]
 
-  log('draw data: ', data[1], ' size: ', #data, self.buf, self.win)
+  trace('draw data: ', data[1], ' size: ', #data, self.buf, self.win)
   if #data < 1 then
-    log('nothing to redraw')
+    trace('nothing to redraw')
     return
   end
   local start = 0
@@ -206,7 +206,7 @@ function Sprite:on_draw(data)
   if Sprite.hl_line ~= nil then
     Sprite.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', Sprite.hl_line - 1, 0, -1)
   end
-  log('sprite draw finished')
+  trace('sprite draw finished')
 end
 
 function Sprite.on_close()
