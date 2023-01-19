@@ -17,7 +17,7 @@ local default_config = {
   use_file = true,
   log_file = 'gh',
   -- Any messages above this level will be logged.
-  level = 'error',
+  level = 'warn',
   -- Level configuration
   log_size = 10000000,
   modes = {

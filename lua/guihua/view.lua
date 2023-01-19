@@ -70,6 +70,7 @@ function View:initialize(...)
     loc = loc,
     prompt = self.prompt,
     enter = opts.enter,
+    focus = opts.focus,
     border = opts.border,
     ft = opts.ft,
     syntax = opts.syntax,

@@ -17,7 +17,7 @@ end
 -- options: win_width, win_height, x, y, loc, prompt, enter, ft
 local function floating_buf(opts)
   local prompt = opts.prompt or false
-  local enter = opts.enter or false
+  local enter = opts.focus or opts.enter or false
   local x = opts.x or 0
   local y = opts.y or 0
   -- win_w, win_h, x, y should be passwd in from view

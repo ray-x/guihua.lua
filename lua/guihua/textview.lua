@@ -130,6 +130,9 @@ function TextView:initialize(...)
     TextView.static.hl_line = opts.hl_line
   end
 
+  if opts.ft then
+    vim.api.nvim_buf_set_option(self.buf, 'filetype', opts.ft)
+  end
   if opts.allow_edit then
     vim.api.nvim_buf_set_option(self.buf, 'readonly', false)
   end
