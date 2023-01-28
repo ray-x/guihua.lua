@@ -556,7 +556,6 @@ function ListViewCtrl:on_backspace(deleteword)
     return
   end
 
-  vim.api.nvim_win_set_option(0, 'virtualedit', 'block')
   vim.cmd([[stopi]])
   if deleteword then
     vim.cmd([[normal! diw]])

@@ -99,6 +99,8 @@ function View:initialize(...)
     -- prevent you get black ground
     api.nvim_win_set_option(self.win, 'winblend', 0)
   end
+
+  api.nvim_win_set_option(self.win, 'virtualedit', 'block')
   log('floatbuf created ', self.buf, self.win)
   self:set_hl(opts)
   if opts.data ~= nil and #opts.data >= 1 then
