@@ -547,7 +547,7 @@ end
 
 function ListViewCtrl:on_backspace(deleteword)
   local listobj = ListViewCtrl._viewctlobject
-  local buf = listobj.m_delegate.buf
+  local buf = listobj.m_delegate.buf or vim.api.nvim_get_current_buf()
   local filter_input = vim.api.nvim_buf_get_lines(buf, -2, -1, false)[1]
   local filter_input_trim = string.sub(filter_input, 5, #filter_input)
 
@@ -556,6 +556,7 @@ function ListViewCtrl:on_backspace(deleteword)
     return
   end
 
+  vim.api.nvim_win_set_option(0, 'virtualedit', 'block')
   vim.cmd([[stopi]])
   if deleteword then
     vim.cmd([[normal! diw]])
