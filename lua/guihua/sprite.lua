@@ -4,7 +4,7 @@ local log = require('guihua.log').info
 local util = require('guihua.util')
 local trace = require('guihua.log').trace
 local api = vim.api
-
+local Sprite
 if Sprite == nil then
   Sprite = class('Sprite', View)
 end
@@ -138,7 +138,7 @@ function Sprite:initialize(...)
       end
       local ctime = vim.loop.hrtime()
       if self.timeout and ctime > start_time + self.timeout * 1000000 then
-        log("timeout", self.timeout, ctime - start_time)
+        log('timeout', self.timeout, ctime - start_time)
         self:on_close()
         return
       end
