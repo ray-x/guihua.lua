@@ -56,7 +56,9 @@ function ListView:initialize(...)
   trace('listview ft:', opts)
 
   vim.api.nvim_buf_set_option(self.buf, 'ft', ft)
-  vim.api.nvim_win_set_option(self.win, 'wrap', false)
+  if not opts.wrap then
+    vim.api.nvim_win_set_option(self.win, 'wrap', false)
+  end
 
   if not opts.prompt or opts.enter then
     vim.cmd('normal! 1gg')
@@ -140,7 +142,12 @@ function ListView.close()
     log('fallback mask closer')
     local mask_buf = ListView.MaskBufnr
     local mask_win = ListView.MaskWinnr
-    if mask_buf and vim.api.nvim_buf_is_valid(mask_buf) and mask_win and vim.api.nvim_win_is_valid(mask_win) then
+    if
+      mask_buf
+      and vim.api.nvim_buf_is_valid(mask_buf)
+      and mask_win
+      and vim.api.nvim_win_is_valid(mask_win)
+    then
       vim.api.nvim_win_close(mask_win, true)
     end
   end
@@ -184,11 +191,7 @@ function ListView:set_pos(i)
   local selhighlight = vim.api.nvim_create_namespace('selhighlight')
   local cursor = vim.api.nvim_win_get_cursor(self.win)
   cursor[1] = i
-  -- vim.api.nvim_win_set_cursor(self.win, cursor)
 
-  -- vim.api.nvim_buf_clear_namespace(self.buf, _VT_GHLIST, 0, -1)
-  -- _VT_GHLIST = vim.api.nvim_buf_set_virtual_text(self.buf, _VT_GHLIST, i - 1, {{"<-", "Sting"}}, {})
-  -- log("set virtual text on ", i, "buf", self.buf, _VT_GHLIST)
   vim.schedule(function()
     log('setpos', self.buf, self.selected_line)
 
@@ -198,7 +201,14 @@ function ListView:set_pos(i)
     end
     vim.api.nvim_buf_clear_namespace(self.buf, selhighlight, 0, -1)
     local ListviewHl = 'GuihuaListSelHl'
-    vim.api.nvim_buf_add_highlight(self.buf, selhighlight, ListviewHl, self.selected_line - 1, 0, -1)
+    vim.api.nvim_buf_add_highlight(
+      self.buf,
+      selhighlight,
+      ListviewHl,
+      self.selected_line - 1,
+      0,
+      -1
+    )
   end)
 end
 

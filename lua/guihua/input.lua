@@ -47,13 +47,13 @@ local function input(opts, on_confirm)
   vim.api.nvim_buf_set_option(bufnr, 'bufhidden', 'wipe')
   vim.api.nvim_buf_add_highlight(bufnr, -1, 'NGPreviewTitle', 0, 0, #prompt)
   vim.fn.prompt_setprompt(bufnr, prompt)
-  local width = #placeholder + #prompt + 10
+  local width = #placeholder + #prompt + (opts.width or 20)
   local wopts = {
-    relative = 'cursor',
+    relative = opts.relative or 'cursor',
     width = width,
     height = 1,
-    row = -3,
-    col = 1,
+    row = opts.row or -3,
+    col = opts.col,
     style = 'minimal',
     border = 'single',
   }
