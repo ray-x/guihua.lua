@@ -174,7 +174,7 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
   opts.win_width = opts.win_width or math.ceil(columns * 0.88)
   local win, buf, _ = floatterm(opts)
 
-  api.nvim_win_set_option(win, 'winhl', 'Normal:Normal')
+  api.nvim_win_set_option(win, 'winhl', 'Normal:NormalFloat')
 
   local closer = function(code, data, ev)
     log('floatwin closing ', win, code, data, ev)
@@ -351,6 +351,7 @@ end
 local function test_mask(t)
   local b, w, c = floating_buf_mask(t)
 end
+-- test2(false)
 
 -- test_mask(60)
 

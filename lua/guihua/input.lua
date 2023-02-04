@@ -53,7 +53,7 @@ local function input(opts, on_confirm)
     width = width,
     height = 1,
     row = opts.row or -3,
-    col = opts.col,
+    col = opts.col or 0,
     style = 'minimal',
     border = 'single',
   }
@@ -61,7 +61,7 @@ local function input(opts, on_confirm)
     wopts.title = opts.title or input_ctx.title
   end
   local winnr = vim.api.nvim_open_win(bufnr, true, wopts)
-  vim.api.nvim_win_set_option(winnr, 'winhl', 'Normal:Floating')
+  vim.api.nvim_win_set_option(winnr, 'winhl', 'Normal:NormalFloat')
   if input_ctx.on_change then
     vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, {
       buffer = bufnr,
