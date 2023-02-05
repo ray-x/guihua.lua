@@ -68,6 +68,7 @@ local function floating_buf(opts)
   end
   local win = api.nvim_open_win(buf, enter, win_opts)
   log('creating win', win, 'buf', buf)
+  vim.api.nvim_win_set_option(win, 'winhl', 'Normal:NormalFloat,NormalNC:Normal')
 
   -- note: if failed to focus on the view, you can add to the caller
 
@@ -308,7 +309,6 @@ local term = function(opts)
 end
 
 --
--- test2(false)
 -- test_term(true)
 -- multigrid
 -- floating_term({ cmd = 'lazygit', border = 'single', external = true })
@@ -351,7 +351,7 @@ end
 local function test_mask(t)
   local b, w, c = floating_buf_mask(t)
 end
--- test2(false)
+-- test2(true)
 
 -- test_mask(60)
 
