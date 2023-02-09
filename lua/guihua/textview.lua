@@ -47,7 +47,7 @@ function TextView:initialize(...)
   trace(opts)
   local bg = util.bgcolor(0x050812)
 
-  opts.bg = opts.bg or 'GuihuaTextViewDark'
+  opts.bg = opts.preview_bg or opts.bg or 'GuihuaTextViewDark'
 
   if opts.width or opts.height then
     opts.rect = { widht = opts.widht or 60, height = opts.height or 30 }

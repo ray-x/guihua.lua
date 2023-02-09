@@ -127,6 +127,8 @@ function ListViewCtrl:initialize(delegate, ...)
     { mode = 'n', key = m.confirm, cmd = function() ListViewCtrl:on_confirm() end, desc = 'ListViewCtrl:on_confirm()' },
     { mode = 'n', key = m.vsplit, cmd = function() ListViewCtrl:on_confirm({ split = 'v' }) end, desc = 'ListViewCtrl:on_confirm {split = v}'},
     { mode = 'n', key = m.split, cmd = function() ListViewCtrl:on_confirm({ split = 's' }) end, desc = 'ListViewCtrl:on_confirm {split = s}'},
+    { mode = 'n', key = m.tab, cmd = function() ListViewCtrl:on_confirm({ split = 't' }) end, desc = 'ListViewCtrl:on_confirm {split = t}'},
+    { mode = 'i', key = string.format('<C-%s>', m.tab), cmd = function() ListViewCtrl:on_confirm({ split = 't' }) end, desc = 'ListViewCtrl:on_confirm {split = t}'},
     { mode = 'i', key = m.confirm, cmd = function() ListViewCtrl:on_confirm() end, desc = 'ListViewCtrl:on_confirm()' },
     { mode = 'n', key = m.close_view, cmd = function() ListViewCtrl:on_close() end, desc = 'ListViewCtrl:on_close()' },
     { mode = 'n', key = m.send_qf, cmd = function() ListViewCtrl:on_quickfix() end, desc = 'ListViewCtrl:on_quickfix()' },
@@ -199,7 +201,14 @@ function ListViewCtrl:on_next()
     disp_h = disp_h - 1
   end
 
-  trace('next: ', listobj.selected_line, listobj.display_start_at, listobj.display_height, l, disp_h)
+  trace(
+    'next: ',
+    listobj.selected_line,
+    listobj.display_start_at,
+    listobj.display_height,
+    l,
+    disp_h
+  )
 
   if l > #data_collection then
     -- stylua: ignore
@@ -396,7 +405,14 @@ function ListViewCtrl:draw_page(offset_direction)
 
   local l = listobj.display_start_at + offset_direction * disp_h
 
-  trace('pagedown: ', listobj.selected_line, listobj.display_start_at, listobj.display_height, l, disp_h)
+  trace(
+    'pagedown: ',
+    listobj.selected_line,
+    listobj.display_start_at,
+    listobj.display_height,
+    l,
+    disp_h
+  )
 
   if l < 1 then
     listobj.m_delegate:set_pos(1)

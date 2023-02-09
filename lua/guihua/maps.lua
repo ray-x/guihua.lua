@@ -12,6 +12,7 @@ _GH_SETUP = {
     confirm = '<C-o>',
     split = '<C-s>',
     vsplit = '<C-v>',
+    tab = 't',
   },
 }
 local M = {}

@@ -19,8 +19,8 @@ end
 opts={
   header=true/"headerinfo"
   rect={width, height, pos_x, pos_y}
-  background
-  prompt
+  bg = background
+  prompt = true|false
 }
 
 --]]

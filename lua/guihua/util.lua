@@ -82,11 +82,21 @@ end
 function M.selcolor(Hl)
   vim.validate({ Hl = { Hl, 'string' } })
   log(Hl)
-  local bg = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'bg#'), 2), 16)
-    or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'bg#'), 2), 16)
+  local bg = tonumber(
+    string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'bg#'), 2),
+    16
+  ) or tonumber(
+    string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'bg#'), 2),
+    16
+  )
 
-  local fg = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'fg#'), 2), 16)
-    or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'fg#'), 2), 16)
+  local fg = tonumber(
+    string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'fg#'), 2),
+    16
+  ) or tonumber(
+    string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'fg#'), 2),
+    16
+  )
 
   if
     vim.fn.hlexists('GuihuaListSelHl') == 1
@@ -95,9 +105,10 @@ function M.selcolor(Hl)
     -- already defined
     return
   end
-  local bgcolor = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GuihuaListDark')), 'bg#'), 2), 16)
-    or bg
-    or 0x303030
+  local bgcolor = tonumber(
+    string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GuihuaListDark')), 'bg#'), 2),
+    16
+  ) or bg or 0x303030
 
   vim.validate({ bgcolor = { bgcolor, 'number' } })
   --   local sel = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("PmenuSel")), "bg#") default
@@ -214,7 +225,15 @@ local function apply_syntax_to_region(ft, start, finish)
   if not pcall(vim.cmd, string.format('syntax include %s syntax/%s.vim', lang, ft)) then
     return
   end
-  vim.cmd(string.format('syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s', name, start, finish + 1, lang))
+  vim.cmd(
+    string.format(
+      'syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s',
+      name,
+      start,
+      finish + 1,
+      lang
+    )
+  )
 end
 
 -- Attach ts highlighter
@@ -315,6 +334,8 @@ M.open_file_at = function(filename, line, col, split)
     else
       vim.cmd(string.format('sp! %s', filename))
     end
+  elseif split == 't' then
+    vim.cmd(string.format('tabnew! %s', filename))
   end
   vim.cmd('doautocmd FileType')
   col = col or 1
