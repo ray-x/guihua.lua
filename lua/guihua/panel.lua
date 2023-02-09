@@ -40,7 +40,13 @@ local function entry_prefix(node, is_last_node)
 end
 
 local function func_type(node)
-  if node.type == 'function' or node.type == 'method' or node.kind == 12 or node.kind == 5 or node.kind == 6 then
+  if
+    node.type == 'function'
+    or node.type == 'method'
+    or node.kind == 12
+    or node.kind == 5
+    or node.kind == 6
+  then
     return true
   end
 end
@@ -59,8 +65,11 @@ local function format_node(node, section)
   end
   last_leave_node = last_leave_node and nil -- true/nil-> nil, false -> false
   local str = entry_prefix(node, is_last_node)
-  str = str .. panel_icons.bracket_left .. (syntax_icons[node.type] or node.type or '') .. panel_icons.bracket_right
-  str = str .. ' ' .. (node.node_text or node.text or '')
+  str = str
+    .. panel_icons.bracket_left
+    .. (syntax_icons[node.type] or node.type or '')
+    .. panel_icons.bracket_right
+  str = str .. ' ' .. (node.node_text or node.text or node.name or '')
   if node.node_text == nil and node.text == nil then
     log('node text is empty', node)
   end
@@ -174,9 +183,19 @@ function Panel:animate_create(animate, fast)
       api.nvim_buf_set_option(self.buf, 'modifiable', true)
       api.nvim_buf_set_lines(self.buf, offset, offset + #section.header, false, section.header)
       offset = offset + #section.header
-      api.nvim_buf_set_lines(self.buf, offset, offset + #section.text, false, section.text)
+      if section.text and #section.text > 0 then
+        for j, t in ipairs(section.text) do
+          if t == nil then
+            section.text[j] = ''
+          end
+          if section.text[j]:find('\n') then -- diagnostics can have newlines
+            section.text[j] = section.text[j]:gsub('\n', ' ')
+          end
+        end
+        log(section)
+        api.nvim_buf_set_lines(self.buf, offset, offset + #section.text, false, section.text)
+      end
       offset = offset + #section.text
-      -- Apparently this needs to be set after we insert text.
       api.nvim_buf_set_option(self.buf, 'modifiable', false)
       api.nvim_win_set_width(self.win, final_width)
       log('section rendered', i, section.header, #section.text)
@@ -220,25 +239,23 @@ function Panel:get_jump_info()
   end
   local scts = self.activePanel.sections
   for _, sct in pairs(scts) do
-    if vfn.empty(sct.nodes) == 1 then
-      log('no nodes', sct.header)
-      return
-    end
-    for _, node in pairs(sct.nodes) do
-      trace(node.text or node.node_text)
-      trace(node, sct.format(node), utils.trim(line))
-      log(node.text)
-      if utils.trim(sct.format(node)) == utils.trim(line) then
-        log('node found', node.node_text or node.text, 'line', line, node.uri)
-        return node
+    if vfn.empty(sct.nodes) == 0 then
+      for _, node in pairs(sct.nodes) do
+        trace(node.text or node.node_text)
+        trace(node, sct.format(node), utils.trim(line))
+        log(node.text)
+        if utils.trim(sct.format(node)):gsub('\n', ' ') == utils.trim(line) then
+          log('node found', node.node_text or node.text, 'line', line, node.uri)
+          return node
+        end
       end
-    end
-    -- parcial match
-    for _, node in pairs(sct.nodes) do
-      -- log(node, sct.format(node), utils.trim(line))
-      if utils.trim(line):find(utils.trim(sct.format(node))) then
-        log('node found', node.node_text, 'line', line)
-        return node
+      -- parcial match
+      for _, node in pairs(sct.nodes) do
+        -- log(node, sct.format(node), utils.trim(line))
+        if utils.trim(line):find(utils.trim(sct.format(node))) then
+          log('node found', node.node_text, 'line', line)
+          return node
+        end
       end
     end
   end
@@ -251,7 +268,13 @@ end
 local function add_keymappings(bufnr)
   bufnr = bufnr or 0
   -- jump to definition on <CR> or double-click
-  api.nvim_buf_set_keymap(bufnr, 'n', '<CR>', ':lua require "guihua.panel".jump_or_fold()<CR>', { silent = true })
+  api.nvim_buf_set_keymap(
+    bufnr,
+    'n',
+    '<CR>',
+    ':lua require "guihua.panel".jump_or_fold()<CR>',
+    { silent = true }
+  )
 
   api.nvim_buf_set_keymap(
     bufnr,
@@ -266,10 +289,16 @@ local function add_keymappings(bufnr)
     { buffer = bufnr, command = ":lua require ('guihua.panel').on_hover()" }
   )
 
-  api.nvim_create_autocmd(
-    { 'CursorMoved', 'CursorMovedI', 'TabLeave', 'FocusLost', 'BufRead', 'BufEnter', 'BufUnload', 'BufLeave' },
-    { buffer = bufnr, command = ":lua require ('guihua.panel').on_preview_close()" }
-  )
+  api.nvim_create_autocmd({
+    'CursorMoved',
+    'CursorMovedI',
+    'TabLeave',
+    'FocusLost',
+    'BufRead',
+    'BufEnter',
+    'BufUnload',
+    'BufLeave',
+  }, { buffer = bufnr, command = ":lua require ('guihua.panel').on_preview_close()" })
 end
 
 local function filepreview(node)
@@ -311,7 +340,10 @@ local function run_on_buf_write(buf)
   local tabpage = api.nvim_get_current_tabpage()
   local augroup = _make_augroup_name(tabpage)
   vim.cmd('augroup ' .. augroup)
-  api.nvim_create_autocmd({ 'BufWritePost' }, { buffer = buf, command = ":lua require ('guihua.panel').redraw(false)" })
+  api.nvim_create_autocmd(
+    { 'BufWritePost' },
+    { buffer = buf, command = ":lua require ('guihua.panel').redraw(false)" }
+  )
 
   vim.cmd('augroup END')
 end
@@ -390,7 +422,10 @@ local function run_on_buf_enter()
   local augroup = _make_augroup_name(tabpage)
   vim.cmd('augroup ' .. augroup)
 
-  api.nvim_create_autocmd({ 'BufEnter' }, { command = ":lua require ('guihua.panel').redraw(false)" })
+  api.nvim_create_autocmd(
+    { 'BufEnter' },
+    { command = ":lua require ('guihua.panel').redraw(false)" }
+  )
   vim.cmd('augroup END')
 end
 
@@ -528,7 +563,16 @@ function Panel.foldexpr()
   elseif line_indent <= before_indent then
     level = tostring(line_indent)
   else
-    log('unhandled case: ' .. line_num .. ' ' .. line_indent .. ' ' .. before_indent .. ' ' .. after_indent)
+    log(
+      'unhandled case: '
+        .. line_num
+        .. ' '
+        .. line_indent
+        .. ' '
+        .. before_indent
+        .. ' '
+        .. after_indent
+    )
     level = '0'
   end
 
@@ -691,7 +735,7 @@ function Panel:open(should_toggle, redraw, buf)
           return
         end
         local header = self.header_text
-        local msg = 'failed to generate pannel filetype: ' .. filetype
+        local msg = 'failed to generate panel filetype: ' .. filetype
         local guihua_buf = api.nvim_win_get_buf(wid)
         if header == nil or guihua_buf == nil then
           log('header or guihua_buf is nil')
@@ -705,7 +749,6 @@ function Panel:open(should_toggle, redraw, buf)
         api.nvim_buf_set_option(guihua_buf, 'modifiable', false)
         self.last_parsed_buf = -1
       end
-      return
     end
     self.sections[i].text = {}
     self.sections[i].nodes = nodes
