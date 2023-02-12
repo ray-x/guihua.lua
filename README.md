@@ -53,6 +53,7 @@ Plugin has implementation of fzy with both ffi and native lua. If you like to tr
     confirm = '<C-o>',
     split = '<C-s>',
     vsplit = '<C-v>',
+    tabnew = '<C-t>',
   }
 
   --

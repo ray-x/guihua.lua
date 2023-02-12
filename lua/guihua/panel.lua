@@ -461,7 +461,7 @@ local function make_panel_window(win_name)
   api.nvim_command('hi NonText guifg=bg')
   vim.wo.winfixwidth = true
   vim.wo.spell = false
-  -- updateh followings? nolist, nowrap, breakindent?, number? nosigncolumn
+  -- updateh following? nolist, nowrap, breakindent?, number? nosigncolumn
   return win, buf
 end
 
@@ -548,9 +548,9 @@ function Panel.foldexpr()
   local before_indent = get_indent_level(before)
   local line_indent = get_indent_level(line)
   local after_indent = get_indent_level(after)
-  -- section seperator etc
+  -- section separator etc
   local level
-  -- grep seperator?
+  -- grep separator?
   if line_indent < 0 then
     level = '-1'
   elseif line == '' or before == '' or line_indent < 1 then
