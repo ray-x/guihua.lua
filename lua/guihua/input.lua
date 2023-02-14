@@ -69,8 +69,6 @@ local function input(opts, on_confirm)
     end
   end
 
-
-
   local winnr = vim.api.nvim_open_win(bufnr, true, wopts)
   vim.api.nvim_win_set_option(winnr, 'winhl', 'Normal:NormalFloat,NormalNC:Normal')
   if input_ctx.on_change then
