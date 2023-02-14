@@ -607,11 +607,20 @@ end
 M.rainbow = function(start)
   return list_color({
     '#FF0000',
+    '#FF4000',
     '#FF8F00',
+    '#FFDF00',
     '#FFFF00',
+    '#BFFF00',
+    '#8FFF00',
+    '#4FFF00',
     '#00FF00',
+    '#00FF40',
+    '#00BFA0',
     '#00B0FF',
-    '#2E2B5F',
+    '#0040FF',
+    '#3020FF',
+    '#5020FF',
     '#8B00FF',
   }, start)
 end
