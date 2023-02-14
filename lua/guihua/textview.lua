@@ -137,6 +137,9 @@ function TextView:initialize(...)
     vim.api.nvim_buf_set_option(self.buf, 'readonly', false)
   end
 
+  local ns = vim.api.nvim_create_namespace(opts.ft)
+  vim.api.nvim_set_hl(ns, '@error', {}) -- clear error highlight
+  vim.api.nvim_win_set_hl_ns(self.win, ns)
   TextView.static.ActiveTextView = self
 
   log('ctor TextView: end') -- , View.ActiveView)--, self)
