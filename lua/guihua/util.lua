@@ -616,6 +616,27 @@ M.rainbow = function(start)
   }, start)
 end
 
+
+M.title_options = function(title)
+  if not title then
+    return
+  end
+  if vim.fn.has('nvim-0.9') == 0 then
+    return
+  end
+  local rainbow = M.rainbow()
+  local base = 'GHRainbow'
+  local title_with_color = {}
+  for i = 1, #title do
+    local name = base .. tostring(i)
+    local c = rainbow().rgb
+    vim.api.nvim_set_hl(0, name, { fg = c, bold = true, default = true })
+    title_with_color[i] = { title:sub(i, i), name }
+  end
+  return title_with_color
+end
+
+
 -- for i, v in ipairs(M.rainbow_colors) do
 --   print(1, v)
 -- end

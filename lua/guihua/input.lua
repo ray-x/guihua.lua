@@ -57,9 +57,20 @@ local function input(opts, on_confirm)
     style = 'minimal',
     border = 'single',
   }
-  if vim.fn.has('nvim-0.9') == 1 then
-    wopts.title = opts.title or input_ctx.title
+
+  local title_options = utils.title_options
+  if opts.title or input_ctx.title and vim.fn.has('nvim-0.9') then
+    local title = title_options(opts.title or input_ctx.title)
+    print(vim.inspect(title))
+    if title then
+      wopts.title = title
+      wopts.title = opts.title or input_ctx.title
+      wopts.title_pos = opts.title_pos or 'center'
+    end
   end
+
+
+
   local winnr = vim.api.nvim_open_win(bufnr, true, wopts)
   vim.api.nvim_win_set_option(winnr, 'winhl', 'Normal:NormalFloat,NormalNC:Normal')
   if input_ctx.on_change then
@@ -106,7 +117,7 @@ local function input(opts, on_confirm)
   return winnr
 end
 
--- input({ prompt = 'replace: ', placeholder = 'old' }, function(text)
+-- input({ prompt = 'replace: ', placeholder = 'old', title = 'title' }, function(text)
 --   print('replace old' .. 'with: ' .. text)
 -- end, function(text)
 --   print('on change: ' .. text)

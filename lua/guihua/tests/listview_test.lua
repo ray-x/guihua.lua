@@ -180,11 +180,12 @@ local function test_list()
 
   local win = ListView:new({
     loc = 'top_center',
-    border = 'none',
+    border = 'single',
     prompt = true,
     enter = true,
     rect = { height = 5, width = 90 },
     data = data,
+    title = 'title',
     on_confirm = on_confirm,
     on_move = on_move,
   })

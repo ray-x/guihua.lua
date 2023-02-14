@@ -13,25 +13,7 @@ if _GH_SETUP == nil then
   require('guihua').setup()
 end
 
-local function title_options(title)
-  if not title then
-    return
-  end
-  if vim.fn.has('nvim-0.9') == 0 then
-    return
-  end
-  local rainbow = utils.rainbow()
-  local base = 'GHRainbow'
-  local title_with_color = {}
-  for i = 1, #title do
-    local name = base .. tostring(i)
-    local c = rainbow().rgb
-    vim.api.nvim_set_hl(0, name, { fg = c, bold = true, default = true })
-    title_with_color[i] = { title:sub(i, i), name }
-  end
-  return title_with_color
-end
-
+local title_options = utils.title_options
 
 -- Create a simple floating terminal.
 -- options: win_width, win_height, x, y, loc, prompt, enter, ft
