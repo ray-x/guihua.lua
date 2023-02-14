@@ -166,6 +166,16 @@ function M.selcolor(Hl)
   return 'GuihuaListSelHl'
 end
 
+M.get_hl_color = function(group_name)
+  local ok, hl = pcall(vim.api.nvim_get_hl_by_name, group_name, true)
+  if not ok then
+    return nil, nil
+  end
+  local fg = hl.foreground and '#' .. bit.tohex(hl.foreground, 6)
+  local bg = hl.background and '#' .. bit.tohex(hl.background, 6)
+  return fg, bg
+end
+
 function M.close_view_event(_, key, winnr, bufnr, enter)
   if winnr == nil then
     winnr = api.nvim_get_current_win()
@@ -555,5 +565,59 @@ M.shorten = (function()
     return M.shorten_len(filename, 1)
   end
 end)()
+
+local hsl = require('guihua.hsl')
+M.rgb_to_hsl = function(rgb)
+  local h, s, l = hsl.rgb_string_to_hsl(rgb)
+  return hsl.new(h, s, l, rgb)
+end
+
+M.get_hsl_color = function(hl)
+  local c1, c2 = M.get_hl_color(hl)
+  local fg, bg
+  if c1 then
+    fg = M.rgb_to_hsl(c1)
+  end
+  if c2 then
+    bg = M.rgb_to_hsl(c2)
+  end
+  return fg, bg
+end
+
+local list_color = function(colors, start)
+  local tbl = {}
+  local idx = start or 1
+  for _, color in pairs(colors) do
+    if type(color) == 'string' then
+      table.insert(tbl, M.rgb_to_hsl(color))
+    else
+      table.insert(tbl, color)
+    end
+  end
+  return function(_)
+    local value = tbl[idx]
+    idx = idx + 1
+    if idx > #tbl then
+      idx = 1
+    end
+    return value
+  end
+end
+
+M.rainbow = function(start)
+  return list_color({
+    '#FF0000',
+    '#FF8F00',
+    '#FFFF00',
+    '#00FF00',
+    '#00B0FF',
+    '#2E2B5F',
+    '#8B00FF',
+  }, start)
+end
+
+-- for i, v in ipairs(M.rainbow_colors) do
+--   print(1, v)
+-- end
 
 return M

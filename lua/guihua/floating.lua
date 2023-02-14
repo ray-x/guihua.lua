@@ -1,7 +1,7 @@
 local api = vim.api
 local location = require('guihua.location')
 -- local validate = vim.validate
--- local utils = require('guihua.util')
+local utils = require('guihua.util')
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 local columns = api.nvim_get_option('columns')
@@ -12,6 +12,26 @@ _GH_SETUP = _GH_SETUP or nil
 if _GH_SETUP == nil then
   require('guihua').setup()
 end
+
+local function title_options(title)
+  if not title then
+    return
+  end
+  if vim.fn.has('nvim-0.9') == 0 then
+    return
+  end
+  local rainbow = utils.rainbow()
+  local base = 'GHRainbow'
+  local title_with_color = {}
+  for i = 1, #title do
+    local name = base .. tostring(i)
+    local c = rainbow().rgb
+    vim.api.nvim_set_hl(0, name, { fg = c, bold = true, default = true })
+    title_with_color[i] = { title:sub(i, i), name }
+  end
+  return title_with_color
+end
+
 
 -- Create a simple floating terminal.
 -- options: win_width, win_height, x, y, loc, prompt, enter, ft
@@ -66,6 +86,15 @@ local function floating_buf(opts)
     vim.api.nvim_buf_set_option(buf, 'filetype', 'guihua') -- default ft for all buffers. do not use specific ft e.g
     -- javascript as it may cause lsp loading
   end
+
+  if opts.title and vim.fn.has('nvim-0.9') then
+    local title = title_options(opts.title)
+    if title then
+      win_opts.title = title
+      win_opts.title_pos = opts.title_pos or 'center'
+    end
+  end
+
   local win = api.nvim_open_win(buf, enter, win_opts)
   log('creating win', win, 'buf', buf)
   vim.api.nvim_win_set_option(win, 'winhl', 'Normal:NormalFloat,NormalNC:Normal')
@@ -85,6 +114,25 @@ local function floating_buf(opts)
         win = nil
       end
     end
+end
+
+local function title_options(title)
+  if not title then
+    return
+  end
+  if vim.fn.has('nvim-0.9') == 0 then
+    return
+  end
+  local rainbow = utils.rainbow_colors
+  local base = 'GHRainbow'
+  local title_with_color = {}
+  for i = 1, #title do
+    local name = base .. tostring(i)
+    local c = rainbow().rgb
+    vim.api.nvim_set_hl(0, name, { fg = c, bold = true, default = true })
+    title_with_color[i] = { title:sub(i, i), name }
+  end
+  return title_with_color
 end
 
 -- Create a mask.
@@ -154,6 +202,15 @@ local function floatterm(opts)
   end
 
   log(win_opts)
+
+  if opts.title and vim.fn.has('nvim-0.9') then
+    local title = title_options(opts.title)
+    if title then
+      win_opts.title = title
+      win_opts.title_pos = 'center'
+    end
+  end
+
   local win = api.nvim_open_win(buf, true, win_opts)
   return win, buf, win_opts
 end
@@ -338,7 +395,7 @@ local function test(prompt)
 end
 
 local function test2(prompt)
-  local b, w, c = floating_buf({ win_width = 30, win_height = 8, x = 25, y = 25, prompt = prompt })
+  local b, w, c = floating_buf({ win_width = 30, win_height = 8, x = 25, y = 25, prompt = prompt, title = 'title' })
   local data = { 'floating buf', 'linea', 'lineb', 'linec', 'lined', 'linee' }
   for i = 1, 10, 1 do
     vim.api.nvim_buf_set_lines(b, i, -1, false, { data[i] })
