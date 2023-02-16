@@ -61,7 +61,6 @@ local function input(opts, on_confirm)
   local title_options = utils.title_options
   if opts.title or input_ctx.title and vim.fn.has('nvim-0.9') then
     local title = title_options(opts.title or input_ctx.title)
-    print(vim.inspect(title))
     if title then
       wopts.title = title
       wopts.title = opts.title or input_ctx.title
