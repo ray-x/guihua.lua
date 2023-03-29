@@ -144,12 +144,15 @@ function M.selcolor(Hl)
     local lbg = string.format('#%06x', sel)
     log(diff, sel, bgcolor, Hl)
 
-    local hi = [[hi default GuihuaListSelHl cterm=Bold gui=Bold guibg=]] .. lbg
-    if vim.o.background == 'light' and sel_gstr then
-      hi = hi .. ' guifg=' .. sel_gstr
+    if vim.o.background == 'light' and sel_gstr and vim.fn.empty(sel_gstr) ~= 1 then
+      vim.api.nvim_set_hl(
+        0,
+        'GuihuaListSelHl',
+        { bg = lbg, fg = sel_gstr, bold = true, default = true }
+      )
+    else
+      vim.api.nvim_set_hl(0, 'GuihuaListSelHl', { bg = lbg, bold = true, default = true })
     end
-
-    vim.cmd(hi)
   else
     log(diff, t, sel, bgcolor, Hl)
     if t > 360 then -- not sure how this plugin works for light schema
@@ -633,7 +636,6 @@ M.rainbow = function(start)
   }, start)
 end
 
-
 M.title_options = function(title)
   if not title then
     return
@@ -652,7 +654,6 @@ M.title_options = function(title)
   end
   return title_with_color
 end
-
 
 -- for i, v in ipairs(M.rainbow_colors) do
 --   print(1, v)
