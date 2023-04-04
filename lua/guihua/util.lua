@@ -7,6 +7,7 @@ local os_name = vim.loop.os_uname().sysname
 local is_windows = os_name == 'Windows' or os_name == 'Windows_NT'
 -- Check whether current buffer contains main function
 
+local HAS_NVIM_0_9 = vim.fn.has('nvim-0.9') == 1
 function M.sep()
   if is_windows then
     return '\\'
@@ -170,13 +171,20 @@ function M.selcolor(Hl)
 end
 
 M.get_hl_color = function(group_name)
-  local ok, hl = pcall(vim.api.nvim_get_hl_by_name, group_name, true)
-  if not ok then
-    return nil, nil
+  if HAS_NVIM_0_9 and vim.api.nvim_get_hl then
+    local hl = vim.api.nvim_get_hl(0, { name = group_name })
+    local fg = hl.fg and '#' .. bit.tohex(hl.fg, 6)
+    local bg = hl.bg and '#' .. bit.tohex(hl.bg, 6)
+    return fg, bg
+  else -- TODO: deprecated in 0.9
+    local ok, hl = pcall(vim.api.nvim_get_hl_by_name, group_name, true)
+    if not ok then
+      return nil, nil
+    end
+    local fg = hl.foreground and '#' .. bit.tohex(hl.foreground, 6)
+    local bg = hl.background and '#' .. bit.tohex(hl.background, 6)
+    return fg, bg
   end
-  local fg = hl.foreground and '#' .. bit.tohex(hl.foreground, 6)
-  local bg = hl.background and '#' .. bit.tohex(hl.background, 6)
-  return fg, bg
 end
 
 function M.close_view_event(_, key, winnr, bufnr, enter)
