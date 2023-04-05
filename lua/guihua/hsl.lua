@@ -60,17 +60,17 @@ local function hsl_to_rgb(h, s, L)
    end
    m1 = L*2-m2
 
-   local function _h2rgb(m1, m2, h)
-      if h<0 then h = h+1 end
-      if h>1 then h = h-1 end
-      if h*6<1 then
-         return m1+(m2-m1)*h*6
-      elseif h*2<1 then
-         return m2
-      elseif h*3<2 then
-         return m1+(m2-m1)*(2/3-h)*6
+   local function _h2rgb(_m1, _m2, _h)
+      if _h<0 then _h = _h+1 end
+      if _h>1 then _h = _h-1 end
+      if _h*6<1 then
+         return _m1+(_m2-_m1)*_h*6
+      elseif _h*2<1 then
+         return _m2
+      elseif _h*3<2 then
+         return _m1+(_m2-_m1)*(2/3-_h)*6
       else
-         return m1
+         return _m1
       end
    end
 
@@ -172,7 +172,7 @@ end
 -- @return               two new instances of Color
 -----------------------------------------------------------------------------
 function Color:neighbors(angle)
-   local angle = angle or 30
+   angle = angle or 30
    return self:hue_offset(angle), self:hue_offset(360-angle)
 end
 

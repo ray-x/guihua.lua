@@ -31,7 +31,7 @@ function float()
   local mid = '│' .. string.rep(' ', width + 2) .. '│'
   local bot = '╰' .. string.rep('─', width + 2) .. '╯'
 
-  local lines = { top }
+  lines = { top }
   for _ = 1, height, 1 do
     table.insert(lines, mid)
   end
