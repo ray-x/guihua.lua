@@ -95,7 +95,7 @@ log.new = function(config, standalone)
       elseif type(x) == 'table' then
         x = vim.inspect(x)
       else
-        x = tostring(x)
+        x = tostring(x or 'nil')
       end
 
       t[#t + 1] = x
@@ -116,7 +116,8 @@ log.new = function(config, standalone)
 
     -- Output to console
     if config.use_console then
-      local console_string = string.format('[%-4s][%s] %s: %s', nameupper, os.date('%H:%M:%S'), lineinfo, msg)
+      local console_string =
+        string.format('[%-4s][%s] %s: %s', nameupper, os.date('%H:%M:%S'), lineinfo, msg)
 
       if config.highlights and level_config.hl then
         vim.cmd(string.format('echohl %s', level_config.hl))

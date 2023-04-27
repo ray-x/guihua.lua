@@ -69,9 +69,12 @@ function ListView:initialize(...)
   if opts.hl_group then
     self.hl_group = opts.hl_group
   end
+  self.ns = self.ns or vim.api.nvim_create_namespace('guihua_listview')
+
   ListView.static.Winnr = self.win
   ListView.static.Bufnr = self.buf
   ListView.static.Closer = self.closer
+  ListView.static.ns = self.ns
 
   if opts.transparency then
     ListView.static.MaskWinnr = self.mask_win
@@ -82,7 +85,8 @@ function ListView:initialize(...)
   local m = _GH_SETUP.maps
   vim.api.nvim_buf_set_keymap(self.buf, 'n', m.close_view, '<cmd> lua ListView.close() <CR>', {})
   vim.api.nvim_buf_set_keymap(self.buf, 'i', m.close_view, '<cmd> lua ListView.close() <CR>', {})
-  -- vim.fn.setpos('.', {self.win, i, 1, 0})
+  vim.api.nvim_set_hl(self.ns, '@error', { undercurl = false, underdouble = false, underline = false})
+  vim.api.nvim_win_set_hl_ns(self.win, self.ns)
   return self
 end
 
