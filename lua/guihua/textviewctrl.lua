@@ -101,7 +101,7 @@ function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
   local lines = #contents
   local syntax = opts.syntax
   if syntax == nil or #syntax < 1 then
-    syntax = api.nvim_buf_get_option(bufnr, 'ft')
+    syntax = api.nvim_buf_get_option_value(bufnr, 'ft')
   end
 
   -- TODO: for saving, need update file_info based on data loaded, e.g. if we only load 1 line, but display_height is 10

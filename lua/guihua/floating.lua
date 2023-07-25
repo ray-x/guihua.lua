@@ -4,10 +4,10 @@ local location = require('guihua.location')
 local utils = require('guihua.util')
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
-local columns = api.nvim_get_option('columns')
-local lines = api.nvim_get_option('lines')
-local shell = api.nvim_get_option('shell')
-local shellcmdflag = api.nvim_get_option('shellcmdflag')
+local columns = api.nvim_get_option_value('columns', {})
+local lines = api.nvim_get_option_value('lines', {})
+local shell = api.nvim_get_option_value('shell', {})
+local shellcmdflag = api.nvim_get_option_value('shellcmdflag', {})
 _GH_SETUP = _GH_SETUP or nil
 if _GH_SETUP == nil then
   require('guihua').setup()
@@ -57,29 +57,29 @@ local function floating_buf(opts)
   end
   trace('floating opts: ', win_opts, opts)
   local buf = api.nvim_create_buf(false, true)
-  api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
-  api.nvim_buf_set_option(buf, 'buflisted', false)
-  -- api.nvim_buf_set_option(buf, 'buftype', 'guihua_input')
+  api.nvim_set_option_value('bufhidden', 'wipe', {buf=buf})
+  api.nvim_set_option_value('buflisted', false, {buf=buf})
+  -- api.nvim_set_option_value('buftype', 'guihua_input', {buf=buf})
   if prompt then
-    vim.fn.prompt_setprompt(buf, ' ')
-    api.nvim_buf_set_option(buf, 'buftype', 'prompt') -- vim.fn.setbufvar(bufnr, "buflisted", 0)
+    vim.fn.prompt_setprompt(buf, '󱩾')
+    api.nvim_set_option_value("buftype", 'prompt', {buf=buf}) -- vim.fn.setbufvar(bufnr})
   else
-    api.nvim_buf_set_option(buf, 'readonly', true)
-    vim.api.nvim_buf_set_option(buf, 'filetype', 'guihua') -- default ft for all buffers. do not use specific ft e.g
+    api.nvim_set_option_value('readonly', true, {buf=buf})
+    vim.api.nvim_set_option_value('filetype', 'guihua', {buf=buf}) -- default ft for all buffers. do not use specific ft e.g
     -- javascript as it may cause lsp loading
   end
 
   if opts.title and vim.fn.has('nvim-0.9') then
     local title = title_options(opts.title)
     if title then
-      win_opts.title = title
+      win_opts.title= title
       win_opts.title_pos = opts.title_pos or 'center'
     end
   end
 
   local win = api.nvim_open_win(buf, enter, win_opts)
   log('creating win', win, 'buf', buf)
-  vim.api.nvim_win_set_option(win, 'winhl', 'Normal:NormalFloat,NormalNC:Normal')
+  vim.api.nvim_set_option_value('winhl', 'Normal:NormalFloat,NormalNC:Normal', {win=win})
 
   -- note: if failed to focus on the view, you can add to the caller
 
@@ -101,8 +101,8 @@ end
 -- Create a mask.
 local function floating_buf_mask(transparency) -- win_width, win_height, x, y, loc, prompt, enter, ft)
   vim.validate({ transparency = { transparency, 'number' } })
-  columns = api.nvim_get_option('columns')
-  lines = api.nvim_get_option('lines')
+  columns = api.nvim_get_option_value('columns', {})
+  lines = api.nvim_get_option_value('lines', {})
   -- local loc = location.center
   -- local row, col = loc(lines, columns)
   local win_opts = {
@@ -115,12 +115,12 @@ local function floating_buf_mask(transparency) -- win_width, win_height, x, y, l
   }
 
   local buf = api.nvim_create_buf(false, true)
-  api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
-  api.nvim_buf_set_option(buf, 'readonly', true)
-  api.nvim_buf_set_option(buf, 'buflisted', false)
-  vim.api.nvim_buf_set_option(buf, 'filetype', 'guihua') -- default ft for all buffers. do not use specific ft e.g
+  api.nvim_set_option_value('bufhidden', 'wipe', {buf=buf})
+  api.nvim_set_option_value('readonly', true, {buf=buf})
+  api.nvim_set_option_value('buflisted', false, {buf=buf})
+  vim.api.nvim_set_option_value('filetype', 'guihua', {buf=buf}) -- default ft for all buffers. do not use specific ft e.g
   local win = api.nvim_open_win(buf, false, win_opts)
-  api.nvim_win_set_option(win, 'winblend', transparency)
+  api.nvim_set_option_value('winblend', transparency, {win=win})
   log('creating win', win, 'buf', buf)
 
   return buf,
@@ -141,8 +141,8 @@ end
 local function floatterm(opts)
   local buf = api.nvim_create_buf(false, true)
   api.nvim_buf_set_keymap(buf, 't', '<ESC>', '<C-\\><C-c>', {})
-  api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
-  api.nvim_buf_set_option(buf, 'buflisted', false)
+  api.nvim_set_option_value('bufhidden', 'wipe', {buf=buf})
+  api.nvim_set_option_value('buflisted', false, {buf=buf})
 
   log(opts)
   local width = opts.win_width or math.floor(columns * 0.9)
@@ -184,18 +184,18 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
   opts.enter = opts.enter or true
 
   if opts.cmd == '' or opts.cmd == nil then
-    opts.cmd = vim.api.nvim_get_option('shell')
+    opts.cmd = vim.api.nvim_get_option_value('shell', {})
   end
 
   -- get dimensions
   -- calculate our floating window size
-  columns = api.nvim_get_option('columns')
-  lines = api.nvim_get_option('lines')
+  columns = api.nvim_get_option_value('columns', {})
+  lines = api.nvim_get_option_value('lines', {})
   opts.win_height = opts.win_height or math.ceil(lines * 0.88)
   opts.win_width = opts.win_width or math.ceil(columns * 0.88)
   local win, buf, _ = floatterm(opts)
 
-  api.nvim_win_set_option(win, 'winhl', 'Normal:NormalFloat')
+  api.nvim_set_option_value('winhl', 'Normal:NormalFloat', {win=win})
 
   local closer = function(code, data, ev)
     log('floatwin closing ', win, code, data, ev)
@@ -205,7 +205,7 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
       opts.closer = nil
     end
   end
-  vim.api.nvim_buf_set_option(buf, 'filetype', 'guihua') -- default ft for all buffers. do not use specific ft e.g
+  vim.api.nvim_set_option_value('filetype', 'guihua', {buf=buf}) -- default ft for all buffers. do not use specific ft e.g
 
   local args
   if type(opts.cmd) == 'string' then
@@ -289,8 +289,8 @@ end
 
 -- wrapper for tui/gui
 local term = function(opts)
-  columns = api.nvim_get_option('columns')
-  lines = api.nvim_get_option('lines')
+  columns = api.nvim_get_option_value('columns', {})
+  lines = api.nvim_get_option_value('lines', {})
 
   local win_width, win_height
   if type(opts.vsplit) == 'boolean' and opts.vsplit == true then

@@ -43,7 +43,7 @@ function float()
   -- local buf = api.nvim_create_buf(false, true)
   -- local float_term_win = api.nvim_open_win(buf, true, opts)
 
-  api.nvim_win_set_option(vim.g.float_term_border_win, 'winhl', 'Normal:NormalFloat')
-  -- api.nvim_win_set_option(float_term_win, 'winhl', 'Normal:NormalFloat')
+  api.nvim_set_option_value('winhl', 'Normal:NormalFloat', {win=vim.g.float_term_border_win})
+  -- api.nvim_set_option_value('winhl', 'Normal:NormalFloat', {win=float_term_win})
 end
 float()

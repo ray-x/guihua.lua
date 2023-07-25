@@ -55,9 +55,9 @@ function ListView:initialize(...)
 
   trace('listview ft:', opts)
 
-  vim.api.nvim_buf_set_option(self.buf, 'ft', ft)
+  vim.api.nvim_set_option_value('ft', ft, {buf = self.buf})
   if not opts.wrap then
-    vim.api.nvim_win_set_option(self.win, 'wrap', false)
+    vim.api.nvim_set_option_value('wrap', false, {win = self.win})
   end
 
   if not opts.prompt or opts.enter then

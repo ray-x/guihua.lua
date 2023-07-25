@@ -93,17 +93,17 @@ function View:initialize(...)
   end
 
   if opts.transparency then
-    api.nvim_win_set_option(self.win, 'winblend', math.min(opts.transparency, 15))
+    api.nvim_set_option_value('winblend', math.min(opts.transparency, 15), {win=self.win})
   end
   if
     vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'bg#') == ''
     or vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'bg#') == ''
   then
     -- prevent you get black ground
-    api.nvim_win_set_option(self.win, 'winblend', 0)
+    api.nvim_set_option_value('winblend', 0, {win=self.win})
   end
 
-  api.nvim_win_set_option(self.win, 'virtualedit', 'block')
+  api.nvim_set_option_value('virtualedit', 'block', {win=self.win})
   log('floatbuf created ', self.buf, self.win)
   self:set_hl(opts)
   if opts.data ~= nil and #opts.data >= 1 then
@@ -133,7 +133,7 @@ function View:set_hl(opts)
   if opts.border_hl ~= nil then
     cmd = cmd .. ',FloatBorder:' .. opts.border_hl
   end
-  api.nvim_win_set_option(self.win, 'winhl', cmd)
+  api.nvim_set_option_value('winhl', cmd, {win=self.win})
 end
 
 function View:bind_ctrl(opts)
@@ -261,7 +261,7 @@ function View:on_draw(data)
     data = self.display_data
   end
 
-  api.nvim_buf_set_option(self.buf, 'readonly', false)
+  api.nvim_set_option_value('readonly', false, {buf=self.buf})
   local content = {}
   if type(data) == 'string' then
     content = { data }
@@ -280,7 +280,7 @@ function View:on_draw(data)
   end
   draw_lines(self.buf, start, end_at, content)
   if self.prompt ~= true then
-    api.nvim_buf_set_option(self.buf, 'readonly', true)
+    api.nvim_set_option_value('readonly', true, {buf=self.buf})
   end
   -- vim.fn.setpos(".", {0, 1, 1, 0})
 end

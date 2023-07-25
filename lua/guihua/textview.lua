@@ -135,10 +135,10 @@ function TextView:initialize(...)
   end
 
   if opts.ft then
-    vim.api.nvim_buf_set_option(self.buf, 'filetype', opts.ft)
+    vim.api.nvim_set_option_value('filetype', opts.ft, {buf=self.buf})
   end
   if opts.allow_edit then
-    vim.api.nvim_buf_set_option(self.buf, 'readonly', false)
+    vim.api.nvim_set_option_value('readonly', false, {buf=self.buf})
   end
 
   local ns = vim.api.nvim_create_namespace(opts.ft or 'textview')
@@ -199,11 +199,11 @@ function TextView:on_draw(opts)
   end
   trace('bufnr', bufnr)
 
-  vim.api.nvim_buf_set_option(bufnr, 'readonly', false)
+  vim.api.nvim_set_option_value('readonly', false, {buf=bufnr})
   -- vim.api.nvim_buf_set_lines(self.buf, start, end_at, true, content)
   vim.api.nvim_buf_set_lines(bufnr, start, end_at, true, content)
-  -- vim.api.nvim_buf_set_option(bufnr, "readonly", true)
-  vim.api.nvim_buf_set_option(bufnr, 'bufhidden', 'wipe')
+  -- vim.api.nvim_set_option_value("readonly", true, {buf=bufnr})
+  vim.api.nvim_set_option_value('bufhidden', 'wipe', {buf=bufnr})
   if TextView.hl_line ~= nil then
     TextView.static.hl_id =
       vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', TextView.hl_line - 1, 0, -1)

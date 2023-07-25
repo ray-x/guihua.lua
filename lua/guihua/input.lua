@@ -35,7 +35,7 @@ local function input(opts, on_confirm)
   local bufnr = vim.api.nvim_create_buf(false, true)
 
   input_ctx.opts = opts
-  local prompt = opts.prompt or '﵀ '
+  local prompt = opts.prompt or '󱩾'
   local placeholder = opts.default or ''
   local setup_confirm = input_ctx.on_confirm
   input_ctx.on_confirm = function(new_name)
@@ -43,8 +43,8 @@ local function input(opts, on_confirm)
     on_confirm(new_name)
   end
   input_ctx.on_change = opts.on_change or input_ctx.on_change
-  vim.api.nvim_buf_set_option(bufnr, 'buftype', 'prompt')
-  vim.api.nvim_buf_set_option(bufnr, 'bufhidden', 'wipe')
+  vim.api.nvim_set_option_value('buftype', 'prompt', {buf=bufnr})
+  vim.api.nvim_set_option_value('bufhidden', 'wipe', {buf=bufnr})
   vim.api.nvim_buf_add_highlight(bufnr, -1, 'NGPreviewTitle', 0, 0, #prompt)
   vim.fn.prompt_setprompt(bufnr, prompt)
   local width = #placeholder + #prompt + (opts.width or 20)
@@ -69,7 +69,7 @@ local function input(opts, on_confirm)
   end
 
   local winnr = vim.api.nvim_open_win(bufnr, true, wopts)
-  vim.api.nvim_win_set_option(winnr, 'winhl', 'Normal:NormalFloat,NormalNC:Normal')
+  vim.api.nvim_set_option_value('winhl', 'Normal:NormalFloat,NormalNC:Normal', {win=winnr})
   if input_ctx.on_change then
     vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, {
       buffer = bufnr,
@@ -83,11 +83,11 @@ local function input(opts, on_confirm)
       end,
     })
     -- vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, { buffer = bufnr, callback = function() end })
-    vim.api.nvim_buf_set_option(bufnr, 'modifiable', true)
-    vim.api.nvim_buf_set_option(bufnr, 'buftype', 'prompt')
+    vim.api.nvim_set_option_value('modifiable', true, {buf=bufnr})
+    vim.api.nvim_set_option_value('buftype', 'prompt', {buf=bufnr})
   end
 
-  vim.api.nvim_buf_set_option(bufnr, 'filetype', 'guihua')
+  vim.api.nvim_set_option_value('filetype', 'guihua', {buf=bufnr})
   utils.map('n', '<ESC>', '<cmd>bd!<CR>', { silent = true, buffer = true })
   utils.map({ 'n', 'i' }, '<CR>', function()
     log('confirm_callback')

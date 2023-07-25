@@ -25,7 +25,7 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
   --
 
   local display_range = opts.location.range
-  local syntax = api.nvim_buf_get_option(bufnr, 'ft')
+  local syntax = api.nvim_get_option_value('ft', {buf = bufnr})
   if syntax == nil or #syntax < 1 then
     syntax = 'c'
   end
@@ -124,8 +124,8 @@ function M.new_list_view(opts)
   opts.width_ratio = opts.width_ratio or 0.9
   opts.preview_height_ratio = opts.preview_height_ratio or 0.4
 
-  local wwidth = api.nvim_get_option('columns')
-  local wheight = api.nvim_get_option('lines')
+  local wwidth = api.nvim_get_option_value('columns', {})
+  local wheight = api.nvim_get_option_value('lines', {})
 
   local loc = 'top_center'
 
@@ -243,7 +243,7 @@ M.select = function(items, opts, on_choice)
   local data = { { text = '  select ' .. opts.prompt .. ' <C-o> Apply <C-e> Exit' } }
 
   local width = #data[1].text + 4
-  local max_width = math.floor(api.nvim_get_option('columns') * (opts.width or 0.9))
+  local max_width = math.floor(api.nvim_get_option_value('columns', {}) * (opts.width or 0.9))
   opts.format_item = opts.format_item or function(item)
     return item
   end

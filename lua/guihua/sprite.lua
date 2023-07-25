@@ -200,9 +200,9 @@ function Sprite:on_draw(data)
   end
   trace('bufnr', bufnr)
 
-  vim.api.nvim_buf_set_option(bufnr, 'readonly', false)
+  vim.api.nvim_set_option_value('readonly', false, {buf=bufnr})
   vim.api.nvim_buf_set_lines(bufnr, start, end_at, true, content)
-  vim.api.nvim_buf_set_option(bufnr, 'bufhidden', 'wipe')
+  vim.api.nvim_set_option_value('bufhidden', 'wipe', {buf=bufnr})
   if Sprite.hl_line ~= nil then
     Sprite.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', Sprite.hl_line - 1, 0, -1)
   end
