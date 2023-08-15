@@ -173,10 +173,10 @@ function Panel:animate_create(animate, fast)
   local set_text_fn = function()
     -- Display matches
     local offset = 0
-    if vim.api.nvim_buf_get_option_value(self.buf, 'filetype') ~= 'guihua' then
+    if api.nvim_get_option_value('filetype', {buf=self.buf}) ~= 'guihua' then
       return
     end
-    if vim.api.nvim_buf_get_option_value(self.buf, 'modifiable') ~= false then
+    if api.nvim_get_option_value('modifiable', {buf=self.buf}) ~= false then
       return
     end
     for i, section in pairs(self.sections) do
