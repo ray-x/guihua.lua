@@ -48,7 +48,7 @@ function TextViewCtrl:initialize(delegate, ...)
   -- ... is the view
   -- todo location, readonly? and filetype
   vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.save, '<cmd>lua TextViewCtrl:on_save()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.jump_to_list, '<cmd>lua gh_jump_to_list()<CR>', {})
+  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.jump_to_list, '<cmd>lua ListViewCtrl:gh_jump_to_list()<CR>', {})
 
   log('bind close', self.m_delegate.win, delegate.buf)
   if opts.edit then

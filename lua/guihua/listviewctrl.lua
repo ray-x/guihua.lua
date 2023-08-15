@@ -28,7 +28,7 @@ end
 --   end
 -- end
 
-function _G.gh_jump_to_list()
+function ListViewCtrl:gh_jump_to_list()
   if ListView == nil then
     return
   end
@@ -40,7 +40,7 @@ function _G.gh_jump_to_list()
   end
 end
 
-function _G.gh_jump_to_preview()
+function ListViewCtrl:gh_jump_to_preview()
   if TextView == nil or TextView.ActiveTextView == nil then
     return
   end
@@ -107,7 +107,7 @@ function ListViewCtrl:initialize(delegate, ...)
     { mode = 'i', key = m.next, cmd = function() ListViewCtrl:on_next() end, desc = 'ListViewCtrl:on_next()' },
     { mode = 'n', key = '<Enter>', cmd = function() ListViewCtrl:on_confirm() end, desc = 'ListViewCtrl:on_confirm()' },
     { mode = 'i', key = '<Enter>', cmd = function() ListViewCtrl:on_confirm() end, desc = 'ListViewCtrl:on_confirm()' },
-    { mode = 'n', key = '<C-w>j', cmd = _G.gh_jump_to_preview, desc = 'jump to preview' },
+    { mode = 'n', key = '<C-w>j', cmd = function () ListViewCtrl:gh_jump_to_preview() end, desc = 'jump to preview' },
     { mode = 'n', key = 'k', cmd = function() ListViewCtrl:on_prev() end, desc = 'ListViewCtrl:on_prev()' },
     { mode = 'n', key = 'j', cmd = function() ListViewCtrl:on_next() end, desc = 'ListViewCtrl:on_next()' },
     { mode = 'n', key = '<Tab>', cmd = function() ListViewCtrl:on_toggle() end, desc = 'ListViewCtrl:on_toggle()' },
