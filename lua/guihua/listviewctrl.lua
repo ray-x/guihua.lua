@@ -72,6 +72,7 @@ function ListViewCtrl:initialize(delegate, ...)
   self.data = opts.data or {}
   self.preview = opts.preview or false
   self.prompt = opts.prompt
+  self.enter = opts.enter
   self.on_input_filter = opts.on_input_filter
   self.display_height = self.m_delegate.display_height or 10
   self.display_start_at = 1

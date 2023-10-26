@@ -181,7 +181,9 @@ end
 -- Create a simple floating terminal.
 local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y)
   local current_window = vim.api.nvim_get_current_win()
-  opts.enter = opts.enter or true
+  if opts.enter == nil then
+    opts.enter = true
+  end
 
   if opts.cmd == '' or opts.cmd == nil then
     opts.cmd = vim.api.nvim_get_option_value('shell', {})
