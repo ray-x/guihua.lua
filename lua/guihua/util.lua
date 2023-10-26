@@ -595,28 +595,7 @@ M.get_hsl_color = function(hl)
   return fg, bg
 end
 
-local list_color = function(colors, start)
-  local tbl = {}
-  local idx = start or 1
-  for _, color in pairs(colors) do
-    if type(color) == 'string' then
-      table.insert(tbl, M.rgb_to_hsl(color))
-    else
-      table.insert(tbl, color)
-    end
-  end
-  return function(_)
-    local value = tbl[idx]
-    idx = idx + 1
-    if idx > #tbl then
-      idx = 1
-    end
-    return value
-  end
-end
-
-M.rainbow = function(start)
-  return list_color({
+local title_colors = {
     '#FF0000',
     '#FF4000',
     '#FF8F00',
@@ -632,26 +611,51 @@ M.rainbow = function(start)
     '#00FF60',
     '#00BFA0',
     '#00A0FF',
-    '#2050FF',
-    '#4020FF',
-    '#6020FF',
+    '#4080FF',
+    '#6A40FF',
+    '#7A40FF',
     '#8B00FF',
     '#AB00FF',
     '#FB00FF',
     '#FB00AF',
     '#FB008F',
     '#FB004F',
-  }, start)
+  }
+
+local list_color = function(colors, start, _end)
+  local tbl = {}
+  start = start or 1
+  _end = _end or #colors
+  local idx = start
+  for _, color in pairs(colors) do
+    if type(color) == 'string' then
+      table.insert(tbl, M.rgb_to_hsl(color))
+    else
+      table.insert(tbl, color)
+    end
+  end
+  return function()
+    local value = tbl[idx]
+    idx = idx + 1
+    if idx > _end then
+      idx = start
+    end
+    return value
+  end
 end
 
-M.title_options = function(title)
+M.rainbow = function(colors, start, _end)
+  return list_color(colors or title_colors, start, _end)
+end
+
+M.title_options = function(title, colors, color_start, color_end)
   if not title then
     return
   end
   if vim.fn.has('nvim-0.9') == 0 then
     return
   end
-  local rainbow = M.rainbow()
+  local rainbow = M.rainbow(colors, color_start, color_end)
   local base = 'GHRainbow'
   local title_with_color = {}
   for i = 1, #title do

@@ -70,7 +70,7 @@ local function floating_buf(opts)
   end
 
   if opts.title and vim.fn.has('nvim-0.9') then
-    local title = title_options(opts.title)
+    local title = title_options(opts.title, opts.title_colors, opts.color_start, opts.color_end)
     if title then
       win_opts.title= title
       win_opts.title_pos = opts.title_pos or 'center'
@@ -167,7 +167,7 @@ local function floatterm(opts)
   log(win_opts)
 
   if opts.title and vim.fn.has('nvim-0.9') then
-    local title = title_options(opts.title)
+    local title = title_options(opts.title, opts.title_colors, opts.color_start, opts.color_end)
     if title then
       win_opts.title = title
       win_opts.title_pos = 'center'
