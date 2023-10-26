@@ -596,6 +596,64 @@ M.get_hsl_color = function(hl)
 end
 
 local title_colors = {
+  nord = {
+    '#ECEFF4',
+    '#ACEFD4',
+    '#9CCFD4',
+    '#81A1C1',
+    '#88B0D0',
+    '#93BE8C',
+    '#A3BE8C',
+    '#B48EAD',
+    '#B08770',
+    '#EBCB8B',
+  },
+  monokai = {
+    '#E6DB74',
+    '#B6DB54',
+    '#A6E22E',
+    '#A6E22E',
+    '#66D9EF',
+    '#AE81FF',
+    '#C8B8F2',
+    '#F8F8F2',
+    '#F8B892',
+    '#F87842',
+    '#F95642',
+    '#FD971F',
+  },
+  solarized = {
+    '#6C71C4',
+    '#7C81C9',
+    '#8C91B4',
+    '#98A8F2',
+    '#68A8E2',
+    '#468BD2',
+    '#268BD2',
+    '#268BD2',
+    '#268BD2',
+    '#2AA198',
+    '#859900',
+    '#A5B900',
+    '#B58900',
+    '#CB4B16',
+    '#DC322F',
+    '#D33682',
+  },
+  dracula = {
+    '#BD93F9',
+    '#6272A4',
+    '#84A7BA',
+    '#F8F8F2',
+    '#50FA7B',
+    '#60EAAB',
+    '#67EABB',
+    '#8BE9FD',
+    '#8BE9FD',
+    '#FF5555',
+    '#FF79C6',
+  },
+  rainbow = {
     '#FF0000',
     '#FF4000',
     '#FF8F00',
@@ -620,7 +678,8 @@ local title_colors = {
     '#FB00AF',
     '#FB008F',
     '#FB004F',
-  }
+  },
+}
 
 local list_color = function(colors, start, _end)
   local tbl = {}
@@ -655,12 +714,19 @@ M.title_options = function(title, colors, color_start, color_end)
   if vim.fn.has('nvim-0.9') == 0 then
     return
   end
+  colors = colors or 'nord'
+  if type(colors) == 'string' then
+    colors = title_colors[colors]
+  end
   local rainbow = M.rainbow(colors, color_start, color_end)
   local base = 'GHRainbow'
   local title_with_color = {}
+  local c = rainbow().rgb
   for i = 1, #title do
     local name = base .. tostring(i)
-    local c = rainbow().rgb
+    if title:sub(i, i) == ' ' then
+      c = rainbow().rgb
+    end
     vim.api.nvim_set_hl(0, name, { fg = c, bold = true, default = true })
     title_with_color[i] = { title:sub(i, i), name }
   end
