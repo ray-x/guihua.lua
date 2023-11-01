@@ -240,14 +240,14 @@ end
 M.select = function(items, opts, on_choice)
   vim.validate({ items = { items, 't' }, opts = { opts, 't' }, on_choice = { on_choice, 'f' } })
   log('select called')
-  local title = opts.prompt .. ' <C-o> Apply <C-e> Exit'
+  local win_title = opts.prompt .. ' <C-o> Apply <C-e> Exit'
   local data = {}
   if vim.fn.has('nvim-0.9') == 0 then
-    title = ' ' .. title
-    data = { { text = title } }
+    win_title = ' ' .. win_title
+    data = { { text = win_title } }
   end
 
-  local width = #title + 8
+  local width = #win_title + 8
   local max_width = math.floor(api.nvim_get_option_value('columns', {}) * (opts.width or 0.9))
   opts.format_item = opts.format_item or function(item)
     return item
@@ -306,7 +306,7 @@ M.select = function(items, opts, on_choice)
     end
   end
 
-  if not title or #title <= 1 then
+  if not win_title or #win_title <= 1 then
     local divider = string.rep('─', width + 4)
     table.insert(data, 2, divider)
   end
@@ -314,7 +314,7 @@ M.select = function(items, opts, on_choice)
   width = math.min(width + 4, max_width)
   local listview = M.new_list_view({
     items = data,
-    title = title,
+    title = win_title,
     border = 'single',
     width = width,
     loc = 'top_center',
