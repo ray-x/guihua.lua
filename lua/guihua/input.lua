@@ -35,18 +35,18 @@ local function input(opts, on_confirm)
   local bufnr = vim.api.nvim_create_buf(false, true)
 
   input_ctx.opts = opts
-  local prompt = opts.prompt or '󱩾'
+  local prompt = opts.prompt
   local placeholder = opts.default or ''
   local setup_confirm = input_ctx.on_confirm
   input_ctx.on_confirm = function(new_name)
     setup_confirm(new_name)
     on_confirm(new_name)
   end
+
   input_ctx.on_change = opts.on_change or input_ctx.on_change
-  vim.api.nvim_set_option_value('buftype', 'prompt', {buf=bufnr})
-  vim.api.nvim_set_option_value('bufhidden', 'wipe', {buf=bufnr})
-  vim.api.nvim_buf_add_highlight(bufnr, -1, 'NGPreviewTitle', 0, 0, #prompt)
-  vim.fn.prompt_setprompt(bufnr, prompt)
+  vim.api.nvim_set_option_value('buftype', 'prompt', { buf = bufnr })
+  vim.api.nvim_set_option_value('bufhidden', 'wipe', { buf = bufnr })
+  local title_options = utils.title_options
   local width = #placeholder + #prompt + (opts.width or 20)
   local wopts = {
     relative = opts.relative or 'cursor',
@@ -57,19 +57,19 @@ local function input(opts, on_confirm)
     style = 'minimal',
     border = 'single',
   }
-
-  local title_options = utils.title_options
-  if opts.title or input_ctx.title and vim.fn.has('nvim-0.9') then
-    local title = title_options(opts.title or input_ctx.title)
+  if opts.title or input_ctx.title or #prompt > 2 and vim.fn.has('nvim-0.9') then
+    local title = title_options(opts.title or input_ctx.title or prompt)
     if title then
       wopts.title = title
-      wopts.title = opts.title or input_ctx.title
       wopts.title_pos = opts.title_pos or 'center'
     end
+    prompt = ' '
   end
 
+  vim.api.nvim_buf_add_highlight(bufnr, -1, 'NGPreviewTitle', 0, 0, #prompt)
+  vim.fn.prompt_setprompt(bufnr, prompt)
   local winnr = vim.api.nvim_open_win(bufnr, true, wopts)
-  vim.api.nvim_set_option_value('winhl', 'Normal:NormalFloat,NormalNC:Normal', {win=winnr})
+  vim.api.nvim_set_option_value('winhl', 'Normal:NormalFloat,NormalNC:Normal', { win = winnr })
   if input_ctx.on_change then
     vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, {
       buffer = bufnr,
@@ -83,15 +83,15 @@ local function input(opts, on_confirm)
       end,
     })
     -- vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, { buffer = bufnr, callback = function() end })
-    vim.api.nvim_set_option_value('modifiable', true, {buf=bufnr})
-    vim.api.nvim_set_option_value('buftype', 'prompt', {buf=bufnr})
+    vim.api.nvim_set_option_value('modifiable', true, { buf = bufnr })
+    vim.api.nvim_set_option_value('buftype', 'prompt', { buf = bufnr })
   end
 
-  vim.api.nvim_set_option_value('filetype', 'guihua', {buf=bufnr})
+  vim.api.nvim_set_option_value('filetype', 'guihua', { buf = bufnr })
   utils.map('n', '<ESC>', '<cmd>bd!<CR>', { silent = true, buffer = true })
   utils.map({ 'n', 'i' }, '<CR>', function()
     log('confirm_callback')
-    local new_text = vim.trim(vim.fn.getline('.'):sub(#input_ctx.opts.prompt + 1, -1))
+    local new_text = vim.trim(vim.fn.getline('.'):sub(#prompt + 1, -1))
     vim.cmd([[stopinsert]])
     vim.cmd([[bd!]])
     if #new_text == 0 or new_text == input_ctx.opts.default then

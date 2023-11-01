@@ -25,7 +25,7 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
   --
 
   local display_range = opts.location.range
-  local syntax = api.nvim_get_option_value('ft', {buf = bufnr})
+  local syntax = api.nvim_get_option_value('ft', { buf = bufnr })
   if syntax == nil or #syntax < 1 then
     syntax = 'c'
   end
@@ -211,38 +211,43 @@ function M.new_list_view(opts)
       end
     end,
     transparency = transparency,
-    on_move = opts.on_move
-      or function(item)
-        trace('on move', item)
-        trace('on move', item.text or item, item.uri, item.filename)
-        -- todo fix
-        if item.uri == nil then
-          item.uri = 'file:///' .. item.filename
-        end
-        return M.preview_uri({
-          uri = item.uri,
-          width_ratio = opts.width_ratio,
-          preview_lines_before = opts.preview_lines_before or 3,
-          width = width,
-          preview_height = pheight,
-          lnum = item.lnum,
-          col = item.col,
-          range = item.range,
-          offset_x = 0,
-          offset_y = offset_y,
-          border = border,
-          external = ext,
-          enable_edit = opts.enable_preview_edit or false,
-        })
-      end,
+    on_move = opts.on_move or function(item)
+      trace('on move', item)
+      trace('on move', item.text or item, item.uri, item.filename)
+      -- todo fix
+      if item.uri == nil then
+        item.uri = 'file:///' .. item.filename
+      end
+      return M.preview_uri({
+        uri = item.uri,
+        width_ratio = opts.width_ratio,
+        preview_lines_before = opts.preview_lines_before or 3,
+        width = width,
+        preview_height = pheight,
+        lnum = item.lnum,
+        col = item.col,
+        range = item.range,
+        offset_x = 0,
+        offset_y = offset_y,
+        border = border,
+        external = ext,
+        enable_edit = opts.enable_preview_edit or false,
+      })
+    end,
   })
 end
 
 M.select = function(items, opts, on_choice)
+  vim.validate({ items = { items, 't' }, opts = { opts, 't' }, on_choice = { on_choice, 'f' } })
   log('select called')
-  local data = { { text = '  select ' .. opts.prompt .. ' <C-o> Apply <C-e> Exit' } }
+  local title = opts.prompt .. ' <C-o> Apply <C-e> Exit'
+  local data = {}
+  if vim.fn.has('nvim-0.9') == 0 then
+    title = ' ' .. title
+    data = { { text = title } }
+  end
 
-  local width = #data[1].text + 4
+  local width = #title + 8
   local max_width = math.floor(api.nvim_get_option_value('columns', {}) * (opts.width or 0.9))
   opts.format_item = opts.format_item or function(item)
     return item
@@ -301,12 +306,15 @@ M.select = function(items, opts, on_choice)
     end
   end
 
-  local divider = string.rep('─', width + 2)
-  table.insert(data, 2, divider)
+  if not title or #title <= 1 then
+    local divider = string.rep('─', width + 4)
+    table.insert(data, 2, divider)
+  end
   -- vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<esc>', true, false, true), 'x', true)
   width = math.min(width + 4, max_width)
   local listview = M.new_list_view({
     items = data,
+    title = title,
     border = 'single',
     width = width,
     loc = 'top_center',
@@ -333,4 +341,21 @@ end
 
 M.input = require('guihua.input').input
 M.input_callback = require('guihua.input').input_callback
+
+--[[
+
+M.select({ 'tabs', 'spaces', 'enter' }, {
+  prompt = 'Select tabs or spaces:',
+  format_item = function(item)
+    return "I'd like to choose " .. item
+  end,
+}, function(choice)
+  if choice == 'spaces' then
+    print('space')
+  else
+    print('tab')
+  end
+end)
+
+]]
 return M
