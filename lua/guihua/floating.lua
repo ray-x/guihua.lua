@@ -57,29 +57,29 @@ local function floating_buf(opts)
   end
   trace('floating opts: ', win_opts, opts)
   local buf = api.nvim_create_buf(false, true)
-  api.nvim_set_option_value('bufhidden', 'wipe', {buf=buf})
-  api.nvim_set_option_value('buflisted', false, {buf=buf})
+  api.nvim_set_option_value('bufhidden', 'wipe', { buf = buf })
+  api.nvim_set_option_value('buflisted', false, { buf = buf })
   -- api.nvim_set_option_value('buftype', 'guihua_input', {buf=buf})
   if prompt then
-    vim.fn.prompt_setprompt(buf, '󱩾')
-    api.nvim_set_option_value("buftype", 'prompt', {buf=buf}) -- vim.fn.setbufvar(bufnr})
+    vim.fn.prompt_setprompt(buf, '󱩾 ')
+    api.nvim_set_option_value('buftype', 'prompt', { buf = buf }) -- vim.fn.setbufvar(bufnr})
   else
-    api.nvim_set_option_value('readonly', true, {buf=buf})
-    vim.api.nvim_set_option_value('filetype', 'guihua', {buf=buf}) -- default ft for all buffers. do not use specific ft e.g
+    api.nvim_set_option_value('readonly', true, { buf = buf })
+    vim.api.nvim_set_option_value('filetype', 'guihua', { buf = buf }) -- default ft for all buffers. do not use specific ft e.g
     -- javascript as it may cause lsp loading
   end
 
   if opts.title and vim.fn.has('nvim-0.9') then
     local title = title_options(opts.title, opts.title_colors, opts.color_start, opts.color_end)
     if title then
-      win_opts.title= title
+      win_opts.title = title
       win_opts.title_pos = opts.title_pos or 'center'
     end
   end
 
   local win = api.nvim_open_win(buf, enter, win_opts)
   log('creating win', win, 'buf', buf)
-  vim.api.nvim_set_option_value('winhl', 'Normal:NormalFloat,NormalNC:Normal', {win=win})
+  vim.api.nvim_set_option_value('winhl', 'Normal:NormalFloat,NormalNC:Normal', { win = win })
 
   -- note: if failed to focus on the view, you can add to the caller
 
@@ -115,12 +115,12 @@ local function floating_buf_mask(transparency) -- win_width, win_height, x, y, l
   }
 
   local buf = api.nvim_create_buf(false, true)
-  api.nvim_set_option_value('bufhidden', 'wipe', {buf=buf})
-  api.nvim_set_option_value('readonly', true, {buf=buf})
-  api.nvim_set_option_value('buflisted', false, {buf=buf})
-  vim.api.nvim_set_option_value('filetype', 'guihua', {buf=buf}) -- default ft for all buffers. do not use specific ft e.g
+  api.nvim_set_option_value('bufhidden', 'wipe', { buf = buf })
+  api.nvim_set_option_value('readonly', true, { buf = buf })
+  api.nvim_set_option_value('buflisted', false, { buf = buf })
+  vim.api.nvim_set_option_value('filetype', 'guihua', { buf = buf }) -- default ft for all buffers. do not use specific ft e.g
   local win = api.nvim_open_win(buf, false, win_opts)
-  api.nvim_set_option_value('winblend', transparency, {win=win})
+  api.nvim_set_option_value('winblend', transparency, { win = win })
   log('creating win', win, 'buf', buf)
 
   return buf,
@@ -141,8 +141,8 @@ end
 local function floatterm(opts)
   local buf = api.nvim_create_buf(false, true)
   api.nvim_buf_set_keymap(buf, 't', '<ESC>', '<C-\\><C-c>', {})
-  api.nvim_set_option_value('bufhidden', 'wipe', {buf=buf})
-  api.nvim_set_option_value('buflisted', false, {buf=buf})
+  api.nvim_set_option_value('bufhidden', 'wipe', { buf = buf })
+  api.nvim_set_option_value('buflisted', false, { buf = buf })
 
   log(opts)
   local width = opts.win_width or math.floor(columns * 0.9)
@@ -197,7 +197,7 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
   opts.win_width = opts.win_width or math.ceil(columns * 0.88)
   local win, buf, _ = floatterm(opts)
 
-  api.nvim_set_option_value('winhl', 'Normal:NormalFloat', {win=win})
+  api.nvim_set_option_value('winhl', 'Normal:NormalFloat', { win = win })
 
   local closer = function(code, data, ev)
     log('floatwin closing ', win, code, data, ev)
@@ -207,7 +207,7 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
       opts.closer = nil
     end
   end
-  vim.api.nvim_set_option_value('filetype', 'guihua', {buf=buf}) -- default ft for all buffers. do not use specific ft e.g
+  vim.api.nvim_set_option_value('filetype', 'guihua', { buf = buf }) -- default ft for all buffers. do not use specific ft e.g
 
   local args
   if type(opts.cmd) == 'string' then
@@ -360,7 +360,15 @@ local function test(prompt)
 end
 
 local function test2(prompt)
-  local b, w, c = floating_buf({ win_width = 30, win_height = 8, x = 25, y = 25, prompt = prompt, title = 'title' })
+  local b, w, c = floating_buf({
+    win_width = 30,
+    win_height = 8,
+    x = 25,
+    y = 25,
+    prompt = prompt,
+    title = 'title',
+    enter = true,
+  })
   local data = { 'floating buf', 'linea', 'lineb', 'linec', 'lined', 'linee' }
   for i = 1, 10, 1 do
     vim.api.nvim_buf_set_lines(b, i, -1, false, { data[i] })

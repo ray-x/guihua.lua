@@ -42,7 +42,9 @@ function ListView:initialize(...)
 
   opts.bg = opts.bg or 'GuihuaListDark'
 
-  opts.enter = true
+  if opts.enter == nil  then
+    opts.enter = true
+  end
   View.initialize(self, opts)
   self:bind_ctrl(opts)
   -- ListView.static.active_view = self

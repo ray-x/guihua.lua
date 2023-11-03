@@ -72,6 +72,7 @@ function ListViewCtrl:initialize(delegate, ...)
   self.data = opts.data or {}
   self.preview = opts.preview or false
   self.prompt = opts.prompt
+  self.prompt_mode = opts.prompt_mode
   self.enter = opts.enter
   self.on_input_filter = opts.on_input_filter
   self.display_height = self.m_delegate.display_height or 10
@@ -517,7 +518,7 @@ function ListViewCtrl:on_search()
   local filter_input = vim.api.nvim_buf_get_lines(buf, -2, -1, false)[1]
   -- get string after prompt
 
-  local filter_input_trim = string.sub(filter_input, 5, #filter_input)
+  local filter_input_trim = string.sub(filter_input, 6, #filter_input)  -- hardcode 6 '󱩾 ' is 5 chars
   log('filter input:', filter_input_trim, 'input:', filter_input)
 
   if listobj.search_item == filter_input_trim then
@@ -566,7 +567,7 @@ function ListViewCtrl:on_backspace(deleteword)
   local listobj = ListViewCtrl._viewctlobject
   local buf = listobj.m_delegate.buf or vim.api.nvim_get_current_buf()
   local filter_input = vim.api.nvim_buf_get_lines(buf, -2, -1, false)[1]
-  local filter_input_trim = string.sub(filter_input, 5, #filter_input)
+  local filter_input_trim = string.sub(filter_input, 6, #filter_input)  -- hardcode 6 '󱩾 ' is 5 chars
 
   if #filter_input_trim == 0 then
     -- filter_input = string.sub(filter_input, 1, -2)
@@ -581,6 +582,7 @@ function ListViewCtrl:on_backspace(deleteword)
   end
   vim.cmd([[normal! A]])
   vim.cmd('startinsert!')
+  ListViewCtrl:on_search()
 
   -- log(filter_input)
   -- vim.api.nvim_buf_set_lines(buf, -2, -1, true, {filter_input})

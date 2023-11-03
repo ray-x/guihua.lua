@@ -183,6 +183,8 @@ function M.new_list_view(opts)
   return ListView:new({
     loc = loc,
     prompt = prompt,
+    prompt_mode = opts.prompt_mode,
+    enter = opts.enter,
     relative = opts.relative,
     style = opts.style,
     api = opts.api,

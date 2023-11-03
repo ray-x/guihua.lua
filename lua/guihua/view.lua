@@ -48,6 +48,7 @@ function View:initialize(...)
   end
   self.prompt = opts.prompt == true and true or false
   self.enter = opts.enter == true and true or false
+  self.prompt_mode = opts.prompt_mode or 'insert'
   self.ft = opts.ft or 'guihua'
   self.syntax = opts.syntax or 'guihua'
   self.display_height = self.rect.height
@@ -70,6 +71,7 @@ function View:initialize(...)
     y = self.rect.pos_y,
     loc = loc,
     prompt = self.prompt,
+    prompt_mode = self.prompt_mode,
     enter = opts.enter,
     focus = opts.focus,
     border = opts.border,
@@ -110,7 +112,7 @@ function View:initialize(...)
   if opts.data ~= nil and #opts.data >= 1 then
     self:on_draw(opts.data)
   end
-  if self.prompt and self.enter then
+  if self.prompt and self.enter and self.prompt_mode == 'insert'  then
     vim.cmd('startinsert!')
     log('create prompt view')
   end
