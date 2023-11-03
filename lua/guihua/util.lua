@@ -707,9 +707,13 @@ M.rainbow = function(colors, start, _end)
   return list_color(colors or title_colors, start, _end)
 end
 
-M.title_options = function(title, colors, color_start, color_end)
-  if not title then
+M.title_options = function(title_input, colors, color_start, color_end)
+  if not title_input then
     return
+  end
+  local title = title_input
+  if type(title_input) == 'table' then
+    title = table.concat(title_input, ' ')
   end
   if vim.fn.has('nvim-0.9') == 0 then
     return
