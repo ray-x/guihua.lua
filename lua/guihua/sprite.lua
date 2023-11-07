@@ -9,6 +9,7 @@ if Sprite == nil then
   Sprite = class('Sprite', View)
 end
 
+local uv = vim.uv or vim.loop
 _GH_SETUP = _GH_SETUP or nil
 if _GH_SETUP == nil then
   require('guihua.maps').setup()
@@ -127,8 +128,8 @@ function Sprite:initialize(...)
   util.close_view_autocmd({ 'BufHidden', 'BufDelete' }, self.win)
   -- controller and data
 
-  local timer = vim.loop.new_timer()
-  local start_time = vim.loop.hrtime()
+  local timer = uv.new_timer()
+  local start_time = uv.hrtime()
   timer:start(
     self.delay,
     self.interval,
@@ -136,7 +137,7 @@ function Sprite:initialize(...)
       if not self.is_run then
         return
       end
-      local ctime = vim.loop.hrtime()
+      local ctime = uv.hrtime()
       if self.timeout and ctime > start_time + self.timeout * 1000000 then
         log('timeout', self.timeout, ctime - start_time)
         self:on_close()
@@ -221,7 +222,7 @@ function Sprite.on_close()
   vim.schedule(function()
     if Sprite.ActiveSprite.__timer then
       Sprite.ActiveSprite.__timer:stop()
-      vim.loop.timer_stop(Sprite.ActiveSprite.__timer)
+      uv.timer_stop(Sprite.ActiveSprite.__timer)
     end
     Sprite.ActiveSprite.__timer = nil
     if Sprite.ActiveSprite.__stop then

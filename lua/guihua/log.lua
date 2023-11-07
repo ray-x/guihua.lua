@@ -37,7 +37,8 @@ local log = {}
 
 local unpack = unpack or table.unpack
 
-local os_name = vim.loop.os_uname().sysname
+local uv = vim.uv or vim.loop
+local os_name = uv.os_uname().sysname
 local is_windows = os_name == 'Windows' or os_name == 'Windows_NT'
 -- Check whether current buffer contains main function
 
@@ -48,6 +49,20 @@ local function sep()
   return '/'
 end
 
+local function fs_write(path, data)
+  uv.fs_open(path, 'a', tonumber('644', 8), function(err, fd)
+    if err then
+      print('Error opening file: ' .. err)
+      return err
+    end
+    uv.fs_write(fd, data, 0, function(e2, _)
+      assert(not e2, e2)
+      uv.fs_close(fd, function(e3)
+        assert(not e3, e3)
+      end)
+    end)
+  end)
+end
 log.new = function(config, standalone)
   config = vim.tbl_deep_extend('force', default_config, config)
   -- path ~/.local/share/nvim
@@ -137,15 +152,16 @@ log.new = function(config, standalone)
     if config.use_file then
       -- check file size
 
-      local fp = io.open(outfile, 'a+')
       local str = string.format('[%-4s][%s] %s: %s\n', nameupper, os.date(), lineinfo, msg)
-      if fp then
-        fp:write(str) -- return true if successful
-        fp:flush()
-        fp:close()
-      else
-        print('Could not open log file')
-      end
+      fs_write(outfile, str)
+      -- local fp = io.open(outfile, 'a+')
+      -- if fp then
+      --   fp:write(str) -- return true if successful
+      --   fp:flush()
+      --   fp:close()
+      -- else
+      --   print('Could not open log file')
+      -- end
     end
   end
 

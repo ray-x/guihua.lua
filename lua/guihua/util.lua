@@ -2,8 +2,8 @@ local M = {}
 local api = vim.api
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
-
-local os_name = vim.loop.os_uname().sysname
+local uv = vim.loop
+local os_name = uv.os_uname().sysname
 local is_windows = os_name == 'Windows' or os_name == 'Windows_NT'
 -- Check whether current buffer contains main function
 
@@ -228,6 +228,7 @@ end
 
 function M.add_pec(s)
   -- / & ! . ^ * $ \ ?
+  -- local special = { '%[', '%]', '%-' }
   local special = { '%[', '%]', '%-' }
   local str = s or ''
   for i = 1, #special do
@@ -457,7 +458,7 @@ function M._get_symbol_kind_name(symbol_kind)
   return protocol.SymbolKind[symbol_kind] or 'Unknown'
 end
 
-M.home = vim.loop.os_homedir()
+M.home = uv.os_homedir()
 
 M.sep = (function()
   if jit then
@@ -596,89 +597,21 @@ M.get_hsl_color = function(hl)
 end
 
 local title_colors = {
-  nord = {
-    '#ECEFF4',
-    '#ACEFD4',
-    '#9CCFD4',
-    '#81A1C1',
-    '#88B0D0',
-    '#93BE8C',
-    '#A3BE8C',
-    '#B48EAD',
-    '#B08770',
-    '#EBCB8B',
-  },
-  monokai = {
-    '#E6DB74',
-    '#B6DB54',
-    '#A6E22E',
-    '#A6E22E',
-    '#66D9EF',
-    '#AE81FF',
-    '#C8B8F2',
-    '#F8F8F2',
-    '#F8B892',
-    '#F87842',
-    '#F95642',
-    '#FD971F',
-  },
-  solarized = {
-    '#6C71C4',
-    '#7C81C9',
-    '#8C91B4',
-    '#98A8F2',
-    '#68A8E2',
-    '#468BD2',
-    '#268BD2',
-    '#268BD2',
-    '#268BD2',
-    '#2AA198',
-    '#859900',
-    '#A5B900',
-    '#B58900',
-    '#CB4B16',
-    '#DC322F',
-    '#D33682',
-  },
-  dracula = {
-    '#BD93F9',
-    '#6272A4',
-    '#84A7BA',
-    '#F8F8F2',
-    '#50FA7B',
-    '#60EAAB',
-    '#67EABB',
-    '#8BE9FD',
-    '#8BE9FD',
-    '#FF5555',
-    '#FF79C6',
-  },
-  rainbow = {
-    '#FF0000',
-    '#FF4000',
-    '#FF8F00',
-    '#FFDF00',
-    '#FFFF00',
-    '#BFFF00',
-    '#8FFF00',
-    '#6FFF00',
-    '#4FFF00',
-    '#00FF00',
-    '#00FF20',
-    '#00FF40',
-    '#00FF60',
-    '#00BFA0',
-    '#00A0FF',
-    '#4080FF',
-    '#6A40FF',
-    '#7A40FF',
-    '#8B00FF',
-    '#AB00FF',
-    '#FB00FF',
-    '#FB00AF',
-    '#FB008F',
-    '#FB004F',
-  },
+  -- stylua: ignore start
+  nord = {'#ECEFF4', '#ACEFD4', '#9CCFD4', '#81A1C1', '#88B0D0', '#93BE8C', '#A3BE8C',
+    '#B48EAD', '#B08770', '#EBCB8B'},
+  monokai = {'#E6DB74', '#B6DB54', '#A6E22E', '#A6E22E', '#66D9EF', '#AE81FF', '#C8B8F2',
+    '#F8F8F2', '#F8B892', '#F87842', '#F95642', '#FD971F'},
+  solarized = {'#6C71C4', '#7C81C9', '#8C91B4', '#98A8F2', '#68A8E2', '#468BD2', '#268BD2',
+    '#268BD2', '#268BD2', '#2AA198', '#859900', '#A5B900', '#B58900', '#CB4B16', '#DC322F',
+    '#D33682'},
+  dracula = {'#BD93F9', '#6272A4', '#84A7BA', '#F8F8F2', '#50FA7B', '#60EAAB', '#67EABB',
+    '#8BE9FD', '#8BE9FD', '#FF5555', '#FF79C6' },
+  rainbow = {'#FF0000', '#FF4000', '#FF8F00', '#FFDF00', '#FFFF00', '#BFFF00', '#8FFF00',
+    '#6FFF00', '#4FFF00', '#00FF00', '#00FF20', '#00FF40', '#00FF60', '#00BFA0', '#00A0FF',
+    '#4080FF', '#6A40FF', '#7A40FF', '#8B00FF', '#AB00FF', '#FB00FF', '#FB00AF', '#FB008F',
+    '#FB004F' },
+  -- stylua: ignore end
 }
 
 local list_color = function(colors, start, _end)
@@ -735,6 +668,37 @@ M.title_options = function(title_input, colors, color_start, color_end)
     title_with_color[i] = { title:sub(i, i), name }
   end
   return title_with_color
+end
+
+M.throttle = function(func, duration)
+  local timer = uv.new_timer()
+  -- util.log(func, duration)
+  local function inner(...)
+    -- util.log('throttle', ...)
+    if not timer:is_active() then
+      timer:start(duration, 0, function() end)
+      pcall(vim.schedule_wrap(func), select(1, ...))
+    end
+  end
+
+  local group = vim.api.nvim_create_augroup('gonvim__CleanupLuvTimers', {})
+  vim.api.nvim_create_autocmd('VimLeavePre', {
+    group = group,
+    pattern = '*',
+    callback = function()
+      if timer then
+        if timer:has_ref() then
+          timer:stop()
+          if not timer:is_closing() then
+            timer:close()
+          end
+        end
+        timer = nil
+      end
+    end,
+  })
+
+  return inner, timer
 end
 
 -- for i, v in ipairs(M.rainbow_colors) do
