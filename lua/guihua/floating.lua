@@ -138,6 +138,7 @@ local function floating_buf_mask(transparency) -- win_width, win_height, x, y, l
     end
 end
 
+-- create a windows for floating terminal
 local function floatterm(opts)
   local buf = api.nvim_create_buf(false, true)
   api.nvim_buf_set_keymap(buf, 't', '<ESC>', '<C-\\><C-c>', {})
@@ -178,7 +179,7 @@ local function floatterm(opts)
   return win, buf, win_opts
 end
 
--- Create a simple floating terminal.
+-- Create a simple shell/cmd execute floating terminal and run termopen
 local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y)
   local current_window = vim.api.nvim_get_current_win()
   if opts.enter == nil then
@@ -289,7 +290,7 @@ local function close_float_terminal(name)
   end
 end
 
--- wrapper for tui/gui
+-- wrapper for tui/gui of floating term
 local term = function(opts)
   columns = api.nvim_get_option_value('columns', {})
   lines = api.nvim_get_option_value('lines', {})
@@ -335,7 +336,9 @@ end
 -- multigrid
 -- floating_term({ cmd = 'lazygit', border = 'single', external = true })
 -- floating_term({ cmd = 'pwd', border = 'single', external = false, autoclose = false })
--- floating_term({ cmd = 'lazygit', border = 'single', external = false })
+-- floating_term({ cmd = {'lazygit'}, border = 'single', external = false })
+-- term({ cmd = {'lazygit'}, border = 'single', external = false })
+-- floating_term({ cmd = {'go'}, border = 'single', external = false })
 -- term({ cmd = 'lazygit', border = 'single', external = false })
 -- term({ cmd = 'git diff --', border = 'single', external = false })
 

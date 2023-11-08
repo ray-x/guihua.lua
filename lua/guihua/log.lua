@@ -154,14 +154,6 @@ log.new = function(config, standalone)
 
       local str = string.format('[%-4s][%s] %s: %s\n', nameupper, os.date(), lineinfo, msg)
       fs_write(outfile, str)
-      -- local fp = io.open(outfile, 'a+')
-      -- if fp then
-      --   fp:write(str) -- return true if successful
-      --   fp:flush()
-      --   fp:close()
-      -- else
-      --   print('Could not open log file')
-      -- end
     end
   end
 
