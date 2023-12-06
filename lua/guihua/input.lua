@@ -76,9 +76,9 @@ local function input(opts, on_confirm)
       callback = function()
         local new_text = vim.trim(vim.fn.getline('.'):sub(#prompt + 1, -1))
         log('text changed', new_text)
-        if #new_text == 0 or new_text == input_ctx.opts.default then
-          return
-        end
+        -- if #new_text == 0 or new_text == input_ctx.opts.default then
+        --   return
+        -- end
         input_ctx.on_change(new_text)
       end,
     })
@@ -96,6 +96,8 @@ local function input(opts, on_confirm)
     vim.cmd([[bd!]])
     if #new_text == 0 or new_text == input_ctx.opts.default then
       log('no change')
+      new_text = vim.trim(vim.fn.getline('.'):sub(#prompt + 1, -1))
+      input_ctx.on_cancel(new_text)
       return
     end
     log('on_confirm: new text: ' .. new_text)
