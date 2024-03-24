@@ -333,6 +333,9 @@ M.select = function(items, opts, on_choice)
     end,
   })
 
+  if listview == nil then
+    return
+  end
   vim.api.nvim_buf_add_highlight(listview.buf, -1, 'Title', 0, 0, -1)
   -- move to 1st tiem
   ListViewCtrl:on_next()

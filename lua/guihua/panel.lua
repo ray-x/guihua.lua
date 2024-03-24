@@ -122,12 +122,12 @@ function Panel:initialize(opts)
       method = 'ƒ ', --  "🍔", -- mac
       ['function'] = ' ', -- "🤣", -- Fun
       ['arrow_function'] = ' ', -- "🤣", -- Fun
-      parameter = '  ', -- Pi
+      parameter = '', -- Pi
       associated = '🤝',
       namespace = '🚀',
       type = ' ',
       field = '🏈',
-      interface = '蘒',
+      interface = '',
       module = '📦',
       flag = '🎏',
     }
@@ -173,14 +173,14 @@ function Panel:animate_create(animate, fast)
   local set_text_fn = function()
     -- Display matches
     local offset = 0
-    if api.nvim_get_option_value('filetype', {buf=self.buf}) ~= 'guihua' then
+    if api.nvim_get_option_value('filetype', { buf = self.buf }) ~= 'guihua' then
       return
     end
-    if api.nvim_get_option_value('modifiable', {buf=self.buf}) ~= false then
+    if api.nvim_get_option_value('modifiable', { buf = self.buf }) ~= false then
       return
     end
     for i, section in pairs(self.sections) do
-      api.nvim_set_option_value('modifiable', true, {buf=self.buf})
+      api.nvim_set_option_value('modifiable', true, { buf = self.buf })
       api.nvim_buf_set_lines(self.buf, offset, offset + #section.header, false, section.header)
       offset = offset + #section.header
       if section.text and #section.text > 0 then
@@ -196,7 +196,7 @@ function Panel:animate_create(animate, fast)
         api.nvim_buf_set_lines(self.buf, offset, offset + #section.text, false, section.text)
       end
       offset = offset + #section.text
-      api.nvim_set_option_value('modifiable', false, {buf=self.buf})
+      api.nvim_set_option_value('modifiable', false, { buf = self.buf })
       api.nvim_win_set_width(self.win, final_width)
       log('section rendered', i, section.header, #section.text)
     end
@@ -223,9 +223,9 @@ function Panel:animate_create(animate, fast)
   end
   if fast then
     vim.defer_fn(function()
-      api.nvim_set_option_value('modifiable', true, {buf=self.buf})
+      api.nvim_set_option_value('modifiable', true, { buf = self.buf })
       api.nvim_buf_set_lines(self.buf, 0, #fast, false, fast)
-      api.nvim_set_option_value('modifiable', false, {buf=self.buf})
+      api.nvim_set_option_value('modifiable', false, { buf = self.buf })
     end, speed * 2)
   end
 
@@ -305,7 +305,7 @@ local function filepreview(node)
   local uri = node.uri
   local range = node.range
   if not uri or not range then
-    local ft = vim.api.nvim_get_option_value('filetype', {buf = 0})
+    local ft = vim.api.nvim_get_option_value('filetype', { buf = 0 })
     local hint = node.hint or node.text or node.node_text or node.name or 'unknown'
     if type(hint) == 'string' then
       hint = { hint }
@@ -447,13 +447,13 @@ local function make_panel_window(win_name)
   local buf = api.nvim_get_current_buf()
 
   --Disable wrapping
-  api.nvim_set_option_value('wrap', false, {win=win})
-  api.nvim_set_option_value('list', false, {win=win})
-  api.nvim_set_option_value('number', false, {win=win})
-  api.nvim_set_option_value('relativenumber', false, {win=win})
-  api.nvim_set_option_value('buftype', 'nofile', {buf=buf})
-  api.nvim_set_option_value('swapfile', false, {buf=buf})
-  api.nvim_set_option_value('wrap', false, {win=win})
+  api.nvim_set_option_value('wrap', false, { win = win })
+  api.nvim_set_option_value('list', false, { win = win })
+  api.nvim_set_option_value('number', false, { win = win })
+  api.nvim_set_option_value('relativenumber', false, { win = win })
+  api.nvim_set_option_value('buftype', 'nofile', { buf = buf })
+  api.nvim_set_option_value('swapfile', false, { buf = buf })
+  api.nvim_set_option_value('wrap', false, { win = win })
   vim.bo.buflisted = false
   vim.bo.modifiable = false
   vim.bo.textwidth = 0
@@ -489,10 +489,10 @@ function Panel:draw()
     self.buf = api.nvim_get_current_buf()
   end
   local header = self.header or { 'outline' }
-  api.nvim_set_option_value('modifiable', true, {buf=self.buf})
+  api.nvim_set_option_value('modifiable', true, { buf = self.buf })
   api.nvim_buf_set_lines(self.buf, 0, #header, false, header)
   api.nvim_buf_set_lines(self.buf, 0, -1, false, {})
-  api.nvim_set_option_value('modifiable', false, {buf=self.buf})
+  api.nvim_set_option_value('modifiable', false, { buf = self.buf })
 
   self:animate_create()
   add_keymappings(self.buf)
@@ -741,12 +741,12 @@ function Panel:open(should_toggle, redraw, buf)
           log('header or guihua_buf is nil')
           return
         end
-        api.nvim_set_option_value('modifiable', true, {buf=guihua_buf})
+        api.nvim_set_option_value('modifiable', true, { buf = guihua_buf })
         -- cleanup
         api.nvim_buf_set_lines(guihua_buf, 0, -1, false, {})
         api.nvim_buf_set_lines(guihua_buf, 0, #header, false, header)
         api.nvim_buf_set_lines(guihua_buf, #header, #header + 2, false, { '', msg })
-        api.nvim_set_option_value('modifiable', false, {buf=guihua_buf})
+        api.nvim_set_option_value('modifiable', false, { buf = guihua_buf })
         self.last_parsed_buf = -1
       end
     end
@@ -760,7 +760,7 @@ function Panel:open(should_toggle, redraw, buf)
   -- redraw the panel
   self:draw()
 
-  local ft = vim.api.nvim_get_option_value('filetype', {buf=buf})
+  local ft = vim.api.nvim_get_option_value('filetype', { buf = buf })
   if ft ~= '' and ft ~= 'guihua' and ft ~= 'nofile' then
     self.last_parsed_buf = buf
   end

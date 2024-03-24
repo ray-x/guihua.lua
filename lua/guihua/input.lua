@@ -30,8 +30,6 @@ end
 
 local function input(opts, on_confirm)
   log(opts)
-  -- local preview_buf = vim.api.nvim_get_current_buf()
-  -- local preview_ns = vim.api.nvim_create_namespace('guihua_input')
   local bufnr = vim.api.nvim_create_buf(false, true)
 
   input_ctx.opts = opts
@@ -76,9 +74,6 @@ local function input(opts, on_confirm)
       callback = function()
         local new_text = vim.trim(vim.fn.getline('.'):sub(#prompt + 1, -1))
         log('text changed', new_text)
-        -- if #new_text == 0 or new_text == input_ctx.opts.default then
-        --   return
-        -- end
         input_ctx.on_change(new_text)
       end,
     })
@@ -113,9 +108,11 @@ local function input(opts, on_confirm)
   utils.map({ 'n', 'i' }, '<BS>', [[<ESC>"_cl]], { silent = true, buffer = true })
 
   vim.cmd(string.format('normal i%s', placeholder))
+  vim.fn.feedkeys('A', 'n')
   return winnr
 end
 
+-- functional test
 -- input({ prompt = 'replace: ', placeholder = 'old', title = 'title' }, function(text)
 --   print('replace old' .. 'with: ' .. text)
 -- end, function(text)
