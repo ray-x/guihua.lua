@@ -340,10 +340,12 @@ local function run_on_buf_write(buf)
   local tabpage = api.nvim_get_current_tabpage()
   local augroup = _make_augroup_name(tabpage)
   vim.cmd('augroup ' .. augroup)
-  api.nvim_create_autocmd(
-    { 'BufWritePost' },
-    { buffer = buf, command = ":lua require ('guihua.panel').redraw(false)" }
-  )
+  api.nvim_create_autocmd({ 'BufWritePost' }, {
+    callback = function()
+      require('guihua.panel').redraw(false)
+    end,
+    buffer = buf,
+  })
 
   vim.cmd('augroup END')
 end
