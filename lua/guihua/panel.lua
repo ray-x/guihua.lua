@@ -409,7 +409,9 @@ function Panel:redraw(recreate)
       return
     end
     if Panel.activePanel == nil then
+      log('active panel is nil')
       Panel:close()
+      return
     end
     if Panel.activePanel.last_parsed_buf ~= buf or vim.bo.filetype == 'guihua' then
       log('swap buffer')
