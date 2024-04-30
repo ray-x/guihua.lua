@@ -99,40 +99,12 @@ function Panel:initialize(opts)
   self.width = opts.width or 35
   self.sections = self.sections or {}
   self.icons = {}
-  self.icons.panel_icons = opts.panel_icons
-    or {
-      section_separator = '─', --'',
-      line_num_left = ':', --'',
-      line_num_right = '', --',
-
-      range_left = '', --'',
-      range_right = '',
-      inner_node = '', --├○',
-      folded = '◉',
-      unfolded = '○',
-
-      outer_node = '', -- '╰○',
-      bracket_left = '', -- ⟪',
-      bracket_right = '', -- '⟫',
-    }
-  panel_icons = self.icons.panel_icons
-  self.icons.syntax_icons = opts.syntax_icons
-    or {
-      var = ' ', -- "👹", -- Vampaire
-      method = 'ƒ ', --  "🍔", -- mac
-      ['function'] = ' ', -- "🤣", -- Fun
-      ['arrow_function'] = ' ', -- "🤣", -- Fun
-      parameter = '', -- Pi
-      associated = '🤝',
-      namespace = '🚀',
-      type = ' ',
-      field = '🏈',
-      interface = '',
-      module = '📦',
-      flag = '🎏',
-    }
-  syntax_icons = self.icons.syntax_icons
-  -- set_highlights(self.icons)
+  panel_icons =
+    vim.tbl_deep_extend('force', require('guihua.icons').icons().panel, opts.panel_icons or {})
+  self.icons.panel = panel_icons
+  syntax_icons =
+    vim.tbl_deep_extend('force', require('guihua.icons').icons().syntax, opts.syntax_icons or {})
+  self.icons.syntax = syntax_icons
 
   self:add_section(opts)
   self.ft = vim.o.ft

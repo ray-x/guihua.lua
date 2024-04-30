@@ -56,6 +56,40 @@ Plugin has implementation of fzy with both ffi and native lua. If you like to tr
     tabnew = '<C-t>',
   }
 
+  -- default icons for panel
+  -- will be tbl_deep_extend() if you override any of those
+  local icons = {
+    panel_icons = {
+      section_separator = '─', --'',
+      line_num_left = ':', --'',
+      line_num_right = '', --',
+
+      range_left = '', --'',
+      range_right = '',
+      inner_node = '', --├○',
+      folded = '◉',
+      unfolded = '○',
+
+      outer_node = '', -- '╰○',
+      bracket_left = '', -- ⟪',
+      bracket_right = '', -- '⟫',
+    },
+    syntax_icons = {
+      var = ' ', -- "👹", -- Vampaire
+        method = 'ƒ ', --  "🍔", -- mac
+        ['function'] = ' ', -- "🤣", -- Fun
+        ['arrow_function'] = ' ', -- "🤣", -- Fun
+          parameter = '', -- Pi
+            associated = '🤝',
+      namespace = '🚀',
+      type = ' ',
+      field = '🏈',
+      interface = '',
+      module = '📦',
+      flag = '🎏',
+    }
+  }
+
   --
   require('guihua.maps').setup({
   maps = {
