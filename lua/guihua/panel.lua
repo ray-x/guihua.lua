@@ -18,7 +18,9 @@ local function _make_window_name(tabpage)
 end
 local sep = '────'
 local function _make_augroup_name(tabpage)
-  return '__guihua__aug_' .. tabpage .. ''
+  -- check if augroup exists
+  local group = '__guihua__aug_' .. tabpage .. ''
+  return api.nvim_create_augroup(group, {})
 end
 
 local active_windows = {}
@@ -87,7 +89,7 @@ local function format_node(node, section)
   if node.lnum then
     str = str .. ' ' .. scope
   end
-  trace('format:', str)
+  trace('formatted:', str)
   return str
 end
 
@@ -210,6 +212,9 @@ function Panel:get_jump_info()
     return
   end
   local scts = self.activePanel.sections
+  -- remove chars after  panel_icons.range_left + number
+  line = line:gsub(panel_icons.range_left .. '%d+.*', '')
+  trace('selected line', line)
   for _, sct in pairs(scts) do
     if vfn.empty(sct.nodes) == 0 then
       for _, node in pairs(sct.nodes) do
@@ -221,7 +226,7 @@ function Panel:get_jump_info()
           return node
         end
       end
-      -- parcial match
+      -- partial match
       for _, node in pairs(sct.nodes) do
         -- log(node, sct.format(node), utils.trim(line))
         if utils.trim(line):find(utils.trim(sct.format(node))) then
@@ -256,10 +261,14 @@ local function add_keymappings(bufnr)
     { silent = true }
   )
 
-  api.nvim_create_autocmd(
-    { 'CursorHold', 'CursorHoldI' },
-    { buffer = bufnr, command = ":lua require ('guihua.panel').on_hover()" }
-  )
+  local augroup = _make_augroup_name(api.nvim_get_current_tabpage())
+  api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
+    buffer = bufnr,
+    group = augroup,
+    callback = function()
+      require('guihua.panel').on_hover()
+    end,
+  })
 
   api.nvim_create_autocmd({
     'CursorMoved',
@@ -270,7 +279,13 @@ local function add_keymappings(bufnr)
     'BufEnter',
     'BufUnload',
     'BufLeave',
-  }, { buffer = bufnr, command = ":lua require ('guihua.panel').on_preview_close()" })
+  }, {
+    buffer = bufnr,
+    group = augroup,
+    callback = function()
+      require('guihua.panel').on_preview_close()
+    end,
+  })
 end
 
 local function filepreview(node)
@@ -342,6 +357,7 @@ end
 --in our window or the window is being closed), let's close guihua for this
 --tab.
 function Panel:remove_tab_on_buf_leave()
+  log('remove_tab_on_buf_leave')
   local tabpage = api.nvim_get_current_tabpage()
   Panel:remove_tab(tabpage)
 end
@@ -350,6 +366,7 @@ end
 function Panel:close()
   local tabpage = api.nvim_get_current_tabpage()
   local win_name = _make_window_name(tabpage)
+  trace('pannel close', tabpage, win_name, 'activePanel', Panel.activePanel)
   if tabs[tabpage] then
     if active_windows[win_name] then
       Panel:remove_tab(tabpage)
@@ -396,23 +413,28 @@ end
 local function run_on_buf_enter()
   local tabpage = api.nvim_get_current_tabpage()
   local augroup = _make_augroup_name(tabpage)
-  vim.cmd('augroup ' .. augroup)
 
-  api.nvim_create_autocmd(
-    { 'BufEnter' },
-    { command = ":lua require ('guihua.panel').redraw(false)" }
-  )
-  vim.cmd('augroup END')
+  api.nvim_create_autocmd({ 'BufEnter' }, {
+    callback = function()
+      require('guihua.panel').redraw(false)
+    end,
+    group = augroup,
+  })
 end
 
 local function close_on_buf_win_leave()
   local tabpage = api.nvim_get_current_tabpage()
   local augroup = _make_augroup_name(tabpage)
-  vim.cmd('augroup ' .. augroup)
-  local lua_callback_cmd = "lua require('guihua.panel').remove_tab_on_buf_leave()"
-  local full_cmd = 'autocmd! ' .. augroup .. ' BufWinLeave <buffer> ' .. lua_callback_cmd
-  vim.cmd(full_cmd)
-  vim.cmd('augroup END')
+  local buffnr = api.nvim_get_current_buf()
+  vim.api.nvim_create_autocmd({ 'BufWinLeave' }, {
+    callback = function()
+      trace('bufwinleave')
+      require('guihua.panel').remove_tab_on_buf_leave()
+    end,
+    buffer = buffnr,
+    group = augroup,
+    desc = 'Remove panel tab on buf leave',
+  })
 end
 
 local function make_panel_window(win_name)
@@ -606,6 +628,7 @@ function Panel.jump_to_loc()
     log('no jump info')
     return
   end
+  trace(node)
   if node.range == nil or node.lnum == nil then
     -- check if on_confirm is set
     log('incorrect node info to jump', node)
@@ -679,6 +702,7 @@ end
 
 function Panel:open(should_toggle, redraw, buf)
   if should_toggle and self:is_open() then
+    log('toggle close')
     Panel:close()
     return
   end
@@ -725,6 +749,7 @@ function Panel:open(should_toggle, redraw, buf)
         api.nvim_set_option_value('modifiable', false, { buf = guihua_buf })
         self.last_parsed_buf = -1
       end
+      return
     end
     self.sections[i].text = {}
     self.sections[i].nodes = nodes
