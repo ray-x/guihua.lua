@@ -35,8 +35,8 @@ local function icons()
 end
 
 local function setup(opts)
-  if opts.icons then
-    _icons = vim.tbl_deep_extend('force',  _icons, opts.icons)
+  if opts and opts.icons then
+    _icons = vim.tbl_deep_extend('force', _icons, opts.icons)
   end
 end
 
