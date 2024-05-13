@@ -49,10 +49,7 @@ local function sep()
   return '/'
 end
 
-
 local function fs_write(path, data)
-  local uv = vim.uv or vim.loop
-
   -- Open the file in append mode
   uv.fs_open(path, 'a', tonumber('644', 8), function(open_err, fd)
     if open_err then
