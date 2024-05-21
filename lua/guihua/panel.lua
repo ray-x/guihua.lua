@@ -20,7 +20,7 @@ local sep = '────'
 local function _make_augroup_name(tabpage)
   -- check if augroup exists
   local group = '__guihua__aug_' .. tabpage .. ''
-  return api.nvim_create_augroup(group, {})
+  return api.nvim_create_augroup(group, {clear = false})
 end
 
 local active_windows = {}
@@ -266,9 +266,8 @@ local function add_augroup(bufnr)
     end,
     desc = 'Hover on cursor hold',
   })
-  log('au created', au)
 
-  au = api.nvim_create_autocmd({
+  api.nvim_create_autocmd({
     'CursorMoved',
     'CursorMovedI',
     'TabLeave',
@@ -328,15 +327,14 @@ local function run_on_buf_write(buf)
   --Wrap autocmd in per-tabpage augroup to stop duplicate registration.
   local tabpage = api.nvim_get_current_tabpage()
   local augroup = _make_augroup_name(tabpage)
-  vim.cmd('augroup ' .. augroup)
   api.nvim_create_autocmd({ 'BufWritePost' }, {
     callback = function()
       require('guihua.panel').redraw(false)
     end,
+    group = augroup,
     buffer = buf,
   })
 
-  vim.cmd('augroup END')
 end
 
 -- Removes current tab from list of open tabs so we don't try to open guihua panel
@@ -345,9 +343,11 @@ function Panel:remove_tab(tabpage)
   tabs[tabpage] = nil
   local augroup = _make_augroup_name(tabpage)
   -- Delete all guihua panel autocommands set up for this tab.
-  vim.cmd('augroup ' .. augroup)
-  vim.cmd('au!')
-  vim.cmd('augroup ' .. augroup)
+  api.nvim_create_autocmd({ 'BufWritePost' }, {
+    group = augroup,
+    buffer = Panel.activePanel.buf,
+    command = 'au!'
+  })
 end
 
 function Panel:is_open()
