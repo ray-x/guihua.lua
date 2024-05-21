@@ -243,34 +243,32 @@ end
 
 -- NB: Must be called from within guihua window.
 local function add_keymappings(bufnr)
-  bufnr = bufnr or 0
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
   -- jump to definition on <CR> or double-click
-  api.nvim_buf_set_keymap(
-    bufnr,
-    'n',
-    '<CR>',
-    ':lua require "guihua.panel".jump_or_fold()<CR>',
-    { silent = true }
-  )
+  vim.keymap.set('n', '<CR>', function()
+    require('guihua.panel').jump_or_fold()
+  end, { buffer = bufnr })
 
-  api.nvim_buf_set_keymap(
-    bufnr,
-    'n',
-    '<2-LeftMouse>',
-    ':lua require "guihua.panel".jump_or_fold()<CR>',
-    { silent = true }
-  )
+  vim.keymap.set('n', '<2-LeftMouse>', function()
+    require('guihua.panel').jump_or_fold()
+  end, { buffer = bufnr })
+end
 
+local function add_augroup(bufnr)
   local augroup = _make_augroup_name(api.nvim_get_current_tabpage())
-  api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
+  log('augroup', augroup, 'buf', bufnr)
+  local au = api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
     buffer = bufnr,
     group = augroup,
     callback = function()
+      log('on hover')
       require('guihua.panel').on_hover()
     end,
+    desc = 'Hover on cursor hold',
   })
+  log('au created', au)
 
-  api.nvim_create_autocmd({
+  au = api.nvim_create_autocmd({
     'CursorMoved',
     'CursorMovedI',
     'TabLeave',
@@ -285,7 +283,10 @@ local function add_keymappings(bufnr)
     callback = function()
       require('guihua.panel').on_preview_close()
     end,
+    desc = 'Close preview on cursor move',
   })
+
+  log('au created', au)
 end
 
 local function filepreview(node)
@@ -294,6 +295,7 @@ local function filepreview(node)
   if not uri or not range then
     local ft = vim.api.nvim_get_option_value('filetype', { buf = 0 })
     local hint = node.hint or node.text or node.node_text or node.name or 'unknown'
+    log(hint)
     if type(hint) == 'string' then
       hint = { hint }
     end
@@ -493,7 +495,7 @@ function Panel:draw()
   api.nvim_set_option_value('modifiable', false, { buf = self.buf })
 
   self:animate_create()
-  add_keymappings(self.buf)
+  -- add_keymappings(self.buf)
   --Track which windows we have been opened in.
   tabs[tabpage] = true
   return self.win, self.buf
@@ -759,12 +761,15 @@ function Panel:open(should_toggle, redraw, buf)
   end
 
   -- redraw the panel
-  self:draw()
+  local wnr, bnr = self:draw()
 
   local ft = vim.api.nvim_get_option_value('filetype', { buf = buf })
   if ft ~= '' and ft ~= 'guihua' and ft ~= 'nofile' then
     self.last_parsed_buf = buf
   end
+  add_keymappings(bnr)
+  add_augroup(bnr)
+
   if not redraw then
     run_on_buf_write(buf)
     run_on_buf_enter()
