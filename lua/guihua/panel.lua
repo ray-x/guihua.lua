@@ -20,7 +20,7 @@ local sep = '────'
 local function _make_augroup_name(tabpage)
   -- check if augroup exists
   local group = '__guihua__aug_' .. tabpage .. ''
-  return api.nvim_create_augroup(group, {clear = false})
+  return api.nvim_create_augroup(group, { clear = false })
 end
 
 local active_windows = {}
@@ -334,7 +334,6 @@ local function run_on_buf_write(buf)
     group = augroup,
     buffer = buf,
   })
-
 end
 
 -- Removes current tab from list of open tabs so we don't try to open guihua panel
@@ -343,11 +342,13 @@ function Panel:remove_tab(tabpage)
   tabs[tabpage] = nil
   local augroup = _make_augroup_name(tabpage)
   -- Delete all guihua panel autocommands set up for this tab.
-  api.nvim_create_autocmd({ 'BufWritePost' }, {
-    group = augroup,
-    buffer = Panel.activePanel.buf,
-    command = 'au!'
-  })
+  if Panel.activePanel and Panel.activePanel.buf then
+    api.nvim_create_autocmd({ 'BufWritePost' }, {
+      group = augroup,
+      buffer = Panel.activePanel.buf,
+      command = 'au!',
+    })
+  end
 end
 
 function Panel:is_open()
