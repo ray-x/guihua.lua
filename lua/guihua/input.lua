@@ -33,7 +33,7 @@ local function input(opts, on_confirm)
   local bufnr = vim.api.nvim_create_buf(false, true)
 
   input_ctx.opts = opts
-  local prompt = opts.prompt
+  local prompt = opts.prompt or ''
   local placeholder = opts.default or ''
   local setup_confirm = input_ctx.on_confirm
   input_ctx.on_confirm = function(new_name)
