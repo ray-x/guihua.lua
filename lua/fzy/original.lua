@@ -144,13 +144,13 @@ function fzy.positions(needle, haystack)
   local m = string.len(haystack)
 
   if n == 0 or m == 0 or m > MATCH_MAX_LENGTH or n > MATCH_MAX_LENGTH then
-    return {}
+    return {}, SCORE_MIN
   elseif n == m then
     local consecutive = {}
     for i=1,n do
       consecutive[i] = i
     end
-    return consecutive
+    return consecutive, SCORE_MAX
   end
 
   local D = {}
