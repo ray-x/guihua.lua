@@ -241,7 +241,6 @@ end
 
 M.select = function(items, opts, on_choice)
   vim.validate({ items = { items, 't' }, opts = { opts, 't' }, on_choice = { on_choice, 'f' } })
-  log('select called')
   local win_title = opts.prompt .. ' <C-o> Apply <C-e> Exit'
   local data = {}
   if vim.fn.has('nvim-0.9') == 0 then
@@ -323,9 +322,8 @@ M.select = function(items, opts, on_choice)
     relative = 'cursor',
     rawdata = true,
     data = data,
-    on_confirm = function(item)
-      log(item)
-      return on_choice(item.value)
+    on_confirm = function(item, idx)
+      return on_choice(item.value, item.idx or idx)
     end,
     on_move = function(pos)
       trace(pos)
@@ -337,7 +335,7 @@ M.select = function(items, opts, on_choice)
     return
   end
   vim.api.nvim_buf_add_highlight(listview.buf, -1, 'Title', 0, 0, -1)
-  -- move to 1st tiem
+  -- move to 1st item
   ListViewCtrl:on_next()
   ListViewCtrl:on_next()
 
