@@ -58,6 +58,7 @@ function TextView:initialize(...)
       TextView.ActiveTextView.win ~= nil
       and vim.api.nvim_win_is_valid(TextView.ActiveTextView.win)
       and vim.api.nvim_buf_is_valid(TextView.ActiveTextView.buf)
+      and TextView.static.ActiveTextView.rect.height == opts.rect.height
     then
       log('active view ', TextView.ActiveTextView.buf, TextView.ActiveTextView.win)
       if TextView.hl_id ~= nil then
@@ -85,6 +86,9 @@ function TextView:initialize(...)
       end
       log('ctor TextView: end, already existed') -- , View.ActiveView)--, self)
       return TextView.ActiveTextView
+    else
+      TextView.ActiveTextView:close()
+      TextView.ActiveTextView = nil
     end
   end
   if opts.allow_edit then

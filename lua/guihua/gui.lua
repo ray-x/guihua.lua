@@ -6,7 +6,6 @@ local util = require('guihua.util')
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 local api = vim.api
-trace = log
 local top_center = require('guihua.location').top_center
 
 -- local path_sep = require('navigator.util').path_sep()
@@ -49,7 +48,7 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
     syntax = syntax,
     width = opts.width,
     height = display_range['end'].line - display_range.start.line + 1,
-    preview_height = opts.height,
+    preview_height = display_range['end'].line - display_range.start.line + 1, -- opts.preview_height or opts.height,
     pos_x = opts.offset_x,
     pos_y = opts.offset_y,
     range = opts.range,
@@ -57,6 +56,7 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
     uri = uri,
     allow_edit = opts.enable_edit,
   }
+  trace('height', win_opts.height, win_opts.preview_height, opts.height, win_opts.height)
 
   if opts.external then
     win_opts.external = true
@@ -73,7 +73,7 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
   local text_view_opts = {
     loc = win_opts.location,
     rect = {
-      height = win_opts.height, -- opts.preview_heigh or 12, -- TODO 12
+      height = win_opts.preview_height,
       width = win_opts.width,
       pos_x = win_opts.pos_x,
       pos_y = win_opts.pos_y,
@@ -111,6 +111,7 @@ function M.preview_uri(opts) -- uri, width, line, col, offset_x, offset_y
 
   -- TODO: preview height
   loc.range['end'] = { line = opts.lnum + (opts.preview_height or opts.height) }
+  opts.height = loc.range['end'].line - loc.range.start.line + 1
   opts.location = loc
 
   trace('uri', opts.uri, opts.lnum, opts.location.range.start.line, opts.location.range['end'].line)
@@ -217,6 +218,7 @@ function M.new_list_view(opts)
     on_move = opts.on_move or function(item)
       trace('on move', item)
       trace('on move', item.text or item, item.uri, item.filename)
+      trace(item, item.status_line, pheight)
       -- todo fix
       if item.uri == nil then
         item.uri = 'file:///' .. item.filename
@@ -227,7 +229,7 @@ function M.new_list_view(opts)
         width_ratio = opts.width_ratio,
         preview_lines_before = opts.preview_lines_before or 3,
         width = width,
-        preview_height = pheight + (item.status_line and #item.status_line > 0 and 1) or 0,
+        preview_height = pheight + ((item.status_line and #item.status_line > 0 and 1) or 0),
         lnum = item.lnum,
         col = item.col,
         range = item.range,

@@ -51,18 +51,19 @@ function View:initialize(...)
   self.prompt_mode = opts.prompt_mode or 'insert'
   self.ft = opts.ft or 'guihua'
   self.syntax = opts.syntax or 'guihua'
-  self.display_height = self.rect.height
+  self.display_height = self.display_height or self.rect.height
 
   local floatbuf = require('guihua.floating').floating_buf
   local floatbuf_mask = require('guihua.floating').floating_buf_mask
 
   local wheight = api.nvim_get_option('lines')
   if wheight < self.rect.height + self.rect.pos_y + 2 then
-    self.rect.height = math.max(1, wheight - self.rect.pos_y - 2)
-    self.display_height = self.rect.height
+    self.rect.height = math.max(2, wheight - self.rect.pos_y - 2)
+    self.display_height = self.display_height or self.rect.height
 
     log('height offscreen: ', wheight, self.rect)
   end
+  print('height:', self.rect.height, self.rect.pos_y)
 
   local float_opts = {
     win_width = self.rect.width,
@@ -96,23 +97,23 @@ function View:initialize(...)
   end
 
   if opts.transparency then
-    api.nvim_set_option_value('winblend', math.min(opts.transparency, 15), {win=self.win})
+    api.nvim_set_option_value('winblend', math.min(opts.transparency, 15), { win = self.win })
   end
   if
     vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'bg#') == ''
     or vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'bg#') == ''
   then
     -- prevent you get black ground
-    api.nvim_set_option_value('winblend', 0, {win=self.win})
+    api.nvim_set_option_value('winblend', 0, { win = self.win })
   end
 
-  api.nvim_set_option_value('virtualedit', 'block', {win=self.win})
+  api.nvim_set_option_value('virtualedit', 'block', { win = self.win })
   log('floatbuf created ', self.buf, self.win)
   self:set_hl(opts)
   if opts.data ~= nil and #opts.data >= 1 then
     self:on_draw(opts.data)
   end
-  if self.prompt and self.enter and self.prompt_mode == 'insert'  then
+  if self.prompt and self.enter and self.prompt_mode == 'insert' then
     vim.cmd('startinsert!')
     log('create prompt view')
   end
@@ -136,7 +137,7 @@ function View:set_hl(opts)
   if opts.border_hl ~= nil then
     cmd = cmd .. ',FloatBorder:' .. opts.border_hl
   end
-  api.nvim_set_option_value('winhl', cmd, {win=self.win})
+  api.nvim_set_option_value('winhl', cmd, { win = self.win })
 end
 
 function View:bind_ctrl(opts)
@@ -264,7 +265,7 @@ function View:on_draw(data)
     data = self.display_data
   end
 
-  api.nvim_set_option_value('readonly', false, {buf=self.buf})
+  api.nvim_set_option_value('readonly', false, { buf = self.buf })
   local content = {}
   if type(data) == 'string' then
     content = { data }
@@ -283,7 +284,7 @@ function View:on_draw(data)
   end
   draw_lines(self.buf, start, end_at, content)
   if self.prompt ~= true then
-    api.nvim_set_option_value('readonly', true, {buf=self.buf})
+    api.nvim_set_option_value('readonly', true, { buf = self.buf })
   end
   -- vim.fn.setpos(".", {0, 1, 1, 0})
 end
