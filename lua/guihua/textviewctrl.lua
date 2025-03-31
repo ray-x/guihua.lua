@@ -48,7 +48,13 @@ function TextViewCtrl:initialize(delegate, ...)
   -- ... is the view
   -- todo location, readonly? and filetype
   vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.save, '<cmd>lua TextViewCtrl:on_save()<CR>', {})
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.jump_to_list, '<cmd>lua ListViewCtrl:gh_jump_to_list()<CR>', {})
+  vim.api.nvim_buf_set_keymap(
+    delegate.buf,
+    'n',
+    m.jump_to_list,
+    '<cmd>lua ListViewCtrl:gh_jump_to_list()<CR>',
+    {}
+  )
 
   log('bind close', self.m_delegate.win, delegate.buf)
   if opts.edit then
@@ -108,6 +114,9 @@ function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
   self.file_info.lines = lines
   -- TODO should we create a float win based on opened buffer?
   trace(syntax, contents, self.file_info)
+  if opts.status_line then
+    table.insert(contents, #contents + 1, opts.status_line)
+  end
   return contents, syntax -- allow contents be handled by caller
 end
 
@@ -137,7 +146,13 @@ function TextViewCtrl:on_save()
   if range == nil or range.start == nil or file_info == nil then
     return
   end
-  vim.api.nvim_buf_set_lines(bufnr, range.start.line, range.start.line + file_info.lines, true, contents)
+  vim.api.nvim_buf_set_lines(
+    bufnr,
+    range.start.line,
+    range.start.line + file_info.lines,
+    true,
+    contents
+  )
 end
 
 return TextViewCtrl

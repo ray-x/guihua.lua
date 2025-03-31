@@ -6,7 +6,7 @@ local util = require('guihua.util')
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 local api = vim.api
-
+trace = log
 local top_center = require('guihua.location').top_center
 
 -- local path_sep = require('navigator.util').path_sep()
@@ -91,6 +91,7 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
     hl_line = win_opts.hl_line,
     allow_edit = win_opts.allow_edit,
     external = win_opts.external,
+    status_line = opts.status_line,
   }
 
   log(text_view_opts)
@@ -222,10 +223,11 @@ function M.new_list_view(opts)
       end
       return M.preview_uri({
         uri = item.uri,
+        status_line = item.status_line,
         width_ratio = opts.width_ratio,
         preview_lines_before = opts.preview_lines_before or 3,
         width = width,
-        preview_height = pheight,
+        preview_height = pheight + (item.status_line and #item.status_line > 0 and 1) or 0,
         lnum = item.lnum,
         col = item.col,
         range = item.range,

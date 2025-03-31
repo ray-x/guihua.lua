@@ -11,6 +11,7 @@ if _GH_SETUP == nil then
 end
 -- _VT_GHLIST = vim.api.nvim_create_namespace("guihua_listview")
 
+trace = log
 if ListView == nil then
   ListView = class('ListView', View)
 end
@@ -42,7 +43,7 @@ function ListView:initialize(...)
 
   opts.bg = opts.bg or 'GuihuaListDark'
 
-  if opts.enter == nil  then
+  if opts.enter == nil then
     opts.enter = true
   end
   View.initialize(self, opts)
@@ -57,9 +58,9 @@ function ListView:initialize(...)
 
   trace('listview ft:', opts)
 
-  vim.api.nvim_set_option_value('ft', ft, {buf = self.buf})
+  vim.api.nvim_set_option_value('ft', ft, { buf = self.buf })
   if not opts.wrap then
-    vim.api.nvim_set_option_value('wrap', false, {win = self.win})
+    vim.api.nvim_set_option_value('wrap', false, { win = self.win })
   end
 
   if not opts.prompt or opts.enter then
@@ -87,7 +88,11 @@ function ListView:initialize(...)
   local m = _GH_SETUP.maps
   vim.api.nvim_buf_set_keymap(self.buf, 'n', m.close_view, '<cmd> lua ListView.close() <CR>', {})
   vim.api.nvim_buf_set_keymap(self.buf, 'i', m.close_view, '<cmd> lua ListView.close() <CR>', {})
-  vim.api.nvim_set_hl(self.ns, '@error', { undercurl = false, underdouble = false, underline = false})
+  vim.api.nvim_set_hl(
+    self.ns,
+    '@error',
+    { undercurl = false, underdouble = false, underline = false }
+  )
   vim.api.nvim_win_set_hl_ns(self.win, self.ns)
   return self
 end

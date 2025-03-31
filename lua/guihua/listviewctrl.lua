@@ -15,19 +15,6 @@ if ListViewCtrl == nil then
   ListViewCtrl = class('ListViewCtrl', ViewController)
 end
 
--- local function gh_jump_to_win()
---   local currentWinnr = vim.api.nvim_get_current_win()
---   local jumpto = TextView.ActiveTextView.win
---   if jumpto == currentWinnr then
---     jumpto = ListView.Winnr
---   end
---
---   if jumpto ~= nil and vim.api.nvim_win_is_valid(jumpto) then
---     log('jump from ', currentWinnr, 'to', jumpto)
---     vim.api.nvim_set_current_win(jumpto)
---   end
--- end
-
 function ListViewCtrl:gh_jump_to_list()
   if ListView == nil then
     return
@@ -103,47 +90,51 @@ function ListViewCtrl:initialize(delegate, ...)
   end
   --  stylua: ignore start
   local keymaps = {
-    { mode = 'n', key = m.prev, cmd = function() ListViewCtrl:on_prev() end, desc = 'ListViewCtrl:on_prev()' },
-    { mode = 'i', key = m.prev, cmd = function() ListViewCtrl:on_prev() end, desc = 'ListViewCtrl:on_prev()' },
-    { mode = 'n', key = m.next, cmd = function() ListViewCtrl:on_next() end, desc = 'ListViewCtrl:on_next()' },
-    { mode = 'i', key = m.next, cmd = function() ListViewCtrl:on_next() end, desc = 'ListViewCtrl:on_next()' },
-    { mode = 'n', key = '<Enter>', cmd = function() ListViewCtrl:on_confirm() end, desc = 'ListViewCtrl:on_confirm()' },
-    { mode = 'i', key = '<Enter>', cmd = function() ListViewCtrl:on_confirm() end, desc = 'ListViewCtrl:on_confirm()' },
-    { mode = 'n', key = '<C-w>j', cmd = function () ListViewCtrl:gh_jump_to_preview() end, desc = 'jump to preview' },
-    { mode = 'n', key = 'k', cmd = function() ListViewCtrl:on_prev() end, desc = 'ListViewCtrl:on_prev()' },
-    { mode = 'n', key = 'j', cmd = function() ListViewCtrl:on_next() end, desc = 'ListViewCtrl:on_next()' },
-    { mode = 'n', key = '<Tab>', cmd = function() ListViewCtrl:on_toggle() end, desc = 'ListViewCtrl:on_toggle()' },
-    { mode = 'i', key = '<Tab>', cmd = function() ListViewCtrl:on_toggle() end, desc = 'ListViewCtrl:on_toggle()' },
-    { mode = 'n', key = '<Up>', cmd = function() ListViewCtrl:on_prev() end, desc = 'ListViewCtrl:on_prev()' },
-    { mode = 'n', key = '<Down>', cmd = function() ListViewCtrl:on_next() end, desc = 'ListViewCtrl:on_next()' },
-    { mode = 'i', key = '<Up>', cmd = function() ListViewCtrl:on_prev() end, desc = 'ListViewCtrl:on_prev()' },
-    { mode = 'i', key = '<Down>', cmd = function() ListViewCtrl:on_next() end, desc = 'ListViewCtrl:on_next()' },
-    { mode = 'i', key = m.pageup, cmd = function() ListViewCtrl:on_pageup() end, desc = 'ListViewCtrl:on_pageup()' },
-    { mode = 'i', key = m.pagedown, cmd = function() ListViewCtrl:on_pagedown() end, desc = 'ListViewCtrl:on_pagedown()' },
-    { mode = 'i', key = '<PageUp>', cmd = function() ListViewCtrl:on_pageup() end, desc = 'ListViewCtrl:on_pageup()' },
-    { mode = 'i', key = '<PageDown>', cmd = function() ListViewCtrl:on_pagedown() end, desc = 'ListViewCtrl:on_pagedown()' },
-    { mode = 'n', key = m.pageup, cmd = function() ListViewCtrl:on_pageup() end, desc = 'ListViewCtrl:on_pageup()' },
-    { mode = 'n', key = m.pagedown, cmd = function() ListViewCtrl:on_pagedown() end, desc = 'ListViewCtrl:on_pagedown()' },
-    { mode = 'n', key = '<PageUp>', cmd = function() ListViewCtrl:on_pageup() end, desc = 'ListViewCtrl:on_pageup()' },
-    { mode = 'n', key = '<PageDown>', cmd = function() ListViewCtrl:on_pagedown() end, desc = 'ListViewCtrl:on_pagedown()' },
-    { mode = 'n', key = m.confirm, cmd = function() ListViewCtrl:on_confirm() end, desc = 'ListViewCtrl:on_confirm()' },
-    { mode = 'n', key = m.vsplit, cmd = function() ListViewCtrl:on_confirm({ split = 'v' }) end, desc = 'ListViewCtrl:on_confirm {split = v}'},
-    { mode = 'n', key = m.split, cmd = function() ListViewCtrl:on_confirm({ split = 's' }) end, desc = 'ListViewCtrl:on_confirm {split = s}'},
-    { mode = 'n', key = m.tabnew, cmd = function() ListViewCtrl:on_confirm({ split = 't' }) end, desc = 'ListViewCtrl:on_confirm {split = t}'},
-    { mode = 'i', key = m.tabnew, cmd = function() ListViewCtrl:on_confirm({ split = 't' }) end, desc = 'ListViewCtrl:on_confirm {split = t}'},
-    { mode = 'i', key = m.confirm, cmd = function() ListViewCtrl:on_confirm() end, desc = 'ListViewCtrl:on_confirm()' },
-    { mode = 'n', key = m.close_view, cmd = function() ListViewCtrl:on_close() end, desc = 'ListViewCtrl:on_close()' },
-    { mode = 'n', key = m.send_qf, cmd = function() ListViewCtrl:on_quickfix() end, desc = 'ListViewCtrl:on_quickfix()' },
-    { mode = 'n', key = '<C-c>', cmd = function() ListViewCtrl:on_close() end, desc = 'ListViewCtrl:on_close()' },
-    { mode = 'n', key = '<ESC>', cmd = function() ListViewCtrl:on_close() end, desc = 'ListViewCtrl:on_close()' },
-    { mode = 'i', key = '<BS>', cmd = function() ListViewCtrl:on_backspace() end, desc = 'ListViewCtrl:on_backspace()' },
-    { mode = 'i', key = '<C-W>', cmd = function() ListViewCtrl:on_backspace(true) end, desc = 'ListViewCtrl:on_backspace()' },
+    { mode = 'n', key = m.prev,       cmd = function() ListViewCtrl:on_prev() end,                   desc = 'ListViewCtrl:on_prev()' },
+    { mode = 'i', key = m.prev,       cmd = function() ListViewCtrl:on_prev() end,                   desc = 'ListViewCtrl:on_prev()' },
+    { mode = 'n', key = m.next,       cmd = function() ListViewCtrl:on_next() end,                   desc = 'ListViewCtrl:on_next()' },
+    { mode = 'i', key = m.next,       cmd = function() ListViewCtrl:on_next() end,                   desc = 'ListViewCtrl:on_next()' },
+    { mode = 'n', key = '<Enter>',    cmd = function() ListViewCtrl:on_confirm() end,                desc = 'ListViewCtrl:on_confirm()' },
+    { mode = 'i', key = '<Enter>',    cmd = function() ListViewCtrl:on_confirm() end,                desc = 'ListViewCtrl:on_confirm()' },
+    { mode = 'n', key = '<C-w>j',     cmd = function() ListViewCtrl:gh_jump_to_preview() end,        desc = 'jump to preview' },
+    { mode = 'n', key = 'k',          cmd = function() ListViewCtrl:on_prev() end,                   desc = 'ListViewCtrl:on_prev()' },
+    { mode = 'n', key = 'j',          cmd = function() ListViewCtrl:on_next() end,                   desc = 'ListViewCtrl:on_next()' },
+    { mode = 'n', key = '<Tab>',      cmd = function() ListViewCtrl:on_toggle() end,                 desc = 'ListViewCtrl:on_toggle()' },
+    { mode = 'i', key = '<Tab>',      cmd = function() ListViewCtrl:on_toggle() end,                 desc = 'ListViewCtrl:on_toggle()' },
+    { mode = 'n', key = '<Up>',       cmd = function() ListViewCtrl:on_prev() end,                   desc = 'ListViewCtrl:on_prev()' },
+    { mode = 'n', key = '<Down>',     cmd = function() ListViewCtrl:on_next() end,                   desc = 'ListViewCtrl:on_next()' },
+    { mode = 'i', key = '<Up>',       cmd = function() ListViewCtrl:on_prev() end,                   desc = 'ListViewCtrl:on_prev()' },
+    { mode = 'i', key = '<Down>',     cmd = function() ListViewCtrl:on_next() end,                   desc = 'ListViewCtrl:on_next()' },
+    { mode = 'i', key = m.pageup,     cmd = function() ListViewCtrl:on_pageup() end,                 desc = 'ListViewCtrl:on_pageup()' },
+    { mode = 'i', key = m.pagedown,   cmd = function() ListViewCtrl:on_pagedown() end,               desc = 'ListViewCtrl:on_pagedown()' },
+    { mode = 'i', key = '<PageUp>',   cmd = function() ListViewCtrl:on_pageup() end,                 desc = 'ListViewCtrl:on_pageup()' },
+    { mode = 'i', key = '<PageDown>', cmd = function() ListViewCtrl:on_pagedown() end,               desc = 'ListViewCtrl:on_pagedown()' },
+    { mode = 'n', key = m.pageup,     cmd = function() ListViewCtrl:on_pageup() end,                 desc = 'ListViewCtrl:on_pageup()' },
+    { mode = 'n', key = m.pagedown,   cmd = function() ListViewCtrl:on_pagedown() end,               desc = 'ListViewCtrl:on_pagedown()' },
+    { mode = 'n', key = '<PageUp>',   cmd = function() ListViewCtrl:on_pageup() end,                 desc = 'ListViewCtrl:on_pageup()' },
+    { mode = 'n', key = '<PageDown>', cmd = function() ListViewCtrl:on_pagedown() end,               desc = 'ListViewCtrl:on_pagedown()' },
+    { mode = 'n', key = m.confirm,    cmd = function() ListViewCtrl:on_confirm() end,                desc = 'ListViewCtrl:on_confirm()' },
+    { mode = 'n', key = m.vsplit,     cmd = function() ListViewCtrl:on_confirm({ split = 'v' }) end, desc = 'ListViewCtrl:on_confirm {split = v}' },
+    { mode = 'n', key = m.split,      cmd = function() ListViewCtrl:on_confirm({ split = 's' }) end, desc = 'ListViewCtrl:on_confirm {split = s}' },
+    { mode = 'n', key = m.tabnew,     cmd = function() ListViewCtrl:on_confirm({ split = 't' }) end, desc = 'ListViewCtrl:on_confirm {split = t}' },
+    { mode = 'i', key = m.tabnew,     cmd = function() ListViewCtrl:on_confirm({ split = 't' }) end, desc = 'ListViewCtrl:on_confirm {split = t}' },
+    { mode = 'i', key = m.confirm,    cmd = function() ListViewCtrl:on_confirm() end,                desc = 'ListViewCtrl:on_confirm()' },
+    { mode = 'n', key = m.close_view, cmd = function() ListViewCtrl:on_close() end,                  desc = 'ListViewCtrl:on_close()' },
+    { mode = 'n', key = m.send_qf,    cmd = function() ListViewCtrl:on_quickfix() end,               desc = 'ListViewCtrl:on_quickfix()' },
+    { mode = 'n', key = '<C-c>',      cmd = function() ListViewCtrl:on_close() end,                  desc = 'ListViewCtrl:on_close()' },
+    { mode = 'n', key = '<ESC>',      cmd = function() ListViewCtrl:on_close() end,                  desc = 'ListViewCtrl:on_close()' },
+    { mode = 'i', key = '<BS>',       cmd = function() ListViewCtrl:on_backspace() end,              desc = 'ListViewCtrl:on_backspace()' },
+    { mode = 'i', key = '<C-W>',      cmd = function() ListViewCtrl:on_backspace(true) end,          desc = 'ListViewCtrl:on_backspace()' },
   }
 
   for i = 1, 9 do
     keymaps[#keymaps + 1] = {
       -- stylua: ignore
-      mode = 'n', key = tostring(i), cmd = function() ListViewCtrl:on_item(i) end, desc = 'list on item num'}
+      mode = 'n',
+      key = tostring(i),
+      cmd = function() ListViewCtrl:on_item(i) end,
+      desc = 'list on item num'
+    }
   end
 
   if vim.keymap == nil then
@@ -518,7 +509,7 @@ function ListViewCtrl:on_search()
   local filter_input = vim.api.nvim_buf_get_lines(buf, -2, -1, false)[1]
   -- get string after prompt
 
-  local filter_input_trim = string.sub(filter_input, 6, #filter_input)  -- hardcode 6 '󱩾 ' is 5 chars
+  local filter_input_trim = string.sub(filter_input, 6, #filter_input) -- hardcode 6 '󱩾 ' is 5 chars
   log('filter input:', filter_input_trim, 'input:', filter_input)
 
   if listobj.search_item == filter_input_trim then
@@ -567,7 +558,7 @@ function ListViewCtrl:on_backspace(deleteword)
   local listobj = ListViewCtrl._viewctlobject
   local buf = listobj.m_delegate.buf or vim.api.nvim_get_current_buf()
   local filter_input = vim.api.nvim_buf_get_lines(buf, -2, -1, false)[1]
-  local filter_input_trim = string.sub(filter_input, 6, #filter_input)  -- hardcode 6 '󱩾 ' is 5 chars
+  local filter_input_trim = string.sub(filter_input, 6, #filter_input) -- hardcode 6 '󱩾 ' is 5 chars
 
   if #filter_input_trim == 0 then
     -- filter_input = string.sub(filter_input, 1, -2)
