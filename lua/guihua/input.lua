@@ -64,15 +64,11 @@ local function input(opts, on_confirm)
     prompt = ' '
   end
 
-  -- vim.api.nvim_buf_add_highlight(bufnr, -1, 'NGPreviewTitle', 0, 0, #prompt)
   local ns_id = vim.api.nvim_create_namespace('guihua_input')
-  vim.api.nvim_buf_set_extmark(bufnr, ns_id, 0, 0, {
-    end_col = #prompt,
-    hl_group = 'NGPreviewTitle',
-  })
   vim.fn.prompt_setprompt(bufnr, prompt)
   local winnr = vim.api.nvim_open_win(bufnr, true, wopts)
   vim.api.nvim_set_option_value('winhl', 'Normal:NormalFloat,NormalNC:Normal', { win = winnr })
+
   if input_ctx.on_change then
     vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, {
       buffer = bufnr,
