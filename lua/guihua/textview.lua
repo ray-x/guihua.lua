@@ -91,8 +91,8 @@ function TextView:initialize(...)
           0,
           {
             hl_group = 'GuihuaListSelHl',
-            end_col = -1,
-            end_line = opts.hl_line - 1,
+            end_line = opts.hl_line - 1, -- to next line so I highlight the whole line
+            line_hl_group = 'GuihuaListSelHl',  -- Highlight the whole line
             priority = 1000,
           }
         )
@@ -156,8 +156,8 @@ function TextView:initialize(...)
       0,
       {
         hl_group = 'GuihuaListSelHl',
-        end_col = -1,
         end_line = opts.hl_line - 1,
+        line_hl_group = 'GuihuaListSelHl',  -- Highlight the whole line
         priority = 1000,
       }
     )
@@ -244,8 +244,8 @@ function TextView:on_draw(opts)
       0,
       {
         hl_group = 'GuihuaListSelHl',
-        end_col = -1,
         end_line = TextView.hl_line - 1,
+        line_hl_group = 'GuihuaListSelHl',  -- Highlight the whole line
         priority = 1000,
       }
     )

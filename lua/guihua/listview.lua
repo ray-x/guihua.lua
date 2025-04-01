@@ -227,8 +227,8 @@ function ListView:set_pos(i)
       0,
       {
         hl_group = ListviewHl,
-        end_col = -1,
         end_line = self.selected_line - 1,
+        line_hl_group = 'GuihuaListSelHl',  -- Highlight the whole line
         priority = 1000,
       }
     )

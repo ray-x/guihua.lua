@@ -1,14 +1,14 @@
 return {
   center = function(win_height, win_width)
-    local width = vim.api.nvim_get_option_value("columns", { win = 0 })
-    local height = vim.api.nvim_get_option_value("lines", { win = 0 })
+    local width = vim.api.nvim_get_option_value("columns", { scope = 'global' })
+    local height = vim.api.nvim_get_option_value("lines", { scope = 'global' })
     local row = math.ceil((height - win_height) / 2 - 1)
     local col = math.ceil((width - win_width) / 2)
     return row, col
   end,
   top_center = function(win_height, win_width)
-    local width = vim.api.nvim_get_option_value("columns", { win = 0 })
-    local height = vim.api.nvim_get_option_value("lines", { win = 0 })
+    local width = vim.api.nvim_get_option_value("columns", { scope = 'global' })
+    local height = vim.api.nvim_get_option_value("lines", { scope = 'global' })
     local row = math.max(4, math.ceil((height * 0.4 - win_height) / 2 - 1))
     local col = math.ceil((width - win_width) / 2 - 1)
     return row, col
@@ -16,21 +16,21 @@ return {
   -- caller need to figure out y offset this function always return 0
   -- offset_center = function(win_height, win_width)
   offset_center = function(_, win_width)
-    local width = vim.api.nvim_get_option_value("columns", { win = 0 })
+    local width = vim.api.nvim_get_option_value("columns", { scope = 'global' })
     local row = 0
     local col = math.ceil((width - win_width) / 2 - 1)
     return row, col
   end,
   bottom_center = function(win_height, win_width)
-    local width = vim.api.nvim_get_option_value("columns", { win = 0 })
-    local height = vim.api.nvim_get_option_value("lines", { win = 0 })
+    local width = vim.api.nvim_get_option_value("columns", { scope = 'global' })
+    local height = vim.api.nvim_get_option_value("lines", { scope = 'global' })
     local row = math.ceil((height - win_height))
     local col = math.ceil((width - win_width) / 2)
     return row, col
   end,
   center_right = function(win_height, win_width)
-    local width = vim.api.nvim_get_option_value("columns", { win = 0 })
-    local height = vim.api.nvim_get_option_value("lines", { win = 0 })
+    local width = vim.api.nvim_get_option_value("columns", { scope = 'global' })
+    local height = vim.api.nvim_get_option_value("lines", { scope = 'global' })
     local row = math.ceil((height - win_height) / 2 - 1)
     local col = math.ceil((width - win_width) / 3)
     return row, col

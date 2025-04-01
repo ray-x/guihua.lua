@@ -214,8 +214,9 @@ function Sprite:on_draw(data)
       0,
       {
         hl_group = 'GuihuaListSelHl',
-        end_col = -1,
+        -- end_col = -1,
         end_line = Sprite.hl_line -1,
+        line_hl_group = 'GuihuaListSelHl',  -- Highlight the whole line
         hl_eol = true,
         hl_mode = 'combine',
       }

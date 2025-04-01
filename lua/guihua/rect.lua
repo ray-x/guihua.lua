@@ -4,8 +4,8 @@ local Rect = class('Rect')
 function Rect:initialize(...)
   local cfg = select(1, ...)
 
-  local width = vim.api.nvim_get_option_value('columns', { win = 0 })
-  local height = vim.api.nvim_get_option_value('lines', { win = 0 })
+  local width = vim.api.nvim_get_option_value('columns', { scope = 'global' })
+  local height = vim.api.nvim_get_option_value('lines', { scope = 'global' })
 
   if cfg ~= nil then
     self.rect = cfg.rect
