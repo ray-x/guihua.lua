@@ -63,7 +63,7 @@ function View:initialize(...)
 
     log('height offscreen: ', wheight, self.rect)
   end
-  print('height:', self.rect.height, self.rect.pos_y)
+  log('height:', self.rect.height, self.rect.pos_y)
 
   local float_opts = {
     win_width = self.rect.width,
