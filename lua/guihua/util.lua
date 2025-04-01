@@ -278,7 +278,7 @@ M.highlighter = function(bufnr, ft, lines)
     -- apply_syntax_to_region ?
     log('ts not enable')
     if not lines then
-      log('need spcific lines!')
+      log('need specific lines!')
       -- TODO: did not verify this part of code yet
       lines = 12
     end

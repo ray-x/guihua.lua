@@ -38,6 +38,8 @@ with file uri {
   }
 
 --]]
+
+local ns_id = vim.api.nvim_create_namespace('guihua_textview')
 function TextView:initialize(...)
   trace(debug.traceback())
 
@@ -62,7 +64,7 @@ function TextView:initialize(...)
     then
       log('active view ', TextView.ActiveTextView.buf, TextView.ActiveTextView.win)
       if TextView.hl_id ~= nil then
-        vim.api.nvim_buf_clear_namespace(0, TextView.hl_id, 0, -1)
+        vim.api.nvim_buf_clear_namespace(TextView.static.buf or 0, TextView.hl_id, 0, -1)
         TextView.static.hl_id = nil
         TextView.static.hl_line = nil
       end
@@ -80,8 +82,20 @@ function TextView:initialize(...)
           opts.hl_line = 1
         end
         log('hl buf', self.buf, 'l ', opts.hl_line)
-        TextView.static.hl_id =
-          vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', opts.hl_line - 1, 0, -1)
+        -- TextView.static.hl_id =
+          -- vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', opts.hl_line - 1, 0, -1)
+        TextView.static.hl_id = vim.api.nvim_buf_set_extmark(
+          self.buf,
+          ns_id,
+          opts.hl_line - 1,
+          0,
+          {
+            hl_group = 'GuihuaListSelHl',
+            end_col = -1,
+            end_line = opts.hl_line - 1,
+            priority = 1000,
+          }
+        )
         TextView.static.hl_line = opts.hl_line
       end
       log('ctor TextView: end, already existed') -- , View.ActiveView)--, self)
@@ -133,8 +147,20 @@ function TextView:initialize(...)
       opts.hl_line = 1
     end
     log('buf', self.buf, 'hl_line: ', opts.hl_line)
-    TextView.static.hl_id =
-      vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', opts.hl_line - 1, 0, -1)
+    -- TextView.static.hl_id =
+      -- vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', opts.hl_line - 1, 0, -1)
+    TextView.static.hl_id = vim.api.nvim_buf_set_extmark(
+      self.buf,
+      ns_id,
+      opts.hl_line - 1,
+      0,
+      {
+        hl_group = 'GuihuaListSelHl',
+        end_col = -1,
+        end_line = opts.hl_line - 1,
+        priority = 1000,
+      }
+    )
     TextView.static.hl_line = opts.hl_line
   end
 
@@ -209,8 +235,20 @@ function TextView:on_draw(opts)
   -- vim.api.nvim_set_option_value("readonly", true, {buf=bufnr})
   vim.api.nvim_set_option_value('bufhidden', 'wipe', { buf = bufnr })
   if TextView.hl_line ~= nil then
-    TextView.static.hl_id =
-      vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', TextView.hl_line - 1, 0, -1)
+    -- TextView.static.hl_id =
+      -- vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', TextView.hl_line - 1, 0, -1)
+    TextView.static.hl_id = vim.api.nvim_buf_set_extmark(
+      self.buf,
+      ns_id,
+      TextView.hl_line - 1,
+      0,
+      {
+        hl_group = 'GuihuaListSelHl',
+        end_col = -1,
+        end_line = TextView.hl_line - 1,
+        priority = 1000,
+      }
+    )
   end
   -- vim.fn.setpos(".", {0, 1, 1, 0})
 

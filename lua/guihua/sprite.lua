@@ -17,6 +17,7 @@ end
 local dots = { '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏' }
 local dots2 = { '⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷' }
 local moon = { '🌑 ', '🌒 ', '🌓 ', '🌔 ', '🌕 ', '🌖 ', '🌗 ', '🌘 ' }
+local ns_id = vim.api.nvim_create_namespace('guihua_sprite')
 
 local function get_window_position(opts)
   local offset = opts.offset or 0
@@ -24,7 +25,7 @@ local function get_window_position(opts)
   if opts.relative == 'editor' then
     local statusline_height = 0
     local laststatus = vim.opt.laststatus:get()
-    if laststatus == 2 or laststatus == 3 or (laststatus == 1 and #api.nvim_tabpage_list_wins() > 1) then
+    if laststatus == 2 or laststatus == 3 or (laststatus == 1 and #api.nvim_tabpage_list_wins(0) > 1) then
       statusline_height = 1
     end
     height = vim.opt.lines:get() - (statusline_height + vim.opt.cmdheight:get())
@@ -98,7 +99,7 @@ function Sprite:initialize(...)
     then
       log('active view ', Sprite.ActiveSprite.buf, Sprite.ActiveSprite.win)
       if Sprite.hl_id ~= nil then
-        vim.api.nvim_buf_clear_namespace(0, Sprite.hl_id, 0, -1)
+        vim.api.nvim_buf_clear_namespace(Sprite.ActiveSprite.buf, Sprite.hl_id, 0, -1)
         Sprite.static.hl_id = nil
       end
       trace('active view already existed')
@@ -205,7 +206,20 @@ function Sprite:on_draw(data)
   vim.api.nvim_buf_set_lines(bufnr, start, end_at, true, content)
   vim.api.nvim_set_option_value('bufhidden', 'wipe', {buf=bufnr})
   if Sprite.hl_line ~= nil then
-    Sprite.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', Sprite.hl_line - 1, 0, -1)
+    -- Sprite.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', Sprite.hl_line - 1, 0, -1)
+    Sprite.static.hl_id = vim.api.nvim_buf_set_extmark(
+      self.buf,
+      ns_id,
+      Sprite.hl_line - 1,
+      0,
+      {
+        hl_group = 'GuihuaListSelHl',
+        end_col = -1,
+        end_line = Sprite.hl_line -1,
+        hl_eol = true,
+        hl_mode = 'combine',
+      }
+    )
   end
   trace('sprite draw finished')
 end

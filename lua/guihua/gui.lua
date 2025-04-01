@@ -8,6 +8,7 @@ local trace = require('guihua.log').trace
 local api = vim.api
 local top_center = require('guihua.location').top_center
 
+local ns_id = vim.api.nvim_create_namespace('guihua_gui')
 -- local path_sep = require('navigator.util').path_sep()
 -- local path_cur = require('navigator.util').path_cur()
 function M._preview_location(opts) -- location, width, pos_x, pos_y
@@ -244,7 +245,9 @@ function M.new_list_view(opts)
 end
 
 M.select = function(items, opts, on_choice)
-  vim.validate({ items = { items, 't' }, opts = { opts, 't' }, on_choice = { on_choice, 'f' } })
+  vim.validate('items', items, 'table')
+  vim.validate('opts', opts, 'table')
+  vim.validate('on_choice', on_choice, 'function')
   local win_title = opts.prompt .. ' <C-o> Apply <C-e> Exit'
   local data = {}
   if vim.fn.has('nvim-0.9') == 0 then
@@ -338,7 +341,19 @@ M.select = function(items, opts, on_choice)
   if listview == nil then
     return
   end
-  vim.api.nvim_buf_add_highlight(listview.buf, -1, 'Title', 0, 0, -1)
+  -- vim.api.nvim_buf_add_highlight(listview.buf, -1, 'Title', 0, 0, -1)
+  vim.api.nvim_buf_set_extmark(
+    listview.buf,
+    ns_id,
+    0,
+    0,
+    {
+      end_col = #win_title + 1,
+      hl_group = 'Title',
+      end_line = 0,
+      priority = 1000,
+    }
+  )
   -- move to 1st item
   ListViewCtrl:on_next()
   ListViewCtrl:on_next()

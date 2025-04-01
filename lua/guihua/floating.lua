@@ -217,7 +217,8 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
     args = opts.cmd
   end
 
-  vim.fn.termopen(args, {
+  vim.fn.jobstart(args, {
+    term = true, -- termopen
     on_exit = function(jobid, data, event)
       log('exit', jobid, data, event)
       if opts.autoclose == true then

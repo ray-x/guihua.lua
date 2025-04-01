@@ -199,7 +199,7 @@ function ListView:set_pos(i)
     self.selected_line = 1
   end
   self.selected_line = i
-  local selhighlight = vim.api.nvim_create_namespace('selhighlight')
+  local selhighlight = vim.api.nvim_create_namespace('guihua_selhighlight')
   local cursor = vim.api.nvim_win_get_cursor(self.win)
   cursor[1] = i
 
@@ -212,13 +212,25 @@ function ListView:set_pos(i)
     end
     vim.api.nvim_buf_clear_namespace(self.buf, selhighlight, 0, -1)
     local ListviewHl = 'GuihuaListSelHl'
-    vim.api.nvim_buf_add_highlight(
+    -- vim.api.nvim_buf_add_highlight(
+      -- self.buf,
+      -- selhighlight,
+      -- ListviewHl,
+      -- self.selected_line - 1,
+      -- 0,
+      -- -1
+    -- )
+    vim.api.nvim_buf_set_extmark(
       self.buf,
       selhighlight,
-      ListviewHl,
       self.selected_line - 1,
       0,
-      -1
+      {
+        hl_group = ListviewHl,
+        end_col = -1,
+        end_line = self.selected_line - 1,
+        priority = 1000,
+      }
     )
   end)
 end
