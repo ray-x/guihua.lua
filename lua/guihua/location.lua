@@ -9,7 +9,7 @@ return {
   top_center = function(win_height, win_width)
     local width = vim.api.nvim_get_option_value("columns", { scope = 'global' })
     local height = vim.api.nvim_get_option_value("lines", { scope = 'global' })
-    local row = math.max(4, math.ceil((height * 0.4 - win_height) / 2 - 1))
+    local row = math.max(1, math.ceil((height * 0.4 - win_height) / 2 - 1))
     local col = math.ceil((width - win_width) / 2 - 1)
     return row, col
   end,

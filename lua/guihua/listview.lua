@@ -212,14 +212,6 @@ function ListView:set_pos(i)
     end
     vim.api.nvim_buf_clear_namespace(self.buf, selhighlight, 0, -1)
     local ListviewHl = 'GuihuaListSelHl'
-    -- vim.api.nvim_buf_add_highlight(
-      -- self.buf,
-      -- selhighlight,
-      -- ListviewHl,
-      -- self.selected_line - 1,
-      -- 0,
-      -- -1
-    -- )
     vim.api.nvim_buf_set_extmark(
       self.buf,
       selhighlight,
