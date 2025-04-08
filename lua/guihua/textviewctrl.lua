@@ -3,9 +3,10 @@ local class = require('middleclass')
 local ViewController = require('guihua.viewctrl')
 local util = require('guihua.util')
 local api = vim.api
-local log = require('guihua.log').info
 
+local log = require('guihua.log').info
 local trace = require('guihua.log').trace
+
 _GH_SETUP = _GH_SETUP or nil
 if _GH_SETUP == nil then
   require('guihua.maps').setup()
@@ -15,7 +16,6 @@ if TextViewCtrl == nil then
 end -- no need to subclass from viewctrl
 
 function TextViewCtrl:initialize(delegate, ...)
-  trace(debug.traceback())
   ViewController:initialize(delegate, ...)
   self.m_delegate = delegate
 
@@ -85,7 +85,7 @@ function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
 
   local range = opts.display_range or opts.range
   if range.start == nil then
-    print('error invalid range')
+    vim.notify('error invalid range: nil')
     return
   end
   log(bufnr, range.start.line, uri)

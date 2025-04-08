@@ -1,8 +1,8 @@
 local class = require('middleclass')
 local View = require('guihua.view')
 local log = require('guihua.log').info
-local util = require('guihua.util')
 local trace = require('guihua.log').trace
+local util = require('guihua.util')
 
 local TextViewCtrl = require('guihua.textviewctrl')
 -- local TextView = {}
@@ -57,10 +57,10 @@ function TextView:initialize(...)
 
   if TextView.ActiveTextView ~= nil then
     if
-      TextView.ActiveTextView.win ~= nil
-      and vim.api.nvim_win_is_valid(TextView.ActiveTextView.win)
-      and vim.api.nvim_buf_is_valid(TextView.ActiveTextView.buf)
-      and TextView.static.ActiveTextView.rect.height == opts.rect.height
+        TextView.ActiveTextView.win ~= nil
+        and vim.api.nvim_win_is_valid(TextView.ActiveTextView.win)
+        and vim.api.nvim_buf_is_valid(TextView.ActiveTextView.buf)
+        and TextView.static.ActiveTextView.rect.height == opts.rect.height
     then
       log('active view ', TextView.ActiveTextView.buf, TextView.ActiveTextView.win)
       if TextView.hl_id ~= nil then
@@ -83,19 +83,13 @@ function TextView:initialize(...)
         end
         log('hl buf', self.buf, 'l ', opts.hl_line)
         -- TextView.static.hl_id =
-          -- vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', opts.hl_line - 1, 0, -1)
-        TextView.static.hl_id = vim.api.nvim_buf_set_extmark(
-          self.buf,
-          ns_id,
-          opts.hl_line - 1,
-          0,
-          {
-            hl_group = 'GuihuaListSelHl',
-            end_line = opts.hl_line - 1, -- to next line so I highlight the whole line
-            line_hl_group = 'GuihuaListSelHl',  -- Highlight the whole line
-            priority = 1000,
-          }
-        )
+        -- vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', opts.hl_line - 1, 0, -1)
+        TextView.static.hl_id = vim.api.nvim_buf_set_extmark(self.buf, ns_id, opts.hl_line - 1, 0, {
+          hl_group = 'GuihuaListSelHl',
+          end_line = opts.hl_line - 1, -- to next line so I highlight the whole line
+          line_hl_group = 'GuihuaListSelHl', -- Highlight the whole line
+          priority = 1000,
+        })
         TextView.static.hl_line = opts.hl_line
       end
       log('ctor TextView: end, already existed') -- , View.ActiveView)--, self)
@@ -139,7 +133,7 @@ function TextView:initialize(...)
     self:bind_ctrl(opts)
 
     local content = self.ctrl:on_load(opts)
-    self:on_draw(content)
+    self:on_draw(content, opts.status_line)
   end
 
   if opts.hl_line ~= nil then
@@ -148,19 +142,13 @@ function TextView:initialize(...)
     end
     log('buf', self.buf, 'hl_line: ', opts.hl_line)
     -- TextView.static.hl_id =
-      -- vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', opts.hl_line - 1, 0, -1)
-    TextView.static.hl_id = vim.api.nvim_buf_set_extmark(
-      self.buf,
-      ns_id,
-      opts.hl_line - 1,
-      0,
-      {
-        hl_group = 'GuihuaListSelHl',
-        end_line = opts.hl_line - 1,
-        line_hl_group = 'GuihuaListSelHl',  -- Highlight the whole line
-        priority = 1000,
-      }
-    )
+    -- vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', opts.hl_line - 1, 0, -1)
+    TextView.static.hl_id = vim.api.nvim_buf_set_extmark(self.buf, ns_id, opts.hl_line - 1, 0, {
+      hl_group = 'GuihuaListSelHl',
+      end_line = opts.hl_line - 1,
+      line_hl_group = 'GuihuaListSelHl', -- Highlight the whole line
+      priority = 1000,
+    })
     TextView.static.hl_line = opts.hl_line
   end
 
@@ -188,7 +176,10 @@ function TextView.Active()
   return false
 end
 
-function TextView:on_draw(opts)
+
+---@opts: list of string, or table indicate uri and range of lines
+---@status_line: string or nil, indicate if status line is needed
+function TextView:on_draw(opts, status_line)
   if opts == nil then
     log(debug.traceback())
     return
@@ -201,6 +192,7 @@ function TextView:on_draw(opts)
   if opts.uri ~= nil then
     data = self.ctrl:on_load(opts)
   else
+    log('on_draw opts uri nil')
     data = opts
   end
   local content = {}
@@ -236,19 +228,22 @@ function TextView:on_draw(opts)
   vim.api.nvim_set_option_value('bufhidden', 'wipe', { buf = bufnr })
   if TextView.hl_line ~= nil then
     -- TextView.static.hl_id =
-      -- vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', TextView.hl_line - 1, 0, -1)
-    TextView.static.hl_id = vim.api.nvim_buf_set_extmark(
-      self.buf,
-      ns_id,
-      TextView.hl_line - 1,
-      0,
-      {
-        hl_group = 'GuihuaListSelHl',
-        end_line = TextView.hl_line - 1,
-        line_hl_group = 'GuihuaListSelHl',  -- Highlight the whole line
-        priority = 1000,
-      }
-    )
+    -- vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', TextView.hl_line - 1, 0, -1)
+    TextView.static.hl_id = vim.api.nvim_buf_set_extmark(self.buf, ns_id, TextView.hl_line - 1, 0, {
+      hl_group = 'GuihuaListSelHl',
+      end_line = TextView.hl_line - 1,
+      line_hl_group = 'GuihuaListSelHl', -- Highlight the whole line
+      priority = 1000,
+    })
+  end
+  if status_line then
+    -- add hl to last line
+    TextView.static.hl_id = vim.api.nvim_buf_set_extmark(self.buf, ns_id, #data - 1, 0, {
+      hl_group = 'StatusLine',
+      end_line = #data - 1,
+      line_hl_group = 'GuihuaListSelHl', -- Highlight the whole line
+      priority = 1000,
+    })
   end
   -- vim.fn.setpos(".", {0, 1, 1, 0})
 
