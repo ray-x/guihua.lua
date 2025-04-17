@@ -341,19 +341,6 @@ M.select = function(items, opts, on_choice)
   if listview == nil then
     return
   end
-  -- vim.api.nvim_buf_add_highlight(listview.buf, -1, 'Title', 0, 0, -1)
-  vim.api.nvim_buf_set_extmark(
-    listview.buf,
-    ns_id,
-    0,
-    0,
-    {
-      end_col = #win_title + 1,
-      hl_group = 'Title',
-      end_line = 0,
-      priority = 1000,
-    }
-  )
   -- move to 1st item
   ListViewCtrl:on_next()
   ListViewCtrl:on_next()
