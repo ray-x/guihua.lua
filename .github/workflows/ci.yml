@@ -10,23 +10,23 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-22.04
+          - os: ubuntu-latest
             url: https://github.com/neovim/neovim/releases/download/nightly/nvim-linux64.tar.gz
             manager: sudo snap
             packages: go
-          - os: ubuntu-22.04
-            url: https://github.com/neovim/neovim/releases/download/v0.8.3/nvim-linux64.tar.gz
+          - os: ubuntu-latest
+            url: https://github.com/neovim/neovim/releases/download/v0.11.0/nvim-linux64.tar.gz
             manager: sudo snap
             packages: go
           - os: ubuntu-22.04
-            url: https://github.com/neovim/neovim/releases/download/v0.8.2/nvim-linux64.tar.gz
+            url: https://github.com/neovim/neovim/releases/download/v0.10.4/nvim-linux64.tar.gz
             manager: sudo snap
             packages: go
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - run: date +%F > todays-date
       - name: Restore cache for today's nightly.
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: _neovim
           key: ${{ runner.os }}-${{ matrix.url }}-${{ hashFiles('todays-date') }}
