@@ -1,15 +1,15 @@
 local api = vim.api
-local ts = require "guihua.ts_obsolete.compat"
-local tsrange = require "guihua.ts_obsolete.tsrange"
-local utils = require "guihua.ts_obsolete.utils"
-local parsers = require "nvim-treesitter.parsers"
-local caching = require "guihua.ts_obsolete.caching"
+local ts = require('guihua.ts_obsolete.compat')
+local tsrange = require('guihua.ts_obsolete.tsrange')
+local utils = require('guihua.ts_obsolete.utils')
+local parsers = require('nvim-treesitter.parsers')
+local caching = require('guihua.ts_obsolete.caching')
 
 local M = {}
 
 local EMPTY_ITER = function() end
 
-M.built_in_query_groups = { "highlights", "locals", "folds", "indents", "injections" }
+M.built_in_query_groups = { 'highlights', 'locals', 'folds', 'indents', 'injections' }
 
 -- Creates a function that checks whether a given query exists
 -- for a specific language.
@@ -22,15 +22,15 @@ local function get_query_guard(query)
 end
 
 for _, query in ipairs(M.built_in_query_groups) do
-  M["has_" .. query] = get_query_guard(query)
+  M['has_' .. query] = get_query_guard(query)
 end
 
 ---@return string[]
 function M.available_query_groups()
-  local query_files = api.nvim_get_runtime_file("queries/*/*.scm", true)
+  local query_files = api.nvim_get_runtime_file('queries/*/*.scm', true)
   local groups = {}
   for _, f in ipairs(query_files) do
-    groups[vim.fn.fnamemodify(f, ":t:r")] = true
+    groups[vim.fn.fnamemodify(f, ':t:r')] = true
   end
   local list = {}
   for k, _ in pairs(groups) do
@@ -67,7 +67,7 @@ end
 ---@param query_name string
 ---@return string[]
 local function runtime_queries(lang, query_name)
-  return api.nvim_get_runtime_file(string.format("queries/%s/%s.scm", lang, query_name), true) or {}
+  return api.nvim_get_runtime_file(string.format('queries/%s/%s.scm', lang, query_name), true) or {}
 end
 
 ---@type table<string, table<string, boolean>>
@@ -137,7 +137,7 @@ do
         end
       end
     else
-      error "Cannot have query_name by itself!"
+      error('Cannot have query_name by itself!')
     end
   end
 end
@@ -146,7 +146,7 @@ end
 ---@param fname string
 function M.invalidate_query_file(fname)
   local fnamemodify = vim.fn.fnamemodify
-  M.invalidate_query_cache(fnamemodify(fname, ":p:h:t"), fnamemodify(fname, ":t:r"))
+  M.invalidate_query_cache(fnamemodify(fname, ':p:h:t'), fnamemodify(fname, ':t:r'))
 end
 
 ---@class QueryInfo
@@ -241,7 +241,7 @@ function M.iter_prepared_matches(query, qnode, bufnr, start_row, end_row)
   ---@return string[]
   local function split(to_split)
     local t = {}
-    for str in string.gmatch(to_split, "([^.]+)") do
+    for str in string.gmatch(to_split, '([^.]+)') do
       table.insert(t, str)
     end
 
@@ -259,9 +259,9 @@ function M.iter_prepared_matches(query, qnode, bufnr, start_row, end_row)
       for id, node in pairs(match) do
         local name = query.captures[id] -- name of the capture in the query
         if name ~= nil then
-          local path = split(name .. ".node")
+          local path = split(name .. '.node')
           M.insert_to_path(prepared_match, path, node)
-          local metadata_path = split(name .. ".metadata")
+          local metadata_path = split(name .. '.metadata')
           M.insert_to_path(prepared_match, metadata_path, metadata[id])
         end
       end
@@ -272,13 +272,13 @@ function M.iter_prepared_matches(query, qnode, bufnr, start_row, end_row)
       if preds then
         for _, pred in pairs(preds) do
           -- functions
-          if pred[1] == "set!" and type(pred[2]) == "string" then
+          if pred[1] == 'set!' and type(pred[2]) == 'string' then
             M.insert_to_path(prepared_match, split(pred[2]), pred[3])
           end
-          if pred[1] == "make-range!" and type(pred[2]) == "string" and #pred == 4 then
+          if pred[1] == 'make-range!' and type(pred[2]) == 'string' and #pred == 4 then
             M.insert_to_path(
               prepared_match,
-              split(pred[2] .. ".node"),
+              split(pred[2] .. '.node'),
               tsrange.TSRange.from_nodes(bufnr, match[pred[3]], match[pred[4]])
             )
           end
@@ -303,13 +303,13 @@ end
 ---              Root nodes can have several languages.
 ---@return table|nil
 function M.get_capture_matches(bufnr, captures, query_group, root, lang)
-  if type(captures) == "string" then
+  if type(captures) == 'string' then
     captures = { captures }
   end
   local strip_captures = {} ---@type string[]
   for i, capture in ipairs(captures) do
-    if capture:sub(1, 1) ~= "@" then
-      error 'Captures must start with "@"'
+    if capture:sub(1, 1) ~= '@' then
+      error('Captures must start with "@"')
       return
     end
     -- Remove leading "@".
@@ -333,7 +333,7 @@ function M.iter_captures(bufnr, query_name, root, lang)
   if not query then
     return EMPTY_ITER
   end
-  assert(params)
+  assert(params, 'params should be set if query is set')
 
   local iter = query:iter_captures(params.root, params.source, params.start, params.stop)
 
@@ -344,7 +344,7 @@ function M.iter_captures(bufnr, query_name, root, lang)
     end
 
     local name = query.captures[id]
-    if string.sub(name, 1, 1) == "_" then
+    if string.sub(name, 1, 1) == '_' then
       return wrapped_iter()
     end
 
@@ -362,7 +362,7 @@ end
 ---@param root TSNode
 ---@return table|unknown
 function M.find_best_match(bufnr, capture_string, query_group, filter_predicate, scoring_function, root)
-  if string.sub(capture_string, 1, 1) == "@" then
+  if string.sub(capture_string, 1, 1) == '@' then
     --remove leading "@"
     capture_string = string.sub(capture_string, 2)
   end
@@ -398,7 +398,7 @@ function M.iter_group_results(bufnr, query_group, root, root_lang)
   if not query then
     return EMPTY_ITER
   end
-  assert(params)
+  assert(params, 'params should be set if query is set')
 
   return M.iter_prepared_matches(query, params.root, params.source, params.start, params.stop)
 end
@@ -426,7 +426,7 @@ end
 function M.get_capture_matches_recursively(bufnr, capture_or_fn, query_type)
   ---@type CaptureResFn
   local type_fn
-  if type(capture_or_fn) == "function" then
+  if type(capture_or_fn) == 'function' then
     type_fn = capture_or_fn
   else
     type_fn = function(_, _, _)
