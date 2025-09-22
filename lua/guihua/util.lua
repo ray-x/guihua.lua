@@ -83,21 +83,11 @@ end
 function M.selcolor(Hl)
   vim.validate({ Hl = { Hl, 'string' } })
   log(Hl)
-  local bg = tonumber(
-    string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'bg#'), 2),
-    16
-  ) or tonumber(
-    string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'bg#'), 2),
-    16
-  )
+  local bg = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'bg#'), 2), 16)
+    or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'bg#'), 2), 16)
 
-  local fg = tonumber(
-    string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'fg#'), 2),
-    16
-  ) or tonumber(
-    string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'fg#'), 2),
-    16
-  )
+  local fg = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'fg#'), 2), 16)
+    or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'fg#'), 2), 16)
 
   if
     vim.fn.hlexists('GuihuaListSelHl') == 1
@@ -106,10 +96,9 @@ function M.selcolor(Hl)
     -- already defined
     return
   end
-  local bgcolor = tonumber(
-    string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GuihuaListDark')), 'bg#'), 2),
-    16
-  ) or bg or 0x303030
+  local bgcolor = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GuihuaListDark')), 'bg#'), 2), 16)
+    or bg
+    or 0x303030
 
   vim.validate({ bgcolor = { bgcolor, 'number' } })
   --   local sel = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("PmenuSel")), "bg#") default
@@ -146,11 +135,7 @@ function M.selcolor(Hl)
     log(diff, sel, bgcolor, Hl)
 
     if vim.o.background == 'light' and sel_gstr and vim.fn.empty(sel_gstr) ~= 1 then
-      vim.api.nvim_set_hl(
-        0,
-        'GuihuaListSelHl',
-        { bg = lbg, fg = sel_gstr, bold = true, default = true }
-      )
+      vim.api.nvim_set_hl(0, 'GuihuaListSelHl', { bg = lbg, fg = sel_gstr, bold = true, default = true })
     else
       vim.api.nvim_set_hl(0, 'GuihuaListSelHl', { bg = lbg, bold = true, default = true })
     end
@@ -247,15 +232,7 @@ local function apply_syntax_to_region(ft, start, finish)
   if not pcall(vim.cmd, string.format('syntax include %s syntax/%s.vim', lang, ft)) then
     return
   end
-  vim.cmd(
-    string.format(
-      'syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s',
-      name,
-      start,
-      finish + 1,
-      lang
-    )
-  )
+  vim.cmd(string.format('syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s', name, start, finish + 1, lang))
 end
 
 -- Attach ts highlighter
@@ -266,7 +243,7 @@ M.highlighter = function(bufnr, ft, lines)
 
   local has_ts, _ = pcall(require, 'nvim-treesitter')
   if has_ts then
-    local _, ts_highlight = pcall(require, 'nvim-treesitter.highlight')
+    local _, ts_highlight = pcall(require, 'guihua.ts_obsolete.highlight')
     local _, ts_parsers = pcall(require, 'nvim-treesitter.parsers')
     local lang = ts_parsers.ft_to_lang(ft)
     if ts_parsers.has_parser(lang) then
@@ -551,6 +528,7 @@ function M.shorten_len(filename, len, exclude)
 
   return table.concat(final_path_components)
 end
+
 local is_uri = function(filename)
   return string.match(filename, '^%w+://') ~= nil
 end
@@ -598,16 +576,16 @@ end
 
 local title_colors = {
   -- stylua: ignore start
-  nord = {'#ECEFF4', '#ACEFD4', '#9CCFD4', '#81A1C1', '#88B0D0', '#93BE8C', '#A3BE8C',
-    '#B48EAD', '#B08770', '#EBCB8B'},
-  monokai = {'#E6DB74', '#B6DB54', '#A6E22E', '#A6E22E', '#66D9EF', '#AE81FF', '#C8B8F2',
-    '#F8F8F2', '#F8B892', '#F87842', '#F95642', '#FD971F'},
-  solarized = {'#6C71C4', '#7C81C9', '#8C91B4', '#98A8F2', '#68A8E2', '#468BD2', '#268BD2',
+  nord = { '#ECEFF4', '#ACEFD4', '#9CCFD4', '#81A1C1', '#88B0D0', '#93BE8C', '#A3BE8C',
+    '#B48EAD', '#B08770', '#EBCB8B' },
+  monokai = { '#E6DB74', '#B6DB54', '#A6E22E', '#A6E22E', '#66D9EF', '#AE81FF', '#C8B8F2',
+    '#F8F8F2', '#F8B892', '#F87842', '#F95642', '#FD971F' },
+  solarized = { '#6C71C4', '#7C81C9', '#8C91B4', '#98A8F2', '#68A8E2', '#468BD2', '#268BD2',
     '#268BD2', '#268BD2', '#2AA198', '#859900', '#A5B900', '#B58900', '#CB4B16', '#DC322F',
-    '#D33682'},
-  dracula = {'#BD93F9', '#6272A4', '#84A7BA', '#F8F8F2', '#50FA7B', '#60EAAB', '#67EABB',
+    '#D33682' },
+  dracula = { '#BD93F9', '#6272A4', '#84A7BA', '#F8F8F2', '#50FA7B', '#60EAAB', '#67EABB',
     '#8BE9FD', '#8BE9FD', '#FF5555', '#FF79C6' },
-  rainbow = {'#FF0000', '#FF4000', '#FF8F00', '#FFDF00', '#FFFF00', '#BFFF00', '#8FFF00',
+  rainbow = { '#FF0000', '#FF4000', '#FF8F00', '#FFDF00', '#FFFF00', '#BFFF00', '#8FFF00',
     '#6FFF00', '#4FFF00', '#00FF00', '#00FF20', '#00FF40', '#00FF60', '#00BFA0', '#00A0FF',
     '#4080FF', '#6A40FF', '#7A40FF', '#8B00FF', '#AB00FF', '#FB00FF', '#FB00AF', '#FB008F',
     '#FB004F' },
