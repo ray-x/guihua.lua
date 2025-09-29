@@ -18,10 +18,10 @@ end
 function M.close_view_autocmd(events, winnr)
   vim.cmd(
     'autocmd '
-      .. table.concat(events, ',')
-      .. ' <buffer> ++once lua pcall(vim.api.nvim_win_close, '
-      .. winnr
-      .. ', true)'
+    .. table.concat(events, ',')
+    .. ' <buffer> ++once lua pcall(vim.api.nvim_win_close, '
+    .. winnr
+    .. ', true)'
   )
 end
 
@@ -84,21 +84,21 @@ function M.selcolor(Hl)
   vim.validate({ Hl = { Hl, 'string' } })
   log(Hl)
   local bg = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'bg#'), 2), 16)
-    or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'bg#'), 2), 16)
+      or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'bg#'), 2), 16)
 
   local fg = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'fg#'), 2), 16)
-    or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'fg#'), 2), 16)
+      or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'fg#'), 2), 16)
 
   if
-    vim.fn.hlexists('GuihuaListSelHl') == 1
-    and vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GuihuaListSelHl')), 'bg#') ~= ''
+      vim.fn.hlexists('GuihuaListSelHl') == 1
+      and vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GuihuaListSelHl')), 'bg#') ~= ''
   then
     -- already defined
     return
   end
   local bgcolor = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GuihuaListDark')), 'bg#'), 2), 16)
-    or bg
-    or 0x303030
+      or bg
+      or 0x303030
 
   vim.validate({ bgcolor = { bgcolor, 'number' } })
   --   local sel = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("PmenuSel")), "bg#") default
@@ -342,7 +342,7 @@ M.open_file_at = function(filename, line, col, split)
   -- sometime highlight failed because lazyloading
   local has_ts, _ = pcall(require, 'nvim-treesitter')
   if has_ts then
-    local _, ts_highlight = pcall(require, 'nvim-treesitter.highlight')
+    local _, ts_highlight = pcall(require, 'guihua.ts_obsolete.highlight')
     local _, ts_parsers = pcall(require, 'nvim-treesitter.parsers')
     local lang = ts_parsers.ft_to_lang(vim.o.ft)
     if ts_parsers.has_parser(lang) then
@@ -518,7 +518,7 @@ function M.shorten_len(filename, len, exclude)
     count = count + 1
   end
 
-  local l = #final_path_components -- so that we don't need to keep calculating length
+  local l = #final_path_components       -- so that we don't need to keep calculating length
   table.remove(final_path_components, l) -- remove final slash
 
   -- add back empty positions
