@@ -244,7 +244,7 @@ M.highlighter = function(bufnr, ft, lines)
   local has_ts, _ = pcall(require, 'nvim-treesitter')
   if has_ts then
     local _, ts_highlight = pcall(require, 'guihua.ts_obsolete.highlight')
-    local _, ts_parsers = pcall(require, 'nvim-treesitter.parsers')
+    local _, ts_parsers = pcall(require, 'guihua.ts_obsolete.parsers')
     local lang = ts_parsers.ft_to_lang(ft)
     if ts_parsers.has_parser(lang) then
       trace('attach ts')
