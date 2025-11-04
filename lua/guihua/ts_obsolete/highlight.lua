@@ -1,5 +1,3 @@
-local configs = require('nvim-treesitter.configs')
-
 local M = {}
 
 ---@param config TSModule
@@ -16,11 +14,8 @@ end
 ---@param bufnr integer
 ---@param lang string
 function M.attach(bufnr, lang)
-  local config = configs.get_module('highlight')
   vim.treesitter.start(bufnr, lang)
-  if config and should_enable_vim_regex(config, lang) then
-    vim.bo[bufnr].syntax = 'ON'
-  end
+  vim.bo[bufnr].syntax = 'ON'
 end
 
 ---@param bufnr integer
