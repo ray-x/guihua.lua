@@ -161,6 +161,7 @@ end
 ---@param root_lang string|nil
 ---@return Query|nil, QueryInfo|nil
 local function prepare_query(bufnr, query_name, root, root_lang)
+  local parsers = require('guihua.ts_obsolete.parsers')
   local buf_lang = parsers.get_buf_lang(bufnr)
 
   if not buf_lang then
@@ -433,6 +434,8 @@ function M.get_capture_matches_recursively(bufnr, capture_or_fn, query_type)
       return capture_or_fn, query_type
     end
   end
+
+  local parsers = require('guihua.ts_obsolete.parsers')
   local parser = parsers.get_parser(bufnr)
   local matches = {}
 

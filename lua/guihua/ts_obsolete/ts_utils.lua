@@ -1,7 +1,7 @@
 local api = vim.api
 
-local parsers = require "nvim-treesitter.parsers"
-local utils = require "guihua.ts_obsolete.utils"
+local parsers = require('guihua.ts_obsolete.parsers')
+local utils = require('guihua.ts_obsolete.utils')
 local ts = vim.treesitter
 
 local M = {}
@@ -49,11 +49,11 @@ function M._get_line_for_node(node, type_patterns, transform_fn, bufnr)
     end
   end
   if not is_valid then
-    return ""
+    return ''
   end
-  local line = transform_fn(vim.trim(get_node_text(node, bufnr)[1] or ""), node)
+  local line = transform_fn(vim.trim(get_node_text(node, bufnr)[1] or ''), node)
   -- Escape % to avoid statusline to evaluate content as expression
-  return line:gsub("%%", "%%%%")
+  return line:gsub('%%', '%%%%')
 end
 
 -- Gets the actual text content of a node
@@ -63,7 +63,7 @@ end
 -- @return list of lines of text of the node
 function M.get_node_text(node, bufnr)
   vim.notify_once(
-    "nvim-treesitter.ts_utils.get_node_text is deprecated: use vim.treesitter.get_node_text",
+    'nvim-treesitter.ts_utils.get_node_text is deprecated: use vim.treesitter.get_node_text',
     vim.log.levels.WARN
   )
   return get_node_text(node, bufnr)
@@ -200,7 +200,7 @@ function M.get_root_for_position(line, col, root_lang_tree)
     root_lang_tree = parsers.get_parser()
   end
 
-  local lang_tree = root_lang_tree:language_for_range { line, col, line, col }
+  local lang_tree = root_lang_tree:language_for_range({ line, col, line, col })
 
   while true do
     for _, tree in pairs(lang_tree:trees()) do
@@ -270,7 +270,7 @@ function M.get_vim_range(range, buf)
     -- Use the value of the last col of the previous row instead.
     erow = erow - 1
     if not buf or buf == 0 then
-      ecol = vim.fn.col { erow, "$" } - 1
+      ecol = vim.fn.col({ erow, '$' }) - 1
     else
       ecol = #api.nvim_buf_get_lines(buf, erow - 1, erow, false)[1]
     end
@@ -292,8 +292,8 @@ end
 function M.update_selection(buf, node, selection_mode)
   local start_row, start_col, end_row, end_col = M.get_vim_range({ ts.get_node_range(node) }, buf)
 
-  local v_table = { charwise = "v", linewise = "V", blockwise = "<C-v>" }
-  selection_mode = selection_mode or "charwise"
+  local v_table = { charwise = 'v', linewise = 'V', blockwise = '<C-v>' }
+  selection_mode = selection_mode or 'charwise'
 
   -- Normalise selection_mode
   if vim.tbl_contains(vim.tbl_keys(v_table), selection_mode) then
@@ -308,11 +308,11 @@ function M.update_selection(buf, node, selection_mode)
   if mode.mode ~= selection_mode then
     -- Call to `nvim_replace_termcodes()` is needed for sending appropriate command to enter blockwise mode
     selection_mode = vim.api.nvim_replace_termcodes(selection_mode, true, true, true)
-    api.nvim_cmd({ cmd = "normal", bang = true, args = { selection_mode } }, {})
+    api.nvim_cmd({ cmd = 'normal', bang = true, args = { selection_mode } }, {})
   end
 
   api.nvim_win_set_cursor(0, { start_row, start_col - 1 })
-  vim.cmd "normal! o"
+  vim.cmd('normal! o')
   api.nvim_win_set_cursor(0, { end_row, end_col - 1 })
 end
 
@@ -328,7 +328,7 @@ end
 ---@deprecated Use `vim.treesitter.is_in_node_range()` instead
 function M.is_in_node_range(node, line, col)
   vim.notify_once(
-    "nvim-treesitter.ts_utils.is_in_node_range is deprecated: use vim.treesitter.is_in_node_range",
+    'nvim-treesitter.ts_utils.is_in_node_range is deprecated: use vim.treesitter.is_in_node_range',
     vim.log.levels.WARN
   )
   return ts.is_in_node_range(node, line, col)
@@ -337,7 +337,7 @@ end
 ---@deprecated Use `vim.treesitter.get_node_range()` instead
 function M.get_node_range(node_or_range)
   vim.notify_once(
-    "nvim-treesitter.ts_utils.get_node_range is deprecated: use vim.treesitter.get_node_range",
+    'nvim-treesitter.ts_utils.get_node_range is deprecated: use vim.treesitter.get_node_range',
     vim.log.levels.WARN
   )
   return ts.get_node_range(node_or_range)
@@ -349,7 +349,7 @@ function M.node_to_lsp_range(node)
   local start_line, start_col, end_line, end_col = ts.get_node_range(node)
   local rtn = {}
   rtn.start = { line = start_line, character = start_col }
-  rtn["end"] = { line = end_line, character = end_col }
+  rtn['end'] = { line = end_line, character = end_col }
   return rtn
 end
 
@@ -365,7 +365,7 @@ function M.memoize_by_buf_tick(fn, options)
   options = options or {}
 
   ---@type table<string, {result: any, last_tick: integer}>
-  local cache = setmetatable({}, { __mode = "kv" })
+  local cache = setmetatable({}, { __mode = 'kv' })
   local bufnr_fn = utils.to_func(options.bufnr or utils.identity)
   local key_fn = utils.to_func(options.key or utils.identity)
 
@@ -409,10 +409,10 @@ function M.swap_nodes(node_or_range1, node_or_range2, bufnr, cursor_to_second)
   local text1 = get_node_text(node_or_range1, bufnr)
   local text2 = get_node_text(node_or_range2, bufnr)
 
-  local edit1 = { range = range1, newText = table.concat(text2, "\n") }
-  local edit2 = { range = range2, newText = table.concat(text1, "\n") }
+  local edit1 = { range = range1, newText = table.concat(text2, '\n') }
+  local edit2 = { range = range2, newText = table.concat(text1, '\n') }
   bufnr = bufnr == 0 and vim.api.nvim_get_current_buf() or bufnr
-  vim.lsp.util.apply_text_edits({ edit1, edit2 }, bufnr, "utf-8")
+  vim.lsp.util.apply_text_edits({ edit1, edit2 }, bufnr, 'utf-8')
 
   if cursor_to_second then
     utils.set_jump()
@@ -420,13 +420,13 @@ function M.swap_nodes(node_or_range1, node_or_range2, bufnr, cursor_to_second)
     local char_delta = 0
     local line_delta = 0
     if
-      range1["end"].line < range2.start.line
-      or (range1["end"].line == range2.start.line and range1["end"].character <= range2.start.character)
+      range1['end'].line < range2.start.line
+      or (range1['end'].line == range2.start.line and range1['end'].character <= range2.start.character)
     then
       line_delta = #text2 - #text1
     end
 
-    if range1["end"].line == range2.start.line and range1["end"].character <= range2.start.character then
+    if range1['end'].line == range2.start.line and range1['end'].character <= range2.start.character then
       if line_delta ~= 0 then
         --- why?
         --correction_after_line_change =  -range2.start.character
@@ -434,7 +434,7 @@ function M.swap_nodes(node_or_range1, node_or_range2, bufnr, cursor_to_second)
         --space_between_ranges = range2.start.character - range1["end"].character
         --char_delta = correction_after_line_change + text_now_before_range2 + space_between_ranges
         --- Equivalent to:
-        char_delta = #text2[#text2] - range1["end"].character
+        char_delta = #text2[#text2] - range1['end'].character
 
         -- add range1.start.character if last line of range1 (now text2) does not start at 0
         if range1.start.line == range2.start.line + line_delta then
@@ -459,7 +459,7 @@ function M.goto_node(node, goto_end, avoid_set_jump)
   if not avoid_set_jump then
     utils.set_jump()
   end
-  local range = { M.get_vim_range { node:range() } }
+  local range = { M.get_vim_range({ node:range() }) }
   ---@type table<number>
   local position
   if not goto_end then
@@ -471,8 +471,8 @@ function M.goto_node(node, goto_end, avoid_set_jump)
   -- Enter visual mode if we are in operator pending mode
   -- If we don't do this, it will miss the last character.
   local mode = vim.api.nvim_get_mode()
-  if mode.mode == "no" then
-    vim.cmd "normal! v"
+  if mode.mode == 'no' then
+    vim.cmd('normal! v')
   end
 
   -- Position is 1, 0 indexed.
