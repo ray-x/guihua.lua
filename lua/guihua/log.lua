@@ -80,9 +80,9 @@ log.new = function(config, standalone)
   config = vim.tbl_deep_extend('force', default_config, config)
   -- path ~/.local/share/nvim
 
-  local cache_dir = vim.fn.stdpath('cache') -- ' stdpath('log') '
+  local log_dir = vim.fn.stdpath('log')
   config.log_file = config.log_file or config.plugin or 'gh'
-  local outfile = string.format('%s%s%s.log', cache_dir, sep(), config.log_file)
+  local outfile = string.format('%s%s%s.log', log_dir, sep(), config.log_file)
 
   if config.use_file then
     local fp = io.open(outfile, 'r')
@@ -144,8 +144,7 @@ log.new = function(config, standalone)
 
     -- Output to console
     if config.use_console then
-      local console_string =
-        string.format('[%-4s][%s] %s: %s', nameupper, os.date('%H:%M:%S'), lineinfo, msg)
+      local console_string = string.format('[%-4s][%s] %s: %s', nameupper, os.date('%H:%M:%S'), lineinfo, msg)
 
       if config.highlights and level_config.hl then
         vim.cmd(string.format('echohl %s', level_config.hl))
