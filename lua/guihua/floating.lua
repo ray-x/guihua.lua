@@ -6,8 +6,6 @@ local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 local columns = api.nvim_get_option_value('columns', {})
 local lines = api.nvim_get_option_value('lines', {})
-local shell = api.nvim_get_option_value('shell', {})
-local shellcmdflag = api.nvim_get_option_value('shellcmdflag', {})
 _GH_SETUP = _GH_SETUP or nil
 if _GH_SETUP == nil then
   require('guihua').setup()
@@ -25,21 +23,6 @@ local function floating_buf(opts)
   -- win_w, win_h, x, y should be passwd in from view
   local loc = opts.loc or location.center
   local row, col = loc(opts.win_height, opts.win_width)
-
-  log('loc', opts.loc, opts.win_width, opts.win_height, x, y, enter, col, row, opts.ft)
-  local win_opts = {
-    style = opts.style or 'minimal',
-    width = opts.win_width or 80,
-    height = opts.win_height or 23,
-    border = opts.border or 'single', -- "shadow"
-  }
-
-  if opts.external then
-    win_opts.external = true
-  else
-    win_opts.relative = opts.relative or 'editor'
-    win_opts.bufpos = { 0, 0 }
-  end
 
   if win_opts.relative == 'editor' then
     win_opts.row = row + y
@@ -141,7 +124,11 @@ end
 -- create a windows for floating terminal
 local function floatterm(opts)
   local buf = api.nvim_create_buf(false, true)
-  api.nvim_buf_set_keymap(buf, 't', '<ESC>', '<C-\\><C-c>', {})
+  if vim.keymap then
+    vim.keymap.set('t', '<ESC>', '<C-\\><C-c>', { buffer = buf, noremap = true })
+  else
+    api.nvim_buf_set_keymap(buf, 't', '<ESC>', '<C-\\><C-c>', {})
+  end
   api.nvim_set_option_value('bufhidden', 'wipe', { buf = buf })
   api.nvim_set_option_value('buflisted', false, { buf = buf })
 
@@ -212,9 +199,25 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
 
   local args
   if type(opts.cmd) == 'string' then
+    local shell = api.nvim_get_option_value('shell', {})
+    local shellcmdflag = api.nvim_get_option_value('shellcmdflag', {})
     args = { shell, shellcmdflag, opts.cmd }
   else
     args = opts.cmd
+  end
+
+  local function cleanup_window()
+    if vim.api.nvim_buf_is_valid(buf) then
+      vim.api.nvim_buf_delete(buf, { force = true })
+    end
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_close(win, true)
+      win = nil
+    end
+    log('floatwin closing ', win, current_window, jobid, args)
+    if current_window ~= vim.api.nvim_get_current_win() then
+      vim.api.nvim_set_current_win(current_window)
+    end
   end
 
   vim.fn.jobstart(args, {
@@ -223,38 +226,11 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
       log('exit', jobid, data, event)
       if opts.autoclose == true then
         if data == 0 then
-          if vim.api.nvim_buf_is_valid(buf) then
-            vim.api.nvim_buf_delete(buf, { force = true })
-          end
-          if vim.api.nvim_win_is_valid(win) then
-            vim.api.nvim_win_close(win, true)
-            win = nil
-          end
-          log('floatwin closing ', win, current_window, jobid, data, event)
-          if current_window ~= vim.api.nvim_get_current_win() then
-            vim.api.nvim_set_current_win(current_window)
-          end
-          if data ~= 0 then
-            log('failed to run command', vim.inspect(args))
-          end
+          cleanup_window()
         else
+          log('failed to run command', vim.inspect(args))
           vim.defer_fn(function()
-            vim.schedule(function()
-              if vim.api.nvim_buf_is_valid(buf) then
-                vim.api.nvim_buf_delete(buf, { force = true })
-              end
-              if vim.api.nvim_win_is_valid(win) then
-                vim.api.nvim_win_close(win, true)
-                win = nil
-              end
-              log('floatwin closing ', win, current_window, jobid, data, event)
-              if current_window ~= vim.api.nvim_get_current_win() then
-                vim.api.nvim_set_current_win(current_window)
-              end
-              if data ~= 0 then
-                log('failed to run command', vim.inspect(args))
-              end
-            end)
+            cleanup_window()
           end, 3000)
         end
       end
@@ -327,8 +303,12 @@ local term = function(opts)
   api.nvim_buf_set_var(buf, var_key, { buf, win })
   local m = _GH_SETUP.maps
   local f = string.format('lua require("guihua.floating").close(%s)<CR>', var_key)
-  vim.api.nvim_buf_set_keymap(buf, 'n', m.close_view, f, {})
-  vim.api.nvim_buf_set_keymap(buf, 'i', m.close_view, f, {})
+  if vim.keymap then
+    vim.keymap.set({'n', 'i'}, m.close_view, f, { buffer = buf })
+  else
+    vim.api.nvim_buf_set_keymap(buf, 'n', m.close_view, f, {})
+    vim.api.nvim_buf_set_keymap(buf, 'i', m.close_view, f, {})
+  end
   return buf, win, closer
 end
 

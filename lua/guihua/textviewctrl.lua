@@ -7,10 +7,7 @@ local api = vim.api
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 
-_GH_SETUP = _GH_SETUP or nil
-if _GH_SETUP == nil then
-  require('guihua.maps').setup()
-end
+_GH_SETUP = _GH_SETUP or require('guihua.maps').setup()
 if TextViewCtrl == nil then
   TextViewCtrl = class('TextViewCtrl')
 end -- no need to subclass from viewctrl
@@ -25,7 +22,7 @@ function TextViewCtrl:initialize(delegate, ...)
   self.file_info = opts
   self.display_height = self.m_delegate.display_height or 10
   self.file_info.lines = self.display_height
-  if opts.data == nil or next(opts.data) and opts.uri == nil then
+  if opts.data == nil and (opts.uri == nil or not next(opts.data or {})) then
     log('data not provided opts', opts)
     -- self.on_load(opts)
     -- local data = self:on_load(opts)
@@ -47,14 +44,13 @@ function TextViewCtrl:initialize(delegate, ...)
   trace('init display: ', self.display_data, self.display_height, self.selected_line)
   -- ... is the view
   -- todo location, readonly? and filetype
-  vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.save, '<cmd>lua TextViewCtrl:on_save()<CR>', {})
-  vim.api.nvim_buf_set_keymap(
-    delegate.buf,
-    'n',
-    m.jump_to_list,
-    '<cmd>lua ListViewCtrl:gh_jump_to_list()<CR>',
-    {}
-  )
+  if vim.keymap then
+    vim.keymap.set('n', m.save, '<cmd>lua TextViewCtrl:on_save()<CR>', { buffer = delegate.buf, noremap = true })
+    vim.keymap.set('n', m.jump_to_list, '<cmd>lua ListViewCtrl:gh_jump_to_list()<CR>', { buffer = delegate.buf, noremap = true })
+  else
+    vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.save, '<cmd>lua TextViewCtrl:on_save()<CR>', {})
+    vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.jump_to_list, '<cmd>lua ListViewCtrl:gh_jump_to_list()<CR>', {})
+  end
 
   log('bind close', self.m_delegate.win, delegate.buf)
   if opts.edit then
@@ -84,6 +80,10 @@ function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
   --
 
   local range = opts.display_range or opts.range
+  if range == nil or range.start == nil then
+    log('error: invalid/missing range')
+    return nil
+  end
   if range.start == nil then
     vim.notify('error invalid range: nil')
     return
@@ -126,12 +126,17 @@ function TextViewCtrl:on_save()
   local txtbufnr = TextViewCtrl._viewctlobject.m_delegate.buf
 
   local file_info = TextViewCtrl._viewctlobject.file_info
-  local contents = api.nvim_buf_get_lines(txtbufnr, 0, file_info.lines, false)
-  log(contents, file_info)
+  if file_info == nil or file_info.uri == nil then
+    log('on_save: invalid file_info')
+    return
+  end
 
   if not file_info.allow_edit then
     return
   end
+
+  local contents = api.nvim_buf_get_lines(txtbufnr, 0, file_info.lines, false)
+  log(contents, file_info)
   log('save file info', file_info)
   local bufnr = vim.uri_to_bufnr(file_info.uri)
   if not api.nvim_buf_is_loaded(bufnr) then
