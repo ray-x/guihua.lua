@@ -180,8 +180,15 @@ local function draw_table_item(buf, item, pos)
         s - 1,
         { end_line = pos, end_col = e, hl_group = 'Warnings' }
       )
-
-      s, e = word_find(item.text, item.sybol_name)
+      local next_start = e + 1
+      if next_start > #item.text then
+        break
+      end
+      s, e = word_find(item.text:sub(next_start), item.symbol_name)
+      if s then
+        s = s + next_start - 1
+        e = e + next_start - 1
+      end
     end
   end
   if item.pos ~= nil then
@@ -219,7 +226,8 @@ local function draw_lines(buf, start, end_at, data)
     return
   end
 
-  api.nvim_buf_clear_namespace(0, _GH_SEARCH_NS, 0, -1)
+  buf = buf or 0
+  api.nvim_buf_clear_namespace(buf, _GH_SEARCH_NS, 0, -1)
   -- trace('draw_lines', buf, start, end_at, #data, data)
 
   vim.fn.clearmatches()
@@ -238,7 +246,7 @@ local function draw_lines(buf, start, end_at, data)
       local pos = l[2]
       for _, v in pairs(pos) do
         -- trace(i, v, l, line)
-        api.nvim_buf_set_extmark(0, _GH_SEARCH_NS, i, v - 1, {
+        api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, i, v - 1, {
           end_line = i,
           end_col = v,
           hl_group = 'IncSearch',

@@ -11,7 +11,6 @@ if _GH_SETUP == nil then
 end
 -- _VT_GHLIST = vim.api.nvim_create_namespace("guihua_listview")
 
-trace = log
 if ListView == nil then
   ListView = class('ListView', View)
 end
@@ -86,8 +85,12 @@ function ListView:initialize(...)
   end
 
   local m = _GH_SETUP.maps
-  vim.api.nvim_buf_set_keymap(self.buf, 'n', m.close_view, '<cmd> lua ListView.close() <CR>', {})
-  vim.api.nvim_buf_set_keymap(self.buf, 'i', m.close_view, '<cmd> lua ListView.close() <CR>', {})
+  if vim.keymap then
+    vim.keymap.set({'n', 'i'}, m.close_view, '<cmd> lua ListView.close() <CR>', { buffer = self.buf })
+  else
+    vim.api.nvim_buf_set_keymap(self.buf, 'n', m.close_view, '<cmd> lua ListView.close() <CR>', {})
+    vim.api.nvim_buf_set_keymap(self.buf, 'i', m.close_view, '<cmd> lua ListView.close() <CR>', {})
+  end
   vim.api.nvim_set_hl(
     self.ns,
     '@error',
@@ -197,8 +200,9 @@ function ListView:set_pos(i)
     log('incorrect select_line -1', self.display_height, self.selected_line, self.display_start_at)
     log(debug.traceback())
     self.selected_line = 1
+  else
+    self.selected_line = i
   end
-  self.selected_line = i
   local selhighlight = vim.api.nvim_create_namespace('guihua_selhighlight')
   local cursor = vim.api.nvim_win_get_cursor(self.win)
   cursor[1] = i
@@ -229,7 +233,7 @@ end
 
 function ListView:set_data(data)
   vim.validate({ data = { data, 't' } })
-  self.ctrl:on_data_udpate(data)
+  self.ctrl:on_data_update(data)
   -- updata view?
 end
 

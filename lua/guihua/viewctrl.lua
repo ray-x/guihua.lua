@@ -1,18 +1,19 @@
-local class = require "middleclass"
-local ViewController = class("ViewController")
-local util = require "guihua.util"
-local log = require"guihua.log".info
-local trace = require"guihua.log".trace
+local class = require 'middleclass'
+local ViewController = class('ViewController')
+local util = require 'guihua.util'
+local log = require 'guihua.log'.info
+local trace = require 'guihua.log'.trace
 
 function ViewController:initialize(delegate, ...)
   self.m_delegate = delegate
   -- trace(debug.traceback())
   local opts = select(1, ...) or {}
   self.display_data = opts.data or {}
-  trace("view ctrl")
-  self.data = opts.data or {}
+  trace('view ctrl')
   -- log("viewctrl", delegate)
-  util.close_view_autocmd({"BufHidden", "BufDelete"}, delegate.win) -- , "BufLeave"
+  if delegate and delegate.win then
+    util.close_view_autocmd({'BufHidden', 'BufDelete'}, delegate.win) -- , "BufLeave"
+  end
 
   -- ... is the view
   --   vim.api.nvim_buf_set_keymap(delegate.buf, "i", "<C-e>", "<cmd> lua require'guihua.view':on_close()<CR>", {})

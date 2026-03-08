@@ -508,8 +508,18 @@ function ListViewCtrl:on_search()
   end
   local filter_input = vim.api.nvim_buf_get_lines(buf, -2, -1, false)[1]
   -- get string after prompt
-
-  local filter_input_trim = string.sub(filter_input, 6, #filter_input) -- hardcode 6 '󱩾 ' is 5 chars
+  -- extract prompt length dynamically (find first non-prompt character)
+  local prompt_end = 1
+  for i = 1, #filter_input do
+    if string.sub(filter_input, i, i):match('[^ ▸]') then
+      prompt_end = i
+      break
+    end
+  end
+  if prompt_end > 1 then
+    prompt_end = prompt_end - 1  -- go back one position
+  end
+  local filter_input_trim = string.sub(filter_input, prompt_end + 1, #filter_input)
   log('filter input:', filter_input_trim, 'input:', filter_input)
 
   if listobj.search_item == filter_input_trim then
@@ -558,7 +568,18 @@ function ListViewCtrl:on_backspace(deleteword)
   local listobj = ListViewCtrl._viewctlobject
   local buf = listobj.m_delegate.buf or vim.api.nvim_get_current_buf()
   local filter_input = vim.api.nvim_buf_get_lines(buf, -2, -1, false)[1]
-  local filter_input_trim = string.sub(filter_input, 6, #filter_input) -- hardcode 6 '󱩾 ' is 5 chars
+  -- extract prompt length dynamically
+  local prompt_end = 1
+  for i = 1, #filter_input do
+    if string.sub(filter_input, i, i):match('[^ ▸]') then
+      prompt_end = i
+      break
+    end
+  end
+  if prompt_end > 1 then
+    prompt_end = prompt_end - 1
+  end
+  local filter_input_trim = string.sub(filter_input, prompt_end + 1, #filter_input)
 
   if #filter_input_trim == 0 then
     -- filter_input = string.sub(filter_input, 1, -2)
