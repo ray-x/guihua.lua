@@ -176,7 +176,7 @@ local function test_list()
   package.loaded['guihua.listview'] = nil
   package.loaded['guihua.listviewctrl'] = nil
   -- package.loaded.packer_plugins['guihua.lua'].loaded = false
-  vim.cmd('packadd guihua.lua')
+  -- vim.cmd('packadd guihua.lua')
 
   local win = ListView:new({
     loc = 'top_center',
@@ -307,6 +307,7 @@ local function test_render_list()
 end
 
 local function test_list_one_item()
+  local gopath = vim.env.GOPATH or ''
   data = {
     {
       detail = 'func',
@@ -327,7 +328,7 @@ local function test_list_one_item()
   package.loaded['guihua.listview'] = nil
   package.loaded['guihua.listviewctrl'] = nil
   -- package.loaded.packer_plugins['guihua.lua'].loaded = false
-  vim.cmd('packadd guihua.lua')
+  -- vim.cmd('packadd guihua.lua')
 
   local d = prepare_for_render(data)
   data = d
@@ -346,6 +347,8 @@ local function test_list_one_item()
   -- win:on_draw({})
   -- win:set_pos(1)
 end
+
+test_list_one_item()
 
 local function test_list_one_item_symbol()
   data = {

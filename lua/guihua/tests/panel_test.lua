@@ -246,7 +246,7 @@ local golden_result = {
 
 package.loaded['guihua'] = nil
 package.loaded['guihua.panel'] = nil
-vim.cmd('packadd guihua.lua')
+-- vim.cmd('packadd guihua.lua')
 
 local panel = require('guihua.panel')
 local log = require('guihua.log').info

@@ -3,7 +3,7 @@ package.loaded['guihua.view'] = nil
 package.loaded['guihua.viewctrl'] = nil
 package.loaded['guihua.textview'] = nil
 package.loaded['guihua.listviewctrl'] = nil
-vim.cmd('packadd guihua.lua')
+-- vim.cmd('packadd guihua.lua')
 
 local TextView = require('guihua.textview')
 local log = require('guihua.log').info
@@ -132,7 +132,7 @@ local function test_filepreview()
   local opts = {
     relative = 'cursor',
     syntax = 'lua',
-    rect = { height = 5, pos_x = 0, pos_y = 10,width=60 },
+    rect = { height = 5, pos_x = 0, pos_y = 10, width = 60 },
     uri = uri,
     range = range,
     edit = true,
@@ -148,9 +148,9 @@ end
 -- test_fixed(false)
 -- test_relative()
 
--- test_multi()
+test_multi()
 
-test_filepreview()
+-- test_filepreview()
 
 -- signature
 -- [[ --]]
