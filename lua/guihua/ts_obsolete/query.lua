@@ -2,7 +2,6 @@ local api = vim.api
 local ts = require('guihua.ts_obsolete.compat')
 local tsrange = require('guihua.ts_obsolete.tsrange')
 local utils = require('guihua.ts_obsolete.utils')
-local parsers = require('nvim-treesitter.parsers')
 local caching = require('guihua.ts_obsolete.caching')
 
 local M = {}
