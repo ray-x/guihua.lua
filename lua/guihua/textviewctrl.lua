@@ -44,13 +44,8 @@ function TextViewCtrl:initialize(delegate, ...)
   trace('init display: ', self.display_data, self.display_height, self.selected_line)
   -- ... is the view
   -- todo location, readonly? and filetype
-  if vim.keymap then
-    vim.keymap.set('n', m.save, '<cmd>lua TextViewCtrl:on_save()<CR>', { buffer = delegate.buf, noremap = true })
-    vim.keymap.set('n', m.jump_to_list, '<cmd>lua ListViewCtrl:gh_jump_to_list()<CR>', { buffer = delegate.buf, noremap = true })
-  else
-    vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.save, '<cmd>lua TextViewCtrl:on_save()<CR>', {})
-    vim.api.nvim_buf_set_keymap(delegate.buf, 'n', m.jump_to_list, '<cmd>lua ListViewCtrl:gh_jump_to_list()<CR>', {})
-  end
+  vim.keymap.set('n', m.save, '<cmd>lua TextViewCtrl:on_save()<CR>', { buffer = delegate.buf, noremap = true })
+  vim.keymap.set('n', m.jump_to_list, '<cmd>lua ListViewCtrl:gh_jump_to_list()<CR>', { buffer = delegate.buf, noremap = true })
 
   log('bind close', self.m_delegate.win, delegate.buf)
   if opts.edit then

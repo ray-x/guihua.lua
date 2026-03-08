@@ -184,8 +184,7 @@ function M.close_view_event(_, key, winnr, bufnr, enter)
 
   -- log ("!! closer", winnr, bufnr, enter)
   if enter then
-    api.nvim_buf_set_keymap(bufnr, 'n', key, closer, {})
-    -- cmd( mode .. "map <buffer> " .. key .. " <Cmd> lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true) <CR>" )
+    vim.keymap.set('n', key, closer, { buffer = bufnr, noremap = true })
   end
 end
 

@@ -139,11 +139,7 @@ end
 -- create a windows for floating terminal
 local function floatterm(opts)
   local buf = api.nvim_create_buf(false, true)
-  if vim.keymap then
-    vim.keymap.set('t', '<ESC>', '<C-\\><C-c>', { buffer = buf, noremap = true })
-  else
-    api.nvim_buf_set_keymap(buf, 't', '<ESC>', '<C-\\><C-c>', {})
-  end
+  vim.keymap.set('t', '<ESC>', '<C-\\><C-c>', { buffer = buf, noremap = true })
   api.nvim_set_option_value('bufhidden', 'wipe', { buf = buf })
   api.nvim_set_option_value('buflisted', false, { buf = buf })
 
@@ -318,11 +314,7 @@ local term = function(opts)
   api.nvim_buf_set_var(buf, var_key, { buf, win })
   local m = _GH_SETUP.maps
   local f = string.format('lua require("guihua.floating").close(%s)<CR>', var_key)
-  if vim.keymap then
-    vim.keymap.set({'n', 'i'}, m.close_view, f, { buffer = buf })
-  else
-    vim.api.nvim_buf_set_keymap(buf, 'n', m.close_view, f, {})
-    vim.api.nvim_buf_set_keymap(buf, 'i', m.close_view, f, {})
+  vim.keymap.set({'n', 'i'}, m.close_view, f, { buffer = buf })
   end
   return buf, win, closer
 end

@@ -85,12 +85,7 @@ function ListView:initialize(...)
   end
 
   local m = _GH_SETUP.maps
-  if vim.keymap then
-    vim.keymap.set({'n', 'i'}, m.close_view, '<cmd> lua ListView.close() <CR>', { buffer = self.buf })
-  else
-    vim.api.nvim_buf_set_keymap(self.buf, 'n', m.close_view, '<cmd> lua ListView.close() <CR>', {})
-    vim.api.nvim_buf_set_keymap(self.buf, 'i', m.close_view, '<cmd> lua ListView.close() <CR>', {})
-  end
+  vim.keymap.set({'n', 'i'}, m.close_view, '<cmd> lua ListView.close() <CR>', { buffer = self.buf })
   vim.api.nvim_set_hl(
     self.ns,
     '@error',
