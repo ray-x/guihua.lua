@@ -314,8 +314,7 @@ local term = function(opts)
   api.nvim_buf_set_var(buf, var_key, { buf, win })
   local m = _GH_SETUP.maps
   local f = string.format('lua require("guihua.floating").close(%s)<CR>', var_key)
-  vim.keymap.set({'n', 'i'}, m.close_view, f, { buffer = buf })
-  end
+  vim.keymap.set({ 'n', 'i' }, m.close_view, f, { buffer = buf })
   return buf, win, closer
 end
 
