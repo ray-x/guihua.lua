@@ -65,11 +65,14 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
   end
 
   -- win_opts.items = contents
-  win_opts.hl_line = opts.lnum - display_range.start.line
+  local target_lnum = opts.lnum
+    or ((opts.range and opts.range.start and opts.range.start.line) or display_range.start.line)
+  win_opts.hl_line = target_lnum - display_range.start.line
   if win_opts.hl_line < 0 then
     win_opts.hl_line = 1
   end
-  log(opts.lnum, opts.range.start.line, win_opts.hl_line)
+  local range_start = opts.range and opts.range.start and opts.range.start.line
+  log(target_lnum, range_start, win_opts.hl_line)
   log(win_opts.uri, win_opts.syntax)
   local text_view_opts = {
     loc = win_opts.location,
@@ -122,7 +125,7 @@ end
 function M.new_list_view(opts)
   local items = opts.items
   local data = opts.data or opts.items or {}
-  log('total items:', #items, 'data: ', #data)
+  log('total items:', #(items or {}), 'data: ', #data)
   opts.height_ratio = opts.height_ratio or 0.9
   opts.width_ratio = opts.width_ratio or 0.9
   opts.preview_height_ratio = opts.preview_height_ratio or 0.4
@@ -248,7 +251,8 @@ M.select = function(items, opts, on_choice)
   vim.validate('items', items, 'table')
   vim.validate('opts', opts, 'table')
   vim.validate('on_choice', on_choice, 'function')
-  local win_title = opts.prompt .. ' <C-o> Apply <C-e> Exit'
+  local prompt = opts.prompt or 'Select'
+  local win_title = prompt .. ' <C-o> Apply <C-e> Exit'
   local data = {}
   if vim.fn.has('nvim-0.9') == 0 then
     win_title = ' ' .. win_title
