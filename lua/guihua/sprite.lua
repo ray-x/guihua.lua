@@ -202,25 +202,19 @@ function Sprite:on_draw(data)
   end
   trace('bufnr', bufnr)
 
-  vim.api.nvim_set_option_value('readonly', false, {buf=bufnr})
+  vim.api.nvim_set_option_value('readonly', false, { buf = bufnr })
   vim.api.nvim_buf_set_lines(bufnr, start, end_at, true, content)
-  vim.api.nvim_set_option_value('bufhidden', 'wipe', {buf=bufnr})
+  vim.api.nvim_set_option_value('bufhidden', 'wipe', { buf = bufnr })
   if Sprite.hl_line ~= nil then
     -- Sprite.static.hl_id = vim.api.nvim_buf_add_highlight(self.buf, -1, 'GuihuaListSelHl', Sprite.hl_line - 1, 0, -1)
-    Sprite.static.hl_id = vim.api.nvim_buf_set_extmark(
-      self.buf,
-      ns_id,
-      Sprite.hl_line - 1,
-      0,
-      {
-        hl_group = 'GuihuaListSelHl',
-        -- end_col = -1,
-        end_line = Sprite.hl_line -1,
-        line_hl_group = 'GuihuaListSelHl',  -- Highlight the whole line
-        hl_eol = true,
-        hl_mode = 'combine',
-      }
-    )
+    Sprite.static.hl_id = vim.api.nvim_buf_set_extmark(self.buf, ns_id, Sprite.hl_line - 1, 0, {
+      hl_group = 'GuihuaListSelHl',
+      -- end_col = -1,
+      end_row = Sprite.hl_line - 1,
+      line_hl_group = 'GuihuaListSelHl', -- Highlight the whole line
+      hl_eol = true,
+      hl_mode = 'combine',
+    })
   end
   trace('sprite draw finished')
 end

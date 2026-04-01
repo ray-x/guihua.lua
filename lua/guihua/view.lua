@@ -173,7 +173,7 @@ local function draw_table_item(buf, item, pos)
     local s, e = word_find(item.text, item.symbol_name)
     -- log('hl', pos, s, e, item.text, item.Symbol_name)
     while s ~= nil do
-      api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, s - 1, { end_line = pos, end_col = e, hl_group = 'Warnings' })
+      api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, s - 1, { end_row = pos, end_col = e, hl_group = 'Warnings' })
       local next_start = e + 1
       if next_start > #item.text then
         break
@@ -190,12 +190,12 @@ local function draw_table_item(buf, item, pos)
       -- vim.fn.matchaddpos("IncSearch", {{pos + 1, v}})
 
       log('hl', pos, v)
-      api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, v - 1, { end_line = pos, end_col = v, hl_group = 'IncSearch' })
+      api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, v - 1, { end_row = pos, end_col = v, hl_group = 'IncSearch' })
     end
   end
   if item.fzy ~= nil then
     for _, v in pairs(item.fzy.pos) do
-      api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, v - 1, { end_line = pos, end_col = v, hl_group = 'IncSearch' })
+      api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, v - 1, { end_row = pos, end_col = v, hl_group = 'IncSearch' })
     end
   end
 end
@@ -229,7 +229,7 @@ local function draw_lines(buf, start, end_at, data)
       for _, v in pairs(pos) do
         -- trace(i, v, l, line)
         api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, i, v - 1, {
-          end_line = i,
+          end_row = i,
           end_col = v,
           hl_group = 'IncSearch',
         })

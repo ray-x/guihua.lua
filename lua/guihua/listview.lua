@@ -85,12 +85,8 @@ function ListView:initialize(...)
   end
 
   local m = _GH_SETUP.maps
-  vim.keymap.set({'n', 'i'}, m.close_view, '<cmd> lua ListView.close() <CR>', { buffer = self.buf })
-  vim.api.nvim_set_hl(
-    self.ns,
-    '@error',
-    { undercurl = false, underdouble = false, underline = false }
-  )
+  vim.keymap.set({ 'n', 'i' }, m.close_view, '<cmd> lua ListView.close() <CR>', { buffer = self.buf })
+  vim.api.nvim_set_hl(self.ns, '@error', { undercurl = false, underdouble = false, underline = false })
   vim.api.nvim_win_set_hl_ns(self.win, self.ns)
   return self
 end
@@ -151,12 +147,7 @@ function ListView.close()
     log('fallback mask closer')
     local mask_buf = ListView.MaskBufnr
     local mask_win = ListView.MaskWinnr
-    if
-      mask_buf
-      and vim.api.nvim_buf_is_valid(mask_buf)
-      and mask_win
-      and vim.api.nvim_win_is_valid(mask_win)
-    then
+    if mask_buf and vim.api.nvim_buf_is_valid(mask_buf) and mask_win and vim.api.nvim_win_is_valid(mask_win) then
       vim.api.nvim_win_close(mask_win, true)
     end
   end
@@ -211,18 +202,12 @@ function ListView:set_pos(i)
     end
     vim.api.nvim_buf_clear_namespace(self.buf, selhighlight, 0, -1)
     local ListviewHl = 'GuihuaListSelHl'
-    vim.api.nvim_buf_set_extmark(
-      self.buf,
-      selhighlight,
-      self.selected_line - 1,
-      0,
-      {
-        hl_group = ListviewHl,
-        end_line = self.selected_line - 1,
-        line_hl_group = 'GuihuaListSelHl',  -- Highlight the whole line
-        priority = 1000,
-      }
-    )
+    vim.api.nvim_buf_set_extmark(self.buf, selhighlight, self.selected_line - 1, 0, {
+      hl_group = ListviewHl,
+      end_row = self.selected_line - 1,
+      line_hl_group = 'GuihuaListSelHl', -- Highlight the whole line
+      priority = 1000,
+    })
   end)
 end
 

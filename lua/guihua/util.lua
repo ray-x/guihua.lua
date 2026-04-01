@@ -241,11 +241,27 @@ M.highlighter = function(bufnr, ft, lines)
   end
 
   local has_ts, _ = pcall(require, 'nvim-treesitter')
+  if has_ts and vim.fn.has('nvim-0.12') == 1 then
+    local ok, _ = pcall(require, 'vim.treesitter._highlight')
+    if ok then
+      trace('attach ts')
+      vim.treesitter.start(bufnr, ft)
+      return true
+    else
+      log('ts not enable')
+      return false
+    end
+  end
+
+  -- obsolete start
+  -- TODO: remove this part of code after ts is stable
   if has_ts then
     local _, ts_highlight = pcall(require, 'guihua.ts_obsolete.highlight')
     local _, ts_parsers = pcall(require, 'guihua.ts_obsolete.parsers')
-    local lang = ts_parsers.ft_to_lang(ft)
-    if ts_parsers.has_parser(lang) then
+    -- local lang = ts_parsers.ft_to_lang(ft)
+    local lang = vim.treesitter.language.get_lang(ft)
+    -- if ts_parsers.has_parser(lang) then
+    if lang then
       trace('attach ts')
       ts_highlight.attach(bufnr, lang)
       return true
@@ -261,6 +277,7 @@ M.highlighter = function(bufnr, ft, lines)
     apply_syntax_to_region(ft, 1, lines)
     return
   end
+  -- obsolete end
 
   return false
 end
@@ -341,17 +358,7 @@ M.open_file_at = function(filename, line, col, split)
   -- sometime highlight failed because lazyloading
   local has_ts, _ = pcall(require, 'nvim-treesitter')
   if has_ts then
-    local _, ts_highlight = pcall(require, 'guihua.ts_obsolete.highlight')
-    local _, ts_parsers = pcall(require, 'guihua.ts_obsolete.parsers')
-    local lang = ts_parsers.ft_to_lang(vim.o.ft)
-    if ts_parsers.has_parser(lang) then
-      trace('attach ts', lang)
-      ts_highlight.attach(0, lang)
-      return true
-    else
-      log('ts not enable')
-      return false
-    end
+    vim.treesitter.start(api.nvim_get_current_buf(), vim.bo.filetype)
   end
 end
 

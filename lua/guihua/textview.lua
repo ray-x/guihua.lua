@@ -47,7 +47,7 @@ local function set_highlight(buf, line, hl_group)
   end
   return vim.api.nvim_buf_set_extmark(buf, ns_id, line - 1, 0, {
     hl_group = hl_group,
-    end_line = line - 1,
+    end_row = line - 1,
     line_hl_group = hl_group,
     priority = 1000,
   })
@@ -70,11 +70,11 @@ function TextView:initialize(...)
 
   if TextView.ActiveTextView ~= nil then
     if
-        TextView.ActiveTextView.win ~= nil
-        and vim.api.nvim_win_is_valid(TextView.ActiveTextView.win)
-        and vim.api.nvim_buf_is_valid(TextView.ActiveTextView.buf)
-        and opts.rect ~= nil
-        and TextView.static.ActiveTextView.rect.height == opts.rect.height
+      TextView.ActiveTextView.win ~= nil
+      and vim.api.nvim_win_is_valid(TextView.ActiveTextView.win)
+      and vim.api.nvim_buf_is_valid(TextView.ActiveTextView.buf)
+      and opts.rect ~= nil
+      and TextView.static.ActiveTextView.rect.height == opts.rect.height
     then
       log('active view ', TextView.ActiveTextView.buf, TextView.ActiveTextView.win)
       if TextView.hl_id ~= nil then
@@ -107,9 +107,7 @@ function TextView:initialize(...)
     end
   end
   if opts.allow_edit then
-    vim.api.nvim_command(
-      'autocmd InsertEnter ' .. " <buffer> ++once echo 'use <C-s> to save your changes'"
-    )
+    vim.api.nvim_command('autocmd InsertEnter ' .. " <buffer> ++once echo 'use <C-s> to save your changes'")
   end
 
   opts.enter = opts.enter or false
@@ -179,7 +177,6 @@ function TextView.Active()
   end
   return false
 end
-
 
 ---@opts: list of string, or table indicate uri and range of lines
 ---@status_line: string or nil, indicate if status line is needed
