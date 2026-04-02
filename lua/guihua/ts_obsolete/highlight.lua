@@ -3,6 +3,11 @@ local M = {}
 ---@param config TSModule
 ---@param lang string
 ---@return boolean
+
+if vim.fn.has('nvim-0.12') == 1 then
+  return require('vim.treesitter._highlight')
+end
+
 local function should_enable_vim_regex(config, lang)
   local additional_hl = config.additional_vim_regex_highlighting
   local is_table = type(additional_hl) == 'table'

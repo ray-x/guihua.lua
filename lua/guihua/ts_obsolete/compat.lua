@@ -3,33 +3,43 @@ local ts = vim.treesitter
 local tsq = ts.query
 
 local M = {}
+if true then
+  return M
+end
 
 function M.get_query_files(lang, query_group, is_included)
+  print('use vim.treesitter.query.get_files instead of vim.treesitter.get_query_files')
   return (tsq.get_files or tsq.get_query_files)(lang, query_group, is_included)
 end
 
 function M.get_query(lang, query_name)
+  print('use vim.treesitter.query.get instead of vim.treesitter.get_query')
   return (tsq.get or tsq.get_query)(lang, query_name)
 end
 
 function M.parse_query(lang, query)
+  print('use vim.treesitter.query.parse instead of vim.treesitter.parse_query')
   return (tsq.parse or tsq.parse_query)(lang, query)
 end
 
 function M.get_range(node, source, metadata)
+  print('use vim.treesitter.get_range instead of vim.treesitter.query.get_range')
   return (ts.get_range or tsq.get_range)(node, source, metadata)
 end
 
 function M.get_node_text(node, bufnr)
+  print('use vim.treesitter.get_node_text instead of vim.treesitter.query.get_node_text')
   return (ts.get_node_text or tsq.get_node_text)(node, bufnr)
 end
 
 function M.require_language(lang, opts)
+  print('use vim.treesitter.language.require_language instead of vim.treesitter.require_language')
   return (ts.language.add or ts.language.require_language)(lang, opts)
 end
 
 function M.flatten(t)
-  if vim.fn.has "nvim-0.11" == 1 then
+  print('use vim.iter(t):flatten():totable() instead of vim.tbl_flatten(t)')
+  if vim.fn.has('nvim-0.11') == 1 then
     return vim.iter(t):flatten():totable()
   else
     return vim.tbl_flatten(t)

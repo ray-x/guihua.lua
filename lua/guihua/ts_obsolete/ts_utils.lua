@@ -57,22 +57,31 @@ function M._get_line_for_node(node, type_patterns, transform_fn, bufnr)
 end
 
 -- Gets the actual text content of a node
--- @deprecated Use vim.treesitter.get_node_text
+---@deprecated Use vim.treesitter.get_node_text(node, bufnr)
 -- @param node the node to get the text from
 -- @param bufnr the buffer containing the node
 -- @return list of lines of text of the node
 function M.get_node_text(node, bufnr)
   vim.notify_once(
-    'nvim-treesitter.ts_utils.get_node_text is deprecated: use vim.treesitter.get_node_text',
+    'ts_utils.get_node_text() is deprecated: use vim.treesitter.get_node_text(node, bufnr)',
     vim.log.levels.WARN
   )
-  return get_node_text(node, bufnr)
+  return vim.treesitter.get_node_text(node, bufnr or api.nvim_get_current_buf())
 end
 
 -- Determines whether a node is the parent of another
+---@deprecated Use vim.treesitter.is_ancestor(dest, source)
 -- @param dest the possible parent
 -- @param source the possible child node
 function M.is_parent(dest, source)
+  vim.notify_once(
+    'ts_utils.is_parent() is deprecated: use vim.treesitter.is_ancestor(dest, source)',
+    vim.log.levels.WARN
+  )
+  if ts.is_ancestor then
+    return ts.is_ancestor(dest, source)
+  end
+  -- fallback for older nvim
   if not (dest and source) then
     return false
   end
@@ -160,7 +169,23 @@ function M.get_named_children(node)
   return nodes
 end
 
+---@deprecated Use vim.treesitter.get_node({ bufnr = bufnr, pos = { row, col } })
 function M.get_node_at_cursor(winnr, ignore_injected_langs)
+  vim.notify_once(
+    'ts_utils.get_node_at_cursor() is deprecated: use vim.treesitter.get_node()',
+    vim.log.levels.WARN
+  )
+  if ts.get_node then
+    winnr = winnr or 0
+    local buf = api.nvim_win_get_buf(winnr)
+    local cursor = api.nvim_win_get_cursor(winnr)
+    return ts.get_node({
+      bufnr = buf,
+      pos = { cursor[1] - 1, cursor[2] },
+      ignore_injections = ignore_injected_langs,
+    })
+  end
+  -- fallback for older nvim
   winnr = winnr or 0
   local cursor = api.nvim_win_get_cursor(winnr)
   local cursor_range = { cursor[1] - 1, cursor[2] }
@@ -325,19 +350,19 @@ function M.node_length(node)
   return end_byte - start_byte
 end
 
----@deprecated Use `vim.treesitter.is_in_node_range()` instead
+---@deprecated Use vim.treesitter.is_in_node_range(node, line, col)
 function M.is_in_node_range(node, line, col)
   vim.notify_once(
-    'nvim-treesitter.ts_utils.is_in_node_range is deprecated: use vim.treesitter.is_in_node_range',
+    'ts_utils.is_in_node_range() is deprecated: use vim.treesitter.is_in_node_range()',
     vim.log.levels.WARN
   )
   return ts.is_in_node_range(node, line, col)
 end
 
----@deprecated Use `vim.treesitter.get_node_range()` instead
+---@deprecated Use vim.treesitter.get_node_range(node_or_range)
 function M.get_node_range(node_or_range)
   vim.notify_once(
-    'nvim-treesitter.ts_utils.get_node_range is deprecated: use vim.treesitter.get_node_range',
+    'ts_utils.get_node_range() is deprecated: use vim.treesitter.get_node_range()',
     vim.log.levels.WARN
   )
   return ts.get_node_range(node_or_range)

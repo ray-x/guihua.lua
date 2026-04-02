@@ -1,5 +1,4 @@
 local api = vim.api
-local ts = require('guihua.ts_obsolete.compat')
 local tsrange = require('guihua.ts_obsolete.tsrange')
 local utils = require('guihua.ts_obsolete.utils')
 local caching = require('guihua.ts_obsolete.caching')
@@ -16,7 +15,9 @@ M.built_in_query_groups = { 'highlights', 'locals', 'folds', 'indents', 'injecti
 ---@return fun(string): boolean
 local function get_query_guard(query)
   return function(lang)
-    return M.has_query_files(lang, query)
+    -- return M.has_query_files(lang, query)
+
+    return vim.treesitter.query.get(lang, query) ~= nil
   end
 end
 
@@ -24,8 +25,13 @@ for _, query in ipairs(M.built_in_query_groups) do
   M['has_' .. query] = get_query_guard(query)
 end
 
+---@deprecated Use vim.api.nvim_get_runtime_file('queries/*/*.scm', true) and parse filenames directly
 ---@return string[]
 function M.available_query_groups()
+  vim.notify_once(
+    'query.available_query_groups() is obsolete: use nvim_get_runtime_file("queries/*/*.scm", true)',
+    vim.log.levels.WARN
+  )
   local query_files = api.nvim_get_runtime_file('queries/*/*.scm', true)
   local groups = {}
   for _, f in ipairs(query_files) do
@@ -48,10 +54,15 @@ do
     })
   end
 
+  ---@deprecated Use vim.treesitter.query.get(lang, query_group) and query:iter_matches() directly
   ---@param bufnr integer
   ---@param query_group string
   ---@return any
   function M.get_matches(bufnr, query_group)
+    vim.notify_once(
+      'query.get_matches() is obsolete: use vim.treesitter.query.get(lang, query_group) + query:iter_matches()',
+      vim.log.levels.WARN
+    )
     bufnr = bufnr or api.nvim_get_current_buf()
     local cached_local = query_cache.get(query_group, bufnr)
     if not cached_local or api.nvim_buf_get_changedtick(bufnr) > cached_local.tick then
@@ -72,10 +83,15 @@ end
 ---@type table<string, table<string, boolean>>
 local query_files_cache = {}
 
+---@deprecated Use vim.treesitter.query.get(lang, query_name) ~= nil to check availability
 ---@param lang string
 ---@param query_name string
 ---@return boolean
 function M.has_query_files(lang, query_name)
+  vim.notify_once(
+    'query.has_query_files() is obsolete: use vim.treesitter.query.get(lang, query_name) ~= nil',
+    vim.log.levels.WARN
+  )
   if not query_files_cache[lang] then
     query_files_cache[lang] = {}
   end
@@ -99,12 +115,17 @@ do
   ---@type table<string, table<string, Query>>
   local cache = setmetatable({}, mt)
 
-  -- Same as `vim.treesitter.query` except will return cached values
+  ---@deprecated Use vim.treesitter.query.get(lang, query_name) which has its own caching
   ---@param lang string
   ---@param query_name string
   function M.get_query(lang, query_name)
+    vim.notify_once(
+      'query.get_query() is obsolete: use vim.treesitter.query.get(lang, query_name)',
+      vim.log.levels.WARN
+    )
     if cache[lang][query_name] == nil then
-      cache[lang][query_name] = ts.get_query(lang, query_name)
+      -- cache[lang][query_name] = ts.get_query(lang, query_name)
+      cache[lang][query_name] = vim.treesitter.query.get(lang, query_name) --ts.get_query(lang, query_name)
     end
 
     return cache[lang][query_name]
@@ -115,9 +136,14 @@ do
   -- If lang and query_name is both present, will reload for only the lang and query_name.
   -- If only lang is present, will reload all query_names for that lang
   -- If none are present, will reload everything
+  ---@deprecated No longer needed; vim.treesitter.query.get() manages its own cache
   ---@param lang? string
   ---@param query_name? string
   function M.invalidate_query_cache(lang, query_name)
+    vim.notify_once(
+      'query.invalidate_query_cache() is obsolete: vim.treesitter.query.get() manages its own cache',
+      vim.log.levels.WARN
+    )
     if lang and query_name then
       cache[lang][query_name] = nil
       if query_files_cache[lang] then
@@ -141,9 +167,13 @@ do
   end
 end
 
--- This function is meant for an autocommand and not to be used. Only use if file is a query file.
+---@deprecated No longer needed; vim.treesitter.query.get() manages its own cache
 ---@param fname string
 function M.invalidate_query_file(fname)
+  vim.notify_once(
+    'query.invalidate_query_file() is obsolete: vim.treesitter.query.get() manages its own cache',
+    vim.log.levels.WARN
+  )
   local fnamemodify = vim.fn.fnamemodify
   M.invalidate_query_cache(fnamemodify(fname, ':p:h:t'), fnamemodify(fname, ':t:r'))
 end
@@ -167,7 +197,7 @@ local function prepare_query(bufnr, query_name, root, root_lang)
     return
   end
 
-  local parser = parsers.get_parser(bufnr, buf_lang)
+  local parser = vim.treesitter.get_parser(bufnr, buf_lang)
   if not parser then
     return
   end
@@ -198,7 +228,8 @@ local function prepare_query(bufnr, query_name, root, root_lang)
     return
   end
 
-  local query = M.get_query(root_lang, query_name)
+  -- local query = M.get_query(root_lang, query_name)
+  local query = vim.treesitter.query.get(root_lang, query_name)
   if not query then
     return
   end
@@ -213,7 +244,7 @@ local function prepare_query(bufnr, query_name, root, root_lang)
     }
 end
 
--- Given a path (i.e. a List(String)) this functions inserts value at path
+---@deprecated Internal helper, no core replacement. Use vim.treesitter.query.get() + query:iter_matches() instead.
 ---@param object any
 ---@param path string[]
 ---@param value any
@@ -231,11 +262,16 @@ function M.insert_to_path(object, path, value)
   curr_obj[path[#path]] = value
 end
 
+---@deprecated Use query:iter_matches(root, bufnr, start_row, end_row) directly
 ---@param query Query
 ---@param bufnr integer
 ---@param start_row integer
 ---@param end_row integer
 function M.iter_prepared_matches(query, qnode, bufnr, start_row, end_row)
+  -- vim.notify_once(
+  -- 'query.iter_prepared_matches() is obsolete: use query:iter_matches(root, bufnr, start, stop) directly',
+  -- vim.log.levels.WARN
+  -- )
   -- A function that splits  a string on '.'
   ---@param to_split string
   ---@return string[]
@@ -301,8 +337,13 @@ end
 ---@param root TSNode|nil node from where to start the search
 ---@param lang string|nil the language from where to get the captures.
 ---              Root nodes can have several languages.
+---@deprecated Use vim.treesitter.query.get(lang, query_group) + query:iter_captures() directly
 ---@return table|nil
 function M.get_capture_matches(bufnr, captures, query_group, root, lang)
+  -- vim.notify_once(
+  -- 'query.get_capture_matches() is obsolete: use vim.treesitter.query.get(lang, group) + query:iter_captures()',
+  -- vim.log.levels.WARN
+  -- )
   if type(captures) == 'string' then
     captures = { captures }
   end
@@ -328,7 +369,12 @@ function M.get_capture_matches(bufnr, captures, query_group, root, lang)
   return matches
 end
 
+---@deprecated Use vim.treesitter.query.get(lang, query_name) + query:iter_captures(root, bufnr, start, stop)
 function M.iter_captures(bufnr, query_name, root, lang)
+  vim.notify_once(
+    'query.iter_captures() is obsolete: use vim.treesitter.query.get(lang, name) + query:iter_captures()',
+    vim.log.levels.WARN
+  )
   local query, params = prepare_query(bufnr, query_name, root, lang)
   if not query then
     return EMPTY_ITER
@@ -361,7 +407,12 @@ end
 ---@param scoring_function fun(match: table): number
 ---@param root TSNode
 ---@return table|unknown
+---@deprecated Use vim.treesitter.query.get() + query:iter_matches() with custom filtering
 function M.find_best_match(bufnr, capture_string, query_group, filter_predicate, scoring_function, root)
+  vim.notify_once(
+    'query.find_best_match() is obsolete: use vim.treesitter.query.get() + query:iter_matches() with filtering',
+    vim.log.levels.WARN
+  )
   if string.sub(capture_string, 1, 1) == '@' then
     --remove leading "@"
     capture_string = string.sub(capture_string, 2)
@@ -388,12 +439,16 @@ function M.find_best_match(bufnr, capture_string, query_group, filter_predicate,
   return best
 end
 
----Iterates matches from a query file.
+---@deprecated Use vim.treesitter.query.get(lang, query_group) + query:iter_matches(root, bufnr, start, stop)
 ---@param bufnr integer the buffer
 ---@param query_group string the query file to use
 ---@param root TSNode the root node
 ---@param root_lang? string the root node lang, if known
 function M.iter_group_results(bufnr, query_group, root, root_lang)
+  -- vim.notify_once(
+  -- 'query.iter_group_results() is obsolete: use vim.treesitter.query.get(lang, group) + query:iter_matches()',
+  -- vim.log.levels.WARN
+  -- )
   local query, params = prepare_query(bufnr, query_group, root, root_lang)
   if not query then
     return EMPTY_ITER
@@ -403,7 +458,12 @@ function M.iter_group_results(bufnr, query_group, root, root_lang)
   return M.iter_prepared_matches(query, params.root, params.source, params.start, params.stop)
 end
 
+---@deprecated Use vim.treesitter.query.get(lang, query_group) + query:iter_matches() and collect results
 function M.collect_group_results(bufnr, query_group, root, lang)
+  vim.notify_once(
+    'query.collect_group_results() is obsolete: use vim.treesitter.query.get() + query:iter_matches()',
+    vim.log.levels.WARN
+  )
   local matches = {}
 
   for prepared_match in M.iter_group_results(bufnr, query_group, root, lang) do
@@ -422,8 +482,13 @@ end
 ---                       The function can return `nil` to ignore that tree.
 ---@param query_type string? The query to get the capture from. This is ignored if a function is provided
 ---                    for the capture argument.
+---@deprecated Use vim.treesitter.get_parser():for_each_tree() + vim.treesitter.query.get() + query:iter_captures()
 ---@return table[]
 function M.get_capture_matches_recursively(bufnr, capture_or_fn, query_type)
+  -- vim.notify_once(
+  -- 'query.get_capture_matches_recursively() is obsolete: use parser:for_each_tree() + query.get() + query:iter_captures()',
+  -- vim.log.levels.WARN
+  -- )
   ---@type CaptureResFn
   local type_fn
   if type(capture_or_fn) == 'function' then
@@ -434,8 +499,9 @@ function M.get_capture_matches_recursively(bufnr, capture_or_fn, query_type)
     end
   end
 
-  local parsers = require('guihua.ts_obsolete.parsers')
-  local parser = parsers.get_parser(bufnr)
+  -- local parsers = require('guihua.ts_obsolete.parsers')
+  -- local parser = parsers.get_parser(bufnr)
+  local parser = vim.treesitter.get_parser(bufnr)
   local matches = {}
 
   if parser then

@@ -1,14 +1,20 @@
 local api = vim.api
-local tsutils = require "guihua.ts_obsolete.ts_utils"
-local query = require "guihua.ts_obsolete.query"
-local parsers = require "nvim-treesitter.parsers"
+local tsutils = require('guihua.ts_obsolete.ts_utils')
+local query = require('guihua.ts_obsolete.query')
+local parsers = require('nvim-treesitter.parsers')
 
 local M = {}
+
+-- for nightly use
+
+if vim.fn.has('nvim-0.12') == 1 then
+  return require('vim.treesitter._fold')
+end
 
 -- This is cached on buf tick to avoid computing that multiple times
 -- Especially not for every line in the file when `zx` is hit
 local folds_levels = tsutils.memoize_by_buf_tick(function(bufnr)
-  local max_fold_level = api.nvim_win_get_option(0, "foldnestmax")
+  local max_fold_level = api.nvim_win_get_option(0, 'foldnestmax')
   local trim_level = function(level)
     if level > max_fold_level then
       return max_fold_level
@@ -24,9 +30,9 @@ local folds_levels = tsutils.memoize_by_buf_tick(function(bufnr)
 
   local matches = query.get_capture_matches_recursively(bufnr, function(lang)
     if query.has_folds(lang) then
-      return "@fold", "folds"
+      return '@fold', 'folds'
     elseif query.has_locals(lang) then
-      return "@scope", "locals"
+      return '@scope', 'locals'
     end
   end)
 
@@ -40,7 +46,7 @@ local folds_levels = tsutils.memoize_by_buf_tick(function(bufnr)
   local prev_start = -1
   local prev_stop = -1
 
-  local min_fold_lines = api.nvim_win_get_option(0, "foldminlines")
+  local min_fold_lines = api.nvim_win_get_option(0, 'foldminlines')
 
   for _, match in ipairs(matches) do
     local start, stop, stop_col ---@type integer, integer, integer
@@ -74,7 +80,7 @@ local folds_levels = tsutils.memoize_by_buf_tick(function(bufnr)
 
   -- We now have the list of fold opening and closing, fill the gaps and mark where fold start
   for lnum = 0, api.nvim_buf_line_count(bufnr) do
-    local prefix = ""
+    local prefix = ''
 
     local last_trimmed_level = trim_level(current_level)
     current_level = current_level + (start_counts[lnum] or 0)
@@ -91,13 +97,13 @@ local folds_levels = tsutils.memoize_by_buf_tick(function(bufnr)
     -- If it did have such a mechanism, (trimmed_level - last_trimmed_level)
     -- would be the correct number of starts to pass on.
     if trimmed_level - last_trimmed_level > 0 then
-      prefix = ">"
+      prefix = '>'
     elseif trimmed_level - next_trimmed_level > 0 then
       -- Ending marks tend to confuse vim more than it helps, particularly when
       -- the fold level changes by at least 2; we can uncomment this if
       -- vim's behavior gets fixed.
       -- prefix = "<"
-      prefix = ""
+      prefix = ''
     end
 
     levels[lnum + 1] = prefix .. tostring(trimmed_level)
@@ -110,14 +116,14 @@ end)
 ---@return string
 function M.get_fold_indic(lnum)
   if not parsers.has_parser() or not lnum then
-    return "0"
+    return '0'
   end
 
   local buf = api.nvim_get_current_buf()
 
   local levels = folds_levels(buf) or {}
 
-  return levels[lnum] or "0"
+  return levels[lnum] or '0'
 end
 
 return M
