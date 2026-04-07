@@ -3,21 +3,9 @@ local ts = vim.treesitter
 
 local is_012 = vim.fn.has('nvim-0.12') == 1
 
--- On nvim-treesitter main branch (0.12+), parsers.lua only contains install metadata (no .list).
--- On master branch (<0.12), it has .list, .get_parser, etc.
-local ok, nts_parsers = pcall(require, 'nvim-treesitter.parsers')
-
 local M = {}
 
--- Prefer nvim-treesitter's list if available (master branch), otherwise empty table
-if ok and nts_parsers.list then
-  M.list = nts_parsers.list
-elseif ok and not nts_parsers.list then
-  -- main branch: parsers.lua is just a table of parser configs keyed by name
-  M.list = nts_parsers
-else
-  M.list = {}
-end
+M.list = {}
 
 -- Get a list of all available parsers
 ---@deprecated Use vim.treesitter.language.get_lang() and check parser availability directly

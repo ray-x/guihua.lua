@@ -4,7 +4,6 @@ TSRange.__index = TSRange
 
 local api = vim.api
 local ts_utils = require('guihua.ts_obsolete.ts_utils')
-local parsers = require('nvim-treesitter.parsers')
 
 local function get_byte_offset(buf, row, col)
   return api.nvim_buf_get_offset(buf, row) + vim.fn.byteidx(api.nvim_buf_get_lines(buf, row, row + 1, false)[1], col)
@@ -50,7 +49,6 @@ function TSRange.from_table(buf, range)
 end
 
 function TSRange:parent()
-  -- local root_lang_tree = parsers.get_parser(self.buf)
   local root_lang_tree = vim.treesitter.get_parser(self.buf)
 
   local root = ts_utils.get_root_for_position(self[1], self[2], root_lang_tree)

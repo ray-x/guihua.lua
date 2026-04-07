@@ -1,7 +1,6 @@
 local api = vim.api
 local tsutils = require('guihua.ts_obsolete.ts_utils')
 local query = require('guihua.ts_obsolete.query')
-local parsers = require('nvim-treesitter.parsers')
 
 local M = {}
 
@@ -22,9 +21,9 @@ local folds_levels = tsutils.memoize_by_buf_tick(function(bufnr)
     return level
   end
 
-  local parser = parsers.get_parser(bufnr)
+  local ok, parser = pcall(vim.treesitter.get_parser, bufnr)
 
-  if not parser then
+  if not ok or not parser then
     return {}
   end
 
@@ -115,7 +114,7 @@ end)
 ---@param lnum integer
 ---@return string
 function M.get_fold_indic(lnum)
-  if not parsers.has_parser() or not lnum then
+  if not pcall(vim.treesitter.get_parser, api.nvim_get_current_buf()) or not lnum then
     return '0'
   end
 
