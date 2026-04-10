@@ -104,6 +104,7 @@ function M.iter_scope_tree(node, bufnr)
     end
 
     local scope = M.containing_scope(last_node, bufnr, false) or ts_utils.get_root_for_node(node)
+    -- print(vim.inspect(scope), vim.inspect(scope[1]:parent()))
 
     last_node = scope:parent()
 
@@ -280,13 +281,12 @@ function M.containing_scope(node, bufnr, allow_scope)
     return
   end
 
-  local iter_node = node
-
-  while iter_node ~= nil and not vim.tbl_contains(scopes, iter_node) do
-    iter_node = iter_node:parent()
+  local iter = node
+  while iter ~= nil and not vim.tbl_contains(scopes, iter) do
+    iter = iter:parent()
   end
 
-  return iter_node or (allow_scope and node or nil)
+  return iter or (allow_scope and node or nil)
 end
 
 function M.nested_scope(node, cursor_pos)
