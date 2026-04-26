@@ -9,6 +9,34 @@ local api = vim.api
 local top_center = require('guihua.location').top_center
 
 local ns_id = vim.api.nvim_create_namespace('guihua_gui')
+
+-- Word-wrap `text` to `width` columns, honoring existing newlines.
+local function word_wrap(text, width)
+  local lines = {}
+  for _, paragraph in ipairs(vim.split(text, '\n', { plain = true })) do
+    if #paragraph == 0 then
+      table.insert(lines, '')
+    elseif #paragraph <= width then
+      table.insert(lines, paragraph)
+    else
+      local current = ''
+      for word in paragraph:gmatch('%S+') do
+        if #current == 0 then
+          current = word
+        elseif #current + 1 + #word <= width then
+          current = current .. ' ' .. word
+        else
+          table.insert(lines, current)
+          current = word
+        end
+      end
+      if #current > 0 then
+        table.insert(lines, current)
+      end
+    end
+  end
+  return lines
+end
 -- local path_sep = require('navigator.util').path_sep()
 -- local path_cur = require('navigator.util').path_cur()
 function M._preview_location(opts) -- location, width, pos_x, pos_y
@@ -252,10 +280,16 @@ M.select = function(items, opts, on_choice)
   vim.validate('opts', opts, 'table')
   vim.validate('on_choice', on_choice, 'function')
   local prompt = opts.prompt or 'Select'
-  local win_title = prompt .. ' <C-o> Apply <C-e> Exit'
+  local hint = '<C-o> Apply  <C-e> Exit'
+  -- When the prompt is long or multi-line, render it inside the window instead
+  -- of the title bar (which Neovim truncates to the window width).
+  local PROMPT_TITLE_MAX = 60
+  local prompt_in_content = #prompt > PROMPT_TITLE_MAX or prompt:find('\n') ~= nil
+  local win_title = prompt_in_content and hint or (prompt .. '  ' .. hint)
+
   local data = {}
   if vim.fn.has('nvim-0.9') == 0 then
-    win_title = ' ' .. win_title
+    win_title = ' ' .. win_title
     data = { { text = win_title } }
   end
 
@@ -283,9 +317,9 @@ M.select = function(items, opts, on_choice)
             for _, ed in pairs(change.edits) do
               -- trace(ed)
               if ed.newText and ed.newText ~= '' then
-                local newText = ed.newText:gsub('\n\t', ' ↳ ')
-                newText = newText:gsub('\n', '↳')
-                newText = newText:gsub('↳↳', '↳')
+                local newText = ed.newText:gsub('\n\t', ' â³ ')
+                newText = newText:gsub('\n', 'â³')
+                newText = newText:gsub('â³â³', 'â³')
                 if #newText > 1 then
                   title = title .. ' (add ' .. newText
                   if ed.range then
@@ -297,8 +331,8 @@ M.select = function(items, opts, on_choice)
               end
             end
           elseif change.newText and change.newText ~= '' then
-            local newText = change.newText:gsub('"\n\t"', ' ↳  ')
-            newText = newText:gsub('\n', '↳')
+            local newText = change.newText:gsub('"\n\t"', ' â³  ')
+            newText = newText:gsub('\n', 'â³')
             title = title .. ' (newText: ' .. newText
             if change.range then
               title = title .. ' line: ' .. tostring(change.range.start.line) .. ')'
@@ -318,9 +352,36 @@ M.select = function(items, opts, on_choice)
     end
   end
 
+  -- Prepend wrapped prompt lines when the prompt is too long for the title bar.
+  local header_count = 0
+  if prompt_in_content then
+    local inner_width = math.max(math.min(width, max_width) - 8, 30)
+    local wrapped = word_wrap(prompt, inner_width)
+    local header_lines = {}
+    for _, l in ipairs(wrapped) do
+      local entry = { text = '  ' .. l, header = true }
+      table.insert(header_lines, entry)
+      if #entry.text + 6 > width then
+        width = #entry.text + 6
+      end
+    end
+    -- Separator between prompt and items
+    table.insert(header_lines, { text = '  ' .. string.rep('─', inner_width), header = true })
+    header_count = #header_lines
+    -- Rebuild data: headers first, then items
+    local new_data = {}
+    for _, h in ipairs(header_lines) do
+      table.insert(new_data, h)
+    end
+    for _, d in ipairs(data) do
+      table.insert(new_data, d)
+    end
+    data = new_data
+  end
+
   if not win_title or #win_title <= 1 then
     local divider = string.rep('─', width + 4)
-    table.insert(data, 2, divider)
+    table.insert(data, header_count + 2, divider)
   end
   -- vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<esc>', true, false, true), 'x', true)
   width = math.min(width + 4, max_width)
@@ -334,6 +395,9 @@ M.select = function(items, opts, on_choice)
     rawdata = true,
     data = data,
     on_confirm = function(item, idx)
+      if item.header then
+        return -- non-selectable prompt header lines
+      end
       return on_choice(item.value, item.idx or idx)
     end,
     on_move = function(pos)
@@ -345,11 +409,183 @@ M.select = function(items, opts, on_choice)
   if listview == nil then
     return
   end
-  -- move to 1st item
-  ListViewCtrl:on_next()
-  ListViewCtrl:on_next()
+  -- Advance cursor past any header lines and land on the first real item.
+  for _ = 1, 2 + header_count do
+    ListViewCtrl:on_next()
+  end
 
   return listview
+end
+
+-- Confirm dialog for yes/no questions.
+--
+-- opts:
+--   prompt      (string)  The question to display. Supports plain text and
+--                         markdown (set opts.markdown = true).
+--   title       (string)  Window border title. Defaults to "Confirm".
+--   default     (bool)    Pre-selected button. Defaults to true (Yes).
+--   yes_label   (string)  Label for the affirmative button. Defaults to "Yes".
+--   no_label    (string)  Label for the negative button. Defaults to "No".
+--   markdown    (bool)    Render the prompt with markdown TreeSitter highlights.
+--   width       (number)  Explicit window width (columns).
+--
+-- on_confirm(choice): called with true for Yes, false for No / cancel.
+M.confirm = function(opts, on_confirm)
+  vim.validate('opts', opts, 'table')
+  vim.validate('on_confirm', on_confirm, 'function')
+
+  local prompt = opts.prompt or 'Are you sure?'
+  local title = opts.title or 'Confirm'
+  local yes_label = opts.yes_label or 'Yes'
+  local no_label = opts.no_label or 'No'
+  local is_markdown = opts.markdown or false
+  local selected_yes = opts.default ~= false -- default: Yes pre-selected
+
+  local columns = api.nvim_get_option_value('columns', {})
+  local max_width = opts.width or math.floor(columns * 0.6)
+  max_width = math.min(math.max(max_width, 44), 80)
+
+  local inner_width = max_width - 4 -- 2-char padding on each side
+  local wrapped = word_wrap(prompt, inner_width)
+
+  -- Button labels with shortcut hints
+  local yes_btn = string.format('[y] %s', yes_label)
+  local no_btn = string.format('[n] %s', no_label)
+  local gap = math.max(inner_width - #yes_btn - #no_btn, 4)
+  local btn_line = '  ' .. yes_btn .. string.rep(' ', gap) .. no_btn
+
+  local separator = string.rep('─', inner_width)
+
+  -- Assemble buffer lines
+  local content_lines = { '' } -- top padding
+  for _, l in ipairs(wrapped) do
+    table.insert(content_lines, '  ' .. l)
+  end
+  table.insert(content_lines, '')
+  table.insert(content_lines, '  ' .. separator)
+  table.insert(content_lines, '')
+  local btn_row = #content_lines - 1 -- 0-indexed row index of the button line
+  table.insert(content_lines, btn_line)
+  table.insert(content_lines, '') -- bottom padding
+
+  local floating_buf_fn = require('guihua.floating').floating_buf
+  local location_mod = require('guihua.location')
+
+  local buf, win, closer = floating_buf_fn({
+    win_width = max_width,
+    win_height = #content_lines,
+    title = title,
+    enter = true,
+    border = 'single',
+    loc = location_mod.center,
+  })
+
+  -- Populate buffer
+  api.nvim_set_option_value('modifiable', true, { buf = buf })
+  api.nvim_set_option_value('readonly', false, { buf = buf })
+  api.nvim_buf_set_lines(buf, 0, -1, false, content_lines)
+
+  -- Apply TreeSitter markdown highlights over the prompt region when requested
+  if is_markdown then
+    local ok = pcall(vim.treesitter.start, buf, 'markdown')
+    if not ok then
+      pcall(util.highlighter, buf, 'markdown', #wrapped + 2)
+    end
+  end
+
+  -- Extmark columns for each button (btn_line layout: '  <yes_btn><gap><no_btn>')
+  local yes_col_start = 2
+  local yes_col_end = yes_col_start + #yes_btn
+  local no_col_start = yes_col_end + gap
+  local no_col_end = no_col_start + #no_btn
+
+  local ns = api.nvim_create_namespace('guihua_confirm')
+
+  local function highlight_buttons()
+    api.nvim_buf_clear_namespace(buf, ns, 0, -1)
+    local sel_hl = 'GuihuaListSelHl'
+    local dim_hl = 'Comment'
+    api.nvim_buf_set_extmark(buf, ns, btn_row, yes_col_start, {
+      end_col = yes_col_end,
+      hl_group = selected_yes and sel_hl or dim_hl,
+    })
+    api.nvim_buf_set_extmark(buf, ns, btn_row, no_col_start, {
+      end_col = no_col_end,
+      hl_group = selected_yes and dim_hl or sel_hl,
+    })
+    -- Place cursor on the active button so the user has visual feedback
+    local cursor_col = selected_yes and yes_col_start or no_col_start
+    pcall(api.nvim_win_set_cursor, win, { btn_row + 1, cursor_col })
+  end
+
+  highlight_buttons()
+
+  local function do_confirm(choice)
+    pcall(closer)
+    on_confirm(choice)
+  end
+
+  local map_opts = { noremap = true, silent = true, buffer = buf }
+  -- Direct yes / no shortcuts
+  vim.keymap.set({ 'n', 'i' }, 'y', function()
+    do_confirm(true)
+  end, map_opts)
+  vim.keymap.set({ 'n', 'i' }, 'Y', function()
+    do_confirm(true)
+  end, map_opts)
+  vim.keymap.set({ 'n', 'i' }, 'n', function()
+    do_confirm(false)
+  end, map_opts)
+  vim.keymap.set({ 'n', 'i' }, 'N', function()
+    do_confirm(false)
+  end, map_opts)
+  vim.keymap.set({ 'n', 'i' }, 'q', function()
+    do_confirm(false)
+  end, map_opts)
+  vim.keymap.set({ 'n', 'i' }, '<ESC>', function()
+    do_confirm(false)
+  end, map_opts)
+  -- Enter confirms the currently highlighted button
+  vim.keymap.set({ 'n', 'i' }, '<CR>', function()
+    do_confirm(selected_yes)
+  end, map_opts)
+  -- Toggle selection between Yes and No
+  vim.keymap.set({ 'n', 'i' }, '<Tab>', function()
+    selected_yes = not selected_yes
+    highlight_buttons()
+  end, map_opts)
+  vim.keymap.set({ 'n', 'i' }, '<S-Tab>', function()
+    selected_yes = not selected_yes
+    highlight_buttons()
+  end, map_opts)
+  -- Directional navigation: Left/h â Yes,  Right/l â No
+  vim.keymap.set({ 'n', 'i' }, '<Left>', function()
+    selected_yes = true
+    highlight_buttons()
+  end, map_opts)
+  vim.keymap.set({ 'n', 'i' }, 'h', function()
+    selected_yes = true
+    highlight_buttons()
+  end, map_opts)
+  vim.keymap.set({ 'n', 'i' }, '<Right>', function()
+    selected_yes = false
+    highlight_buttons()
+  end, map_opts)
+  vim.keymap.set({ 'n', 'i' }, 'l', function()
+    selected_yes = false
+    highlight_buttons()
+  end, map_opts)
+
+  -- Close without confirming when the user leaves the buffer
+  api.nvim_create_autocmd('BufLeave', {
+    buffer = buf,
+    once = true,
+    callback = function()
+      pcall(closer)
+    end,
+  })
+
+  return win, buf
 end
 
 M.input = require('guihua.input').input
