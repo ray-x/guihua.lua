@@ -317,9 +317,9 @@ M.select = function(items, opts, on_choice)
             for _, ed in pairs(change.edits) do
               -- trace(ed)
               if ed.newText and ed.newText ~= '' then
-                local newText = ed.newText:gsub('\n\t', ' â³ ')
-                newText = newText:gsub('\n', 'â³')
-                newText = newText:gsub('â³â³', 'â³')
+                local newText = ed.newText:gsub('\n\t', ' ↳ ')
+                newText = newText:gsub('\n', '↳')
+                newText = newText:gsub('↳↳', '↳')
                 if #newText > 1 then
                   title = title .. ' (add ' .. newText
                   if ed.range then
@@ -331,8 +331,8 @@ M.select = function(items, opts, on_choice)
               end
             end
           elseif change.newText and change.newText ~= '' then
-            local newText = change.newText:gsub('"\n\t"', ' â³  ')
-            newText = newText:gsub('\n', 'â³')
+            local newText = change.newText:gsub('"\n\t"', ' ↳  ')
+            newText = newText:gsub('\n', '↳')
             title = title .. ' (newText: ' .. newText
             if change.range then
               title = title .. ' line: ' .. tostring(change.range.start.line) .. ')'
@@ -417,19 +417,70 @@ M.select = function(items, opts, on_choice)
   return listview
 end
 
+-- format_markdown preserves code/diff fences verbatim and word-wraps prose.
+local function format_markdown(text, width)
+  local result = {}
+  local in_fence = false
+  local fence_pat = '^%s*```'
+  for _, raw in ipairs(vim.split(text, '\n', { plain = true })) do
+    if raw:match(fence_pat) then
+      in_fence = not in_fence
+      table.insert(result, raw)
+    elseif in_fence then
+      table.insert(result, raw) -- code / diff content: preserve as-is
+    elseif #raw == 0 then
+      table.insert(result, '')
+    elseif #raw <= width then
+      table.insert(result, raw)
+    else
+      local current = ''
+      for word in raw:gmatch('%S+') do
+        if #current == 0 then
+          current = word
+        elseif #current + 1 + #word <= width then
+          current = current .. ' ' .. word
+        else
+          table.insert(result, current)
+          current = word
+        end
+      end
+      if #current > 0 then
+        table.insert(result, current)
+      end
+    end
+  end
+  return result
+end
+
 -- Confirm dialog for yes/no questions.
 --
--- opts:
---   prompt      (string)  The question to display. Supports plain text and
---                         markdown (set opts.markdown = true).
---   title       (string)  Window border title. Defaults to "Confirm".
---   default     (bool)    Pre-selected button. Defaults to true (Yes).
---   yes_label   (string)  Label for the affirmative button. Defaults to "Yes".
---   no_label    (string)  Label for the negative button. Defaults to "No".
---   markdown    (bool)    Render the prompt with markdown TreeSitter highlights.
---   width       (number)  Explicit window width (columns).
+-- Renders the question in a scrollable content window with full markdown /
+-- diff syntax highlighting (TreeSitter with injected languages), and pins a
+-- dedicated button bar beneath it so the Yes / No choice is always visible.
 --
--- on_confirm(choice): called with true for Yes, false for No / cancel.
+-- opts:
+--   prompt      (string)  Question text (plain text or markdown).
+--   title       (string)  Content-window border title.  Default: "Confirm".
+--   default     (bool)    Pre-selected button.  Default: true (Yes).
+--   yes_label   (string)  Affirmative label.  Default: "Yes".
+--   no_label    (string)  Negative label.     Default: "No".
+--   markdown    (bool)    Enable markdown + injected-language TS highlights.
+--   border      (string)  nvim_open_win border style.  Default: "rounded".
+--   width       (number)  Explicit window width override (columns).
+--
+-- on_confirm(choice): called with true for Yes, false for No / dismiss.
+--
+-- Navigation (button window):
+--   y/Y          → confirm Yes immediately
+--   n/N/q/Esc    → confirm No / dismiss
+--   Enter        → confirm highlighted button
+--   Tab/S-Tab    → toggle button
+--   Left/h       → select Yes     Right/l → select No
+--   j/Down       → scroll content down 3 lines
+--   k/Up         → scroll content up   3 lines
+--   C-d / C-u    → scroll half page
+--   C-f / C-b    → scroll full page
+--   e            → enter content window (free scroll; q / Enter returns focus)
 M.confirm = function(opts, on_confirm)
   vim.validate('opts', opts, 'table')
   vim.validate('on_confirm', on_confirm, 'function')
@@ -439,153 +490,287 @@ M.confirm = function(opts, on_confirm)
   local yes_label = opts.yes_label or 'Yes'
   local no_label = opts.no_label or 'No'
   local is_markdown = opts.markdown or false
-  local selected_yes = opts.default ~= false -- default: Yes pre-selected
+  local selected_yes = opts.default ~= false
+  local border = opts.border or 'rounded'
 
+  -- ── Dimensions ──────────────────────────────────────────────────────────
   local columns = api.nvim_get_option_value('columns', {})
-  local max_width = opts.width or math.floor(columns * 0.6)
-  max_width = math.min(math.max(max_width, 44), 80)
+  local screen_h = api.nvim_get_option_value('lines', {})
+  local max_win_w = opts.width or math.floor(columns * 0.88)
+  max_win_w = math.min(math.max(max_win_w, 44), math.floor(columns * 0.95))
+  local prose_width = max_win_w - 6 -- leave 2-char padding + border
 
-  local inner_width = max_width - 4 -- 2-char padding on each side
-  local wrapped = word_wrap(prompt, inner_width)
+  -- ── Format content ──────────────────────────────────────────────────────
+  local fmt_lines = is_markdown and format_markdown(prompt, prose_width) or word_wrap(prompt, prose_width)
 
-  -- Button labels with shortcut hints
+  -- Compute actual window width from the longest formatted line
+  local max_line_w = 0
+  for _, l in ipairs(fmt_lines) do
+    if #l > max_line_w then
+      max_line_w = #l
+    end
+  end
+  local win_w = math.min(math.max(max_line_w + 6, 44), max_win_w)
+
+  -- Build content buffer lines (with 1-line padding top/bottom)
+  local cbuf_lines = { '' }
+  for _, l in ipairs(fmt_lines) do
+    table.insert(cbuf_lines, '  ' .. l)
+  end
+  table.insert(cbuf_lines, '')
+
+  -- ── Button bar ──────────────────────────────────────────────────────────
+  local BTN_H = 3
   local yes_btn = string.format('[y] %s', yes_label)
   local no_btn = string.format('[n] %s', no_label)
-  local gap = math.max(inner_width - #yes_btn - #no_btn, 4)
-  local btn_line = '  ' .. yes_btn .. string.rep(' ', gap) .. no_btn
+  local inner_btn_w = win_w - 4
+  local btn_gap = math.max(inner_btn_w - #yes_btn - #no_btn, 4)
+  local btn_line = '  ' .. yes_btn .. string.rep(' ', btn_gap) .. no_btn
+  local bbuf_lines = { '', btn_line, '' }
+  local BTN_ROW = 1 -- 0-indexed row of btn_line in btn_buf
 
-  local separator = string.rep('─', inner_width)
+  -- ── Window positions ────────────────────────────────────────────────────
+  -- content_h + 2 (borders) + BTN_H + 2 (borders) stacked together
+  local max_content_h = screen_h - BTN_H - 6
+  local content_h = math.min(#cbuf_lines, math.max(4, max_content_h))
+  local total_h = content_h + 2 + BTN_H + 2
+  local start_row = math.max(0, math.ceil((screen_h - total_h) / 2) - 1)
+  local start_col = math.max(0, math.ceil((columns - win_w) / 2))
+  local btn_row_abs = start_row + content_h + 2 -- below content bottom border
 
-  -- Assemble buffer lines
-  local content_lines = { '' } -- top padding
-  for _, l in ipairs(wrapped) do
-    table.insert(content_lines, '  ' .. l)
+  -- ── Content window ──────────────────────────────────────────────────────
+  local content_buf = api.nvim_create_buf(false, true)
+  api.nvim_set_option_value('bufhidden', 'wipe', { buf = content_buf })
+  api.nvim_set_option_value('buflisted', false, { buf = content_buf })
+  api.nvim_buf_set_lines(content_buf, 0, -1, false, cbuf_lines)
+  api.nvim_set_option_value('modifiable', false, { buf = content_buf })
+  api.nvim_set_option_value('readonly', true, { buf = content_buf })
+
+  local cwin_opts = {
+    relative = 'editor',
+    style = 'minimal',
+    row = start_row,
+    col = start_col,
+    width = win_w,
+    height = content_h,
+    border = border,
+    zindex = 50,
+  }
+  if vim.fn.has('nvim-0.9') == 1 then
+    local t = util.title_options(title)
+    if t then
+      cwin_opts.title = t
+      cwin_opts.title_pos = 'center'
+    end
   end
-  table.insert(content_lines, '')
-  table.insert(content_lines, '  ' .. separator)
-  table.insert(content_lines, '')
-  local btn_row = #content_lines - 1 -- 0-indexed row index of the button line
-  table.insert(content_lines, btn_line)
-  table.insert(content_lines, '') -- bottom padding
+  local content_win = api.nvim_open_win(content_buf, false, cwin_opts)
+  api.nvim_set_option_value('winhl', 'Normal:NormalFloat,NormalNC:Normal', { win = content_win })
+  api.nvim_set_option_value('wrap', true, { win = content_win })
+  api.nvim_set_option_value('linebreak', true, { win = content_win })
+  api.nvim_set_option_value('number', false, { win = content_win })
+  api.nvim_set_option_value('cursorline', false, { win = content_win })
+  api.nvim_set_option_value('signcolumn', 'no', { win = content_win })
 
-  local floating_buf_fn = require('guihua.floating').floating_buf
-  local location_mod = require('guihua.location')
-
-  local buf, win, closer = floating_buf_fn({
-    win_width = max_width,
-    win_height = #content_lines,
-    title = title,
-    enter = true,
-    border = 'single',
-    loc = location_mod.center,
-  })
-
-  -- Populate buffer
-  api.nvim_set_option_value('modifiable', true, { buf = buf })
-  api.nvim_set_option_value('readonly', false, { buf = buf })
-  api.nvim_buf_set_lines(buf, 0, -1, false, content_lines)
-
-  -- Apply TreeSitter markdown highlights over the prompt region when requested
+  -- TreeSitter highlighting for markdown (enables injected-language grammars
+  -- so ```diff, ```lua, ```python blocks are highlighted in their own syntax)
   if is_markdown then
-    local ok = pcall(vim.treesitter.start, buf, 'markdown')
+    local ok = pcall(vim.treesitter.start, content_buf, 'markdown')
     if not ok then
-      pcall(util.highlighter, buf, 'markdown', #wrapped + 2)
+      -- Fall back to Vim's built-in markdown syntax
+      api.nvim_set_option_value('filetype', 'markdown', { buf = content_buf })
     end
   end
 
-  -- Extmark columns for each button (btn_line layout: '  <yes_btn><gap><no_btn>')
+  -- ── Button window ────────────────────────────────────────────────────────
+  local btn_buf = api.nvim_create_buf(false, true)
+  api.nvim_set_option_value('bufhidden', 'wipe', { buf = btn_buf })
+  api.nvim_set_option_value('buflisted', false, { buf = btn_buf })
+  api.nvim_set_option_value('filetype', 'guihua', { buf = btn_buf })
+  api.nvim_buf_set_lines(btn_buf, 0, -1, false, bbuf_lines)
+
+  local bwin_opts = {
+    relative = 'editor',
+    style = 'minimal',
+    row = btn_row_abs,
+    col = start_col,
+    width = win_w,
+    height = BTN_H,
+    border = 'single',
+    zindex = 50,
+  }
+  local btn_win = api.nvim_open_win(btn_buf, true, bwin_opts) -- enter=true
+  api.nvim_set_option_value('winhl', 'Normal:NormalFloat,NormalNC:Normal', { win = btn_win })
+
+  -- ── Button highlight ─────────────────────────────────────────────────────
+  local ns = api.nvim_create_namespace('guihua_confirm')
   local yes_col_start = 2
   local yes_col_end = yes_col_start + #yes_btn
-  local no_col_start = yes_col_end + gap
+  local no_col_start = yes_col_end + btn_gap
   local no_col_end = no_col_start + #no_btn
 
-  local ns = api.nvim_create_namespace('guihua_confirm')
-
   local function highlight_buttons()
-    api.nvim_buf_clear_namespace(buf, ns, 0, -1)
-    local sel_hl = 'GuihuaListSelHl'
-    local dim_hl = 'Comment'
-    api.nvim_buf_set_extmark(buf, ns, btn_row, yes_col_start, {
+    api.nvim_buf_clear_namespace(btn_buf, ns, 0, -1)
+    local sel_hl, dim_hl = 'GuihuaListSelHl', 'Comment'
+    api.nvim_buf_set_extmark(btn_buf, ns, BTN_ROW, yes_col_start, {
       end_col = yes_col_end,
       hl_group = selected_yes and sel_hl or dim_hl,
     })
-    api.nvim_buf_set_extmark(buf, ns, btn_row, no_col_start, {
+    api.nvim_buf_set_extmark(btn_buf, ns, BTN_ROW, no_col_start, {
       end_col = no_col_end,
       hl_group = selected_yes and dim_hl or sel_hl,
     })
-    -- Place cursor on the active button so the user has visual feedback
     local cursor_col = selected_yes and yes_col_start or no_col_start
-    pcall(api.nvim_win_set_cursor, win, { btn_row + 1, cursor_col })
+    pcall(api.nvim_win_set_cursor, btn_win, { BTN_ROW + 1, cursor_col })
   end
 
   highlight_buttons()
 
+  -- ── Close helpers ────────────────────────────────────────────────────────
+  local closed = false
+  local function close_all()
+    if closed then
+      return
+    end
+    closed = true
+    pcall(api.nvim_win_close, content_win, true)
+    pcall(api.nvim_win_close, btn_win, true)
+  end
+
   local function do_confirm(choice)
-    pcall(closer)
+    close_all()
     on_confirm(choice)
   end
 
-  local map_opts = { noremap = true, silent = true, buffer = buf }
-  -- Direct yes / no shortcuts
-  vim.keymap.set({ 'n', 'i' }, 'y', function()
-    do_confirm(true)
-  end, map_opts)
-  vim.keymap.set({ 'n', 'i' }, 'Y', function()
-    do_confirm(true)
-  end, map_opts)
-  vim.keymap.set({ 'n', 'i' }, 'n', function()
-    do_confirm(false)
-  end, map_opts)
-  vim.keymap.set({ 'n', 'i' }, 'N', function()
-    do_confirm(false)
-  end, map_opts)
-  vim.keymap.set({ 'n', 'i' }, 'q', function()
-    do_confirm(false)
-  end, map_opts)
-  vim.keymap.set({ 'n', 'i' }, '<ESC>', function()
-    do_confirm(false)
-  end, map_opts)
-  -- Enter confirms the currently highlighted button
-  vim.keymap.set({ 'n', 'i' }, '<CR>', function()
-    do_confirm(selected_yes)
-  end, map_opts)
-  -- Toggle selection between Yes and No
-  vim.keymap.set({ 'n', 'i' }, '<Tab>', function()
-    selected_yes = not selected_yes
-    highlight_buttons()
-  end, map_opts)
-  vim.keymap.set({ 'n', 'i' }, '<S-Tab>', function()
-    selected_yes = not selected_yes
-    highlight_buttons()
-  end, map_opts)
-  -- Directional navigation: Left/h â Yes,  Right/l â No
-  vim.keymap.set({ 'n', 'i' }, '<Left>', function()
-    selected_yes = true
-    highlight_buttons()
-  end, map_opts)
-  vim.keymap.set({ 'n', 'i' }, 'h', function()
-    selected_yes = true
-    highlight_buttons()
-  end, map_opts)
-  vim.keymap.set({ 'n', 'i' }, '<Right>', function()
-    selected_yes = false
-    highlight_buttons()
-  end, map_opts)
-  vim.keymap.set({ 'n', 'i' }, 'l', function()
-    selected_yes = false
-    highlight_buttons()
-  end, map_opts)
-
-  -- Close without confirming when the user leaves the buffer
-  api.nvim_create_autocmd('BufLeave', {
-    buffer = buf,
+  -- Cascade close: closing one window closes the other
+  api.nvim_create_autocmd('WinClosed', {
+    pattern = tostring(content_win),
     once = true,
     callback = function()
-      pcall(closer)
+      pcall(api.nvim_win_close, btn_win, true)
+    end,
+  })
+  api.nvim_create_autocmd('WinClosed', {
+    pattern = tostring(btn_win),
+    once = true,
+    callback = function()
+      pcall(api.nvim_win_close, content_win, true)
     end,
   })
 
-  return win, buf
+  -- ── Scroll helper (called from btn_win keymaps) ──────────────────────────
+  local function scroll_content(delta)
+    if not api.nvim_win_is_valid(content_win) then
+      return
+    end
+    api.nvim_win_call(content_win, function()
+      local dir = delta > 0 and 'j' or 'k'
+      vim.cmd('normal! ' .. math.abs(delta) .. dir)
+    end)
+  end
+
+  -- ── Keymaps: button window ───────────────────────────────────────────────
+  local bmap = { noremap = true, silent = true, buffer = btn_buf }
+
+  vim.keymap.set({ 'n', 'i' }, 'y', function()
+    do_confirm(true)
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, 'Y', function()
+    do_confirm(true)
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, 'n', function()
+    do_confirm(false)
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, 'N', function()
+    do_confirm(false)
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, 'q', function()
+    do_confirm(false)
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, '<ESC>', function()
+    do_confirm(false)
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, '<CR>', function()
+    do_confirm(selected_yes)
+  end, bmap)
+
+  vim.keymap.set({ 'n', 'i' }, '<Tab>', function()
+    selected_yes = not selected_yes
+    highlight_buttons()
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, '<S-Tab>', function()
+    selected_yes = not selected_yes
+    highlight_buttons()
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, '<Left>', function()
+    selected_yes = true
+    highlight_buttons()
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, 'h', function()
+    selected_yes = true
+    highlight_buttons()
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, '<Right>', function()
+    selected_yes = false
+    highlight_buttons()
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, 'l', function()
+    selected_yes = false
+    highlight_buttons()
+  end, bmap)
+
+  -- Scroll content from the button window
+  vim.keymap.set({ 'n', 'i' }, 'j', function()
+    scroll_content(3)
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, '<Down>', function()
+    scroll_content(3)
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, 'k', function()
+    scroll_content(-3)
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, '<Up>', function()
+    scroll_content(-3)
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, '<C-d>', function()
+    scroll_content(math.ceil(content_h / 2))
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, '<C-u>', function()
+    scroll_content(-math.ceil(content_h / 2))
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, '<C-f>', function()
+    scroll_content(content_h)
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, '<PageDown>', function()
+    scroll_content(content_h)
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, '<C-b>', function()
+    scroll_content(-content_h)
+  end, bmap)
+  vim.keymap.set({ 'n', 'i' }, '<PageUp>', function()
+    scroll_content(-content_h)
+  end, bmap)
+
+  -- Enter content window for free scroll; press q / Enter to return
+  vim.keymap.set({ 'n', 'i' }, 'e', function()
+    if api.nvim_win_is_valid(content_win) then
+      api.nvim_set_current_win(content_win)
+    end
+  end, bmap)
+
+  -- ── Keymaps: content window ──────────────────────────────────────────────
+  local cmap = { noremap = true, silent = true, buffer = content_buf }
+  local function return_to_btn()
+    if api.nvim_win_is_valid(btn_win) then
+      api.nvim_set_current_win(btn_win)
+    end
+  end
+  vim.keymap.set('n', '<CR>', return_to_btn, cmap)
+  vim.keymap.set('n', 'q', return_to_btn, cmap)
+  vim.keymap.set('n', '<ESC>', function()
+    do_confirm(false)
+  end, cmap)
+
+  return content_win, btn_win
 end
 
 M.input = require('guihua.input').input
