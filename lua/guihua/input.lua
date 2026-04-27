@@ -19,7 +19,6 @@ local setup = function(opts)
 end
 
 local function onchange_callback()
-  -- log(input_ctx)
   local new_text = vim.trim(vim.fn.getline('.'):sub(#input_ctx.opts.prompt + 1, -1))
   if #new_text == 0 or new_text == input_ctx.opts.default then
     return
@@ -34,7 +33,7 @@ local function input(opts, on_confirm)
 
   input_ctx.opts = opts
   local prompt = opts.prompt or ''
-  local placeholder = opts.default or ''
+  local placeholder = opts.placeholder or opts.default or ''
   local setup_confirm = input_ctx.on_confirm
   input_ctx.on_confirm = function(new_name)
     setup_confirm(new_name)
@@ -55,7 +54,7 @@ local function input(opts, on_confirm)
     style = 'minimal',
     border = 'single',
   }
-  if opts.title or input_ctx.title or #prompt > 2 and vim.fn.has('nvim-0.9') then
+  if opts.title or input_ctx.title or #prompt > 2 then
     local title = title_options(opts.title or input_ctx.title or prompt)
     if title then
       wopts.title = title
@@ -92,7 +91,6 @@ local function input(opts, on_confirm)
     vim.cmd([[bd!]])
     if #new_text == 0 or new_text == input_ctx.opts.default then
       log('no change')
-      new_text = vim.trim(vim.fn.getline('.'):sub(#prompt + 1, -1))
       input_ctx.on_cancel(new_text)
       return
     end
@@ -107,7 +105,6 @@ local function input(opts, on_confirm)
     vim.api.nvim_win_close(0, true)
   end, { silent = true, buffer = true })
   utils.map({ 'n', 'i' }, '<BS>', [[<ESC>"_cl]], { silent = true, buffer = true })
-
   vim.cmd(string.format('normal i%s', placeholder))
   vim.fn.feedkeys('A', 'n')
   return winnr
@@ -120,7 +117,7 @@ end
 --   print('on change: ' .. text)
 -- end)
 
--- input({ prompt = 'replace: ', placeholder = 'old' }, function(text)
+-- input({ prompt = 'replace: ', placeholder = 'old text' }, function(text)
 --   print('replace old' .. 'with: ' .. text)
 -- end)
 
