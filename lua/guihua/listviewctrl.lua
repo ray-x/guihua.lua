@@ -425,6 +425,10 @@ end
 
 function ListViewCtrl:on_toggle()
   local listobj = ListViewCtrl._viewctlobject
+  if listobj == nil then
+    log('on_toggle failed, no listviewCTRL')
+    return
+  end
   -- local data_collection = listobj.data
   if listobj.selected_lines == nil then
     listobj.selected_lines = {}
@@ -449,6 +453,10 @@ end
 
 function ListViewCtrl:on_confirm(opts)
   local listobj = ListViewCtrl._viewctlobject
+  if listobj == nil then
+    log('on_confirm failed, no listviewCTRL')
+    return
+  end
   local data_collection = listobj.data
   if listobj.filter_applied == true then
     data_collection = listobj.filtered_data
