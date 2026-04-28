@@ -462,6 +462,7 @@ function ListViewCtrl:on_confirm(opts)
     data_collection = listobj.filtered_data
   end
   listobj.m_delegate:close()
+  ListViewCtrl._viewctlobject = nil -- prevent stale deferred on_leave from closing a new list view
   -- trace(listobj.m_delegate)
   if listobj.on_confirm == ListViewCtrl.on_confirm then
     log('no on_confirm listobj and listviewctl is same')
@@ -614,15 +615,19 @@ function ListViewCtrl:on_close()
 end
 
 function ListViewCtrl:on_leave(force)
-  log('closer background') -- , ListViewCtrl._viewctlobject.m_delegate)
+  log('closer background')
+  -- Capture delegate NOW (at call time), not at deferred-fire time.
+  -- If _viewctlobject is replaced by a new M.select() call within the 10ms window,
+  -- we must only close the old delegate, not the new one.
+  local listobj = ListViewCtrl._viewctlobject
+  local delegate = listobj and listobj.m_delegate
   vim.defer_fn(function()
-    -- return
-    if ListViewCtrl._viewctlobject and ListViewCtrl._viewctlobject.m_delegate then
+    if delegate then
       if force then
-        ListViewCtrl._viewctlobject.m_delegate.close()
+        delegate:close()
       end
       if not on_preview() then
-        ListViewCtrl._viewctlobject.m_delegate.close()
+        delegate:close()
       end
     end
   end, 10)
