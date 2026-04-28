@@ -307,7 +307,7 @@ local function test_render_list()
 end
 
 local function test_list_one_item()
-  local gopath = vim.env.GOPATH or ''
+  gopath = vim.env.GOPATH or ''
   data = {
     {
       detail = 'func',
@@ -341,7 +341,7 @@ local function test_list_one_item()
     on_confirm = on_confirm,
     on_move = on_move,
   })
-  -- log("test", win)
+  log('test', win)
   -- vim.cmd("startinsert!")
   -- vim.cmd("normal! zvzb")
   -- win:on_draw({})

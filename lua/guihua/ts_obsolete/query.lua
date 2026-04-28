@@ -324,7 +324,7 @@ function M.get_capture_matches_recursively(bufnr, capture_or_fn, query_type)
   if type(capture_or_fn) == 'function' then
     resolve_fn = capture_or_fn
   else
-    resolve_fn = function()
+    resolve_fn = function(_, _, _)
       return capture_or_fn, query_type
     end
   end

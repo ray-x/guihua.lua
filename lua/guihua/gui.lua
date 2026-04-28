@@ -428,10 +428,8 @@ local function format_markdown(text, width)
       table.insert(result, raw)
     elseif in_fence then
       table.insert(result, raw) -- code / diff content: preserve as-is
-    elseif #raw == 0 then
+    elseif #raw == 0 or #raw <= width then
       table.insert(result, '')
-    elseif #raw <= width then
-      table.insert(result, raw)
     else
       local current = ''
       for word in raw:gmatch('%S+') do
@@ -777,9 +775,8 @@ M.input = require('guihua.input').input
 M.input_callback = require('guihua.input').input_callback
 
 --[[
-
 M.select({ 'tabs', 'spaces', 'enter' }, {
-  prompt = 'Select tabs or spaces:',
+  prompt = 'Select tabs or spaces:\nUse tabs for indentation, or spaces? This is a sample prompt that is intentionally long to demonstrate wrapping behavior.',
   format_item = function(item)
     return "I'd like to choose " .. item
   end,
@@ -790,6 +787,5 @@ M.select({ 'tabs', 'spaces', 'enter' }, {
     print('tab')
   end
 end)
-
 ]]
 return M

@@ -225,7 +225,7 @@ local function floating_term(opts) -- cmd, callback, win_width, win_height, x, y
       vim.api.nvim_win_close(win, true)
       win = nil
     end
-    log('floatwin closing ', win, current_window, jobid, args)
+    log('floatwin closing ', win, current_window, args)
     if current_window ~= vim.api.nvim_get_current_win() then
       vim.api.nvim_set_current_win(current_window)
     end
