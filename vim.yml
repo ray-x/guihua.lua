@@ -23,12 +23,19 @@ globals:
       - type: function
   assert.are.same:
     any: true
+  assert.are_not.same:
+    args:
+      - type: any
+      - type: any
   assert.equals:
     args:
       - type: any
       - type: any
       - required: false
         type: any
+  assert.is_true:
+    args:
+      - type: bool
   assert.is_not:
     any: true
   assert.same:
