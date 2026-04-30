@@ -5,6 +5,7 @@ local util = require('guihua.util')
 
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
+local api = vim.api
 _GH_SETUP = _GH_SETUP or require('guihua.maps').setup()
 ListView = ListView or nil
 if _GH_SETUP == nil then
@@ -15,11 +16,44 @@ if ListViewCtrl == nil then
   ListViewCtrl = class('ListViewCtrl', ViewController)
 end
 
-function ListViewCtrl:gh_jump_to_list()
-  if ListView == nil then
+local controllers = {}
+local current_delegate
+
+local function register_controller(listobj)
+  if listobj == nil or listobj.m_delegate == nil or listobj.m_delegate.buf == nil then
     return
   end
-  local jumpto = ListView.Winnr
+  controllers[listobj.m_delegate.buf] = listobj
+  ListViewCtrl._viewctlobject = listobj
+end
+
+local function unregister_controller(listobj)
+  if listobj == nil or listobj.m_delegate == nil then
+    return
+  end
+  local buf = listobj.m_delegate.buf
+  if buf ~= nil and controllers[buf] == listobj then
+    controllers[buf] = nil
+  end
+  if ListViewCtrl._viewctlobject == listobj then
+    ListViewCtrl._viewctlobject = controllers[api.nvim_get_current_buf()]
+    if ListViewCtrl._viewctlobject == listobj then
+      ListViewCtrl._viewctlobject = nil
+    end
+    if ListViewCtrl._viewctlobject == nil then
+      for _, ctrl in pairs(controllers) do
+        if ctrl ~= listobj then
+          ListViewCtrl._viewctlobject = ctrl
+          break
+        end
+      end
+    end
+  end
+end
+
+function ListViewCtrl:gh_jump_to_list()
+  local _, delegate = current_delegate(self)
+  local jumpto = delegate and delegate.win or ListView.Winnr
   if jumpto ~= nil and vim.api.nvim_win_is_valid(jumpto) then
     log('jump to', jumpto)
     vim.cmd(string.format('noa call nvim_set_current_win(%s)', jumpto))
@@ -39,12 +73,82 @@ function ListViewCtrl:gh_jump_to_preview()
   end
 end
 
-local function on_preview()
+local function on_preview(listobj)
+  if listobj ~= nil and listobj.preview ~= true then
+    return false
+  end
   if TextView == nil or TextView.ActiveTextView == nil then
     return false
   end
   local jumpto = TextView.ActiveTextView.win
   return jumpto ~= nil and vim.api.nvim_win_is_valid(jumpto)
+end
+
+local function on_popup_window()
+  local current_win = api.nvim_get_current_win()
+  if current_win == nil or current_win == 0 or not api.nvim_win_is_valid(current_win) then
+    return false
+  end
+  local current_buf = api.nvim_win_get_buf(current_win)
+  if controllers[current_buf] ~= nil then
+    return true
+  end
+  local ok, cfg = pcall(api.nvim_win_get_config, current_win)
+  if not ok or cfg.relative == nil or cfg.relative == '' then
+    return false
+  end
+  local buftype = api.nvim_get_option_value('buftype', { buf = current_buf })
+  local filetype = api.nvim_get_option_value('filetype', { buf = current_buf })
+  return buftype == 'prompt' or filetype == 'guihua'
+end
+
+current_delegate = function(self_or_bufnr, bufnr)
+  local listobj = nil
+  if type(self_or_bufnr) == 'table' and self_or_bufnr.class ~= nil and self_or_bufnr.m_delegate ~= nil then
+    listobj = self_or_bufnr
+    bufnr = bufnr or (listobj.m_delegate and listobj.m_delegate.buf)
+  elseif type(self_or_bufnr) == 'number' then
+    bufnr = self_or_bufnr
+  end
+  if listobj == nil and bufnr ~= nil then
+    listobj = controllers[bufnr]
+  end
+  if listobj == nil then
+    listobj = controllers[api.nvim_get_current_buf()] or ListViewCtrl._viewctlobject
+  end
+  if listobj == nil or listobj.m_delegate == nil then
+    return nil, nil
+  end
+  local delegate = listobj.m_delegate
+  if bufnr ~= nil and delegate.buf ~= bufnr then
+    return nil, nil
+  end
+  if delegate.win == nil or not vim.api.nvim_win_is_valid(delegate.win) then
+    unregister_controller(listobj)
+    return nil, nil
+  end
+  return listobj, delegate
+end
+
+local function clear_autocmds(listobj)
+  if listobj == nil or listobj.augroup == nil then
+    return
+  end
+  pcall(api.nvim_del_augroup_by_id, listobj.augroup)
+  listobj.augroup = nil
+end
+
+local function close_controller(listobj)
+  if listobj == nil or listobj.closed then
+    return
+  end
+  listobj.closed = true
+  clear_autocmds(listobj)
+  local delegate = listobj.m_delegate
+  unregister_controller(listobj)
+  if delegate ~= nil and delegate.close ~= nil and delegate.win ~= nil and api.nvim_win_is_valid(delegate.win) then
+    delegate:close()
+  end
 end
 
 function ListViewCtrl:initialize(delegate, ...)
@@ -90,49 +194,50 @@ function ListViewCtrl:initialize(delegate, ...)
   end
   --  stylua: ignore start
   local keymaps = {
-    { mode = 'n', key = m.prev,       cmd = function() ListViewCtrl:on_prev() end,                   desc = 'ListViewCtrl:on_prev()' },
-    { mode = 'i', key = m.prev,       cmd = function() ListViewCtrl:on_prev() end,                   desc = 'ListViewCtrl:on_prev()' },
-    { mode = 'n', key = m.next,       cmd = function() ListViewCtrl:on_next() end,                   desc = 'ListViewCtrl:on_next()' },
-    { mode = 'i', key = m.next,       cmd = function() ListViewCtrl:on_next() end,                   desc = 'ListViewCtrl:on_next()' },
-    { mode = 'n', key = '<Enter>',    cmd = function() ListViewCtrl:on_confirm() end,                desc = 'ListViewCtrl:on_confirm()' },
-    { mode = 'i', key = '<Enter>',    cmd = function() ListViewCtrl:on_confirm() end,                desc = 'ListViewCtrl:on_confirm()' },
-    { mode = 'n', key = '<C-w>j',     cmd = function() ListViewCtrl:gh_jump_to_preview() end,        desc = 'jump to preview' },
-    { mode = 'n', key = 'k',          cmd = function() ListViewCtrl:on_prev() end,                   desc = 'ListViewCtrl:on_prev()' },
-    { mode = 'n', key = 'j',          cmd = function() ListViewCtrl:on_next() end,                   desc = 'ListViewCtrl:on_next()' },
-    { mode = 'n', key = '<Tab>',      cmd = function() ListViewCtrl:on_toggle() end,                 desc = 'ListViewCtrl:on_toggle()' },
-    { mode = 'i', key = '<Tab>',      cmd = function() ListViewCtrl:on_toggle() end,                 desc = 'ListViewCtrl:on_toggle()' },
-    { mode = 'n', key = '<Up>',       cmd = function() ListViewCtrl:on_prev() end,                   desc = 'ListViewCtrl:on_prev()' },
-    { mode = 'n', key = '<Down>',     cmd = function() ListViewCtrl:on_next() end,                   desc = 'ListViewCtrl:on_next()' },
-    { mode = 'i', key = '<Up>',       cmd = function() ListViewCtrl:on_prev() end,                   desc = 'ListViewCtrl:on_prev()' },
-    { mode = 'i', key = '<Down>',     cmd = function() ListViewCtrl:on_next() end,                   desc = 'ListViewCtrl:on_next()' },
-    { mode = 'i', key = m.pageup,     cmd = function() ListViewCtrl:on_pageup() end,                 desc = 'ListViewCtrl:on_pageup()' },
-    { mode = 'i', key = m.pagedown,   cmd = function() ListViewCtrl:on_pagedown() end,               desc = 'ListViewCtrl:on_pagedown()' },
-    { mode = 'i', key = '<PageUp>',   cmd = function() ListViewCtrl:on_pageup() end,                 desc = 'ListViewCtrl:on_pageup()' },
-    { mode = 'i', key = '<PageDown>', cmd = function() ListViewCtrl:on_pagedown() end,               desc = 'ListViewCtrl:on_pagedown()' },
-    { mode = 'n', key = m.pageup,     cmd = function() ListViewCtrl:on_pageup() end,                 desc = 'ListViewCtrl:on_pageup()' },
-    { mode = 'n', key = m.pagedown,   cmd = function() ListViewCtrl:on_pagedown() end,               desc = 'ListViewCtrl:on_pagedown()' },
-    { mode = 'n', key = '<PageUp>',   cmd = function() ListViewCtrl:on_pageup() end,                 desc = 'ListViewCtrl:on_pageup()' },
-    { mode = 'n', key = '<PageDown>', cmd = function() ListViewCtrl:on_pagedown() end,               desc = 'ListViewCtrl:on_pagedown()' },
-    { mode = 'n', key = m.confirm,    cmd = function() ListViewCtrl:on_confirm() end,                desc = 'ListViewCtrl:on_confirm()' },
-    { mode = 'n', key = m.vsplit,     cmd = function() ListViewCtrl:on_confirm({ split = 'v' }) end, desc = 'ListViewCtrl:on_confirm {split = v}' },
-    { mode = 'n', key = m.split,      cmd = function() ListViewCtrl:on_confirm({ split = 's' }) end, desc = 'ListViewCtrl:on_confirm {split = s}' },
-    { mode = 'n', key = m.tabnew,     cmd = function() ListViewCtrl:on_confirm({ split = 't' }) end, desc = 'ListViewCtrl:on_confirm {split = t}' },
-    { mode = 'i', key = m.tabnew,     cmd = function() ListViewCtrl:on_confirm({ split = 't' }) end, desc = 'ListViewCtrl:on_confirm {split = t}' },
-    { mode = 'i', key = m.confirm,    cmd = function() ListViewCtrl:on_confirm() end,                desc = 'ListViewCtrl:on_confirm()' },
-    { mode = 'n', key = m.close_view, cmd = function() ListViewCtrl:on_close() end,                  desc = 'ListViewCtrl:on_close()' },
-    { mode = 'n', key = m.send_qf,    cmd = function() ListViewCtrl:on_quickfix() end,               desc = 'ListViewCtrl:on_quickfix()' },
-    { mode = 'n', key = '<C-c>',      cmd = function() ListViewCtrl:on_close() end,                  desc = 'ListViewCtrl:on_close()' },
-    { mode = 'n', key = '<ESC>',      cmd = function() ListViewCtrl:on_close() end,                  desc = 'ListViewCtrl:on_close()' },
-    { mode = 'i', key = '<BS>',       cmd = function() ListViewCtrl:on_backspace() end,              desc = 'ListViewCtrl:on_backspace()' },
-    { mode = 'i', key = '<C-W>',      cmd = function() ListViewCtrl:on_backspace(true) end,          desc = 'ListViewCtrl:on_backspace()' },
+    { mode = 'n', key = m.prev,       cmd = function() self:on_prev() end,                   desc = 'ListViewCtrl:on_prev()' },
+    { mode = 'i', key = m.prev,       cmd = function() self:on_prev() end,                   desc = 'ListViewCtrl:on_prev()' },
+    { mode = 'n', key = m.next,       cmd = function() self:on_next() end,                   desc = 'ListViewCtrl:on_next()' },
+    { mode = 'i', key = m.next,       cmd = function() self:on_next() end,                   desc = 'ListViewCtrl:on_next()' },
+    { mode = 'n', key = '<Enter>',    cmd = function() self:on_confirm() end,                desc = 'ListViewCtrl:on_confirm()' },
+    { mode = 'i', key = '<Enter>',    cmd = function() self:on_confirm() end,                desc = 'ListViewCtrl:on_confirm()' },
+    { mode = 'n', key = '<C-w>j',     cmd = function() self:gh_jump_to_preview() end,        desc = 'jump to preview' },
+    { mode = 'n', key = 'k',          cmd = function() self:on_prev() end,                   desc = 'ListViewCtrl:on_prev()' },
+    { mode = 'n', key = 'j',          cmd = function() self:on_next() end,                   desc = 'ListViewCtrl:on_next()' },
+    { mode = 'n', key = '<Tab>',      cmd = function() self:on_toggle() end,                 desc = 'ListViewCtrl:on_toggle()' },
+    { mode = 'i', key = '<Tab>',      cmd = function() self:on_toggle() end,                 desc = 'ListViewCtrl:on_toggle()' },
+    { mode = 'n', key = '<Up>',       cmd = function() self:on_prev() end,                   desc = 'ListViewCtrl:on_prev()' },
+    { mode = 'n', key = '<Down>',     cmd = function() self:on_next() end,                   desc = 'ListViewCtrl:on_next()' },
+    { mode = 'i', key = '<Up>',       cmd = function() self:on_prev() end,                   desc = 'ListViewCtrl:on_prev()' },
+    { mode = 'i', key = '<Down>',     cmd = function() self:on_next() end,                   desc = 'ListViewCtrl:on_next()' },
+    { mode = 'i', key = m.pageup,     cmd = function() self:on_pageup() end,                 desc = 'ListViewCtrl:on_pageup()' },
+    { mode = 'i', key = m.pagedown,   cmd = function() self:on_pagedown() end,               desc = 'ListViewCtrl:on_pagedown()' },
+    { mode = 'i', key = '<PageUp>',   cmd = function() self:on_pageup() end,                 desc = 'ListViewCtrl:on_pageup()' },
+    { mode = 'i', key = '<PageDown>', cmd = function() self:on_pagedown() end,               desc = 'ListViewCtrl:on_pagedown()' },
+    { mode = 'n', key = m.pageup,     cmd = function() self:on_pageup() end,                 desc = 'ListViewCtrl:on_pageup()' },
+    { mode = 'n', key = m.pagedown,   cmd = function() self:on_pagedown() end,               desc = 'ListViewCtrl:on_pagedown()' },
+    { mode = 'n', key = '<PageUp>',   cmd = function() self:on_pageup() end,                 desc = 'ListViewCtrl:on_pageup()' },
+    { mode = 'n', key = '<PageDown>', cmd = function() self:on_pagedown() end,               desc = 'ListViewCtrl:on_pagedown()' },
+    { mode = 'n', key = m.confirm,    cmd = function() self:on_confirm() end,                desc = 'ListViewCtrl:on_confirm()' },
+    { mode = 'n', key = m.vsplit,     cmd = function() self:on_confirm({ split = 'v' }) end, desc = 'ListViewCtrl:on_confirm {split = v}' },
+    { mode = 'n', key = m.split,      cmd = function() self:on_confirm({ split = 's' }) end, desc = 'ListViewCtrl:on_confirm {split = s}' },
+    { mode = 'n', key = m.tabnew,     cmd = function() self:on_confirm({ split = 't' }) end, desc = 'ListViewCtrl:on_confirm {split = t}' },
+    { mode = 'i', key = m.tabnew,     cmd = function() self:on_confirm({ split = 't' }) end, desc = 'ListViewCtrl:on_confirm {split = t}' },
+    { mode = 'i', key = m.confirm,    cmd = function() self:on_confirm() end,                desc = 'ListViewCtrl:on_confirm()' },
+    { mode = 'n', key = m.close_view, cmd = function() self:on_close() end,                  desc = 'ListViewCtrl:on_close()' },
+    { mode = 'n', key = m.send_qf,    cmd = function() self:on_quickfix() end,               desc = 'ListViewCtrl:on_quickfix()' },
+    { mode = 'n', key = '<C-c>',      cmd = function() self:on_close() end,                  desc = 'ListViewCtrl:on_close()' },
+    { mode = 'n', key = '<ESC>',      cmd = function() self:on_close() end,                  desc = 'ListViewCtrl:on_close()' },
+    { mode = 'i', key = '<BS>',       cmd = function() self:on_backspace() end,              desc = 'ListViewCtrl:on_backspace()' },
+    { mode = 'i', key = '<C-W>',      cmd = function() self:on_backspace(true) end,          desc = 'ListViewCtrl:on_backspace()' },
   }
 
   for i = 1, 9 do
+    local idx = i
     keymaps[#keymaps + 1] = {
       -- stylua: ignore
       mode = 'n',
-      key = tostring(i),
-      cmd = function() ListViewCtrl:on_item(i) end,
+      key = tostring(idx),
+      cmd = function() self:on_item(idx) end,
       desc = 'list on item num'
     }
   end
@@ -146,11 +251,29 @@ function ListViewCtrl:initialize(delegate, ...)
   end
 
   -- stylua: ignore end
-  vim.cmd([[ autocmd TextChangedI,TextChanged <buffer> lua  ListViewCtrl:on_search() ]])
-  vim.cmd([[ autocmd WinLeave <buffer> ++once lua  ListViewCtrl:on_leave() ]])
+  self.augroup = vim.api.nvim_create_augroup('guihua_listview_' .. tostring(delegate.buf), { clear = true })
+  vim.api.nvim_create_autocmd({ 'TextChangedI', 'TextChanged' }, {
+    buffer = delegate.buf,
+    group = self.augroup,
+    callback = function()
+      self:on_search()
+    end,
+  })
+  vim.api.nvim_create_autocmd('WinLeave', {
+    buffer = delegate.buf,
+    group = self.augroup,
+    callback = function()
+      self:on_leave()
+    end,
+  })
+  vim.api.nvim_create_autocmd('FocusGained', {
+    group = self.augroup,
+    callback = function()
+      self:on_focus_gained(delegate.buf)
+    end,
+  })
 
-  --
-  ListViewCtrl._viewctlobject = self
+  register_controller(self)
   log('listview ctrl created ')
 end
 
@@ -169,8 +292,29 @@ function ListViewCtrl:wrap_closer(o)
   end
 end
 
+function ListViewCtrl:clear_autocmds()
+  local listobj = current_delegate(self)
+  clear_autocmds(listobj)
+end
+
+function ListViewCtrl:on_focus_gained(bufnr)
+  local listobj, delegate = current_delegate(self, bufnr)
+  if listobj == nil or delegate == nil or on_preview(listobj) then
+    return
+  end
+  ListViewCtrl._viewctlobject = listobj
+
+  if vim.api.nvim_get_current_win() ~= delegate.win then
+    vim.api.nvim_set_current_win(delegate.win)
+  end
+
+  if delegate.prompt and listobj.prompt_mode == 'insert' then
+    vim.cmd('startinsert!')
+  end
+end
+
 function ListViewCtrl:on_next()
-  local listobj = ListViewCtrl._viewctlobject
+  local listobj = current_delegate(self)
   if listobj == nil then
     log('failed to find ListViewObject')
     return
@@ -254,7 +398,7 @@ function ListViewCtrl:on_item(i)
   if i < 1 then
     i = 1
   end
-  local listobj = ListViewCtrl._viewctlobject
+  local listobj = current_delegate(self)
   if listobj == nil then
     log('incorrect on_prev context', ListViewCtrl)
     return
@@ -297,7 +441,7 @@ function ListViewCtrl:on_item(i)
 end
 
 function ListViewCtrl:on_prev()
-  local listobj = ListViewCtrl._viewctlobject
+  local listobj = current_delegate(self)
   if listobj == nil then
     log('incorrect on_prev context', ListViewCtrl)
     return
@@ -364,16 +508,19 @@ function ListViewCtrl:on_prev()
 end
 
 function ListViewCtrl:on_pagedown()
-  ListViewCtrl:draw_page(1)
+  self:draw_page(1)
 end
 
 function ListViewCtrl:on_pageup()
-  ListViewCtrl:draw_page(-1)
+  self:draw_page(-1)
 end
 
 -- offset can be 1: page down, -1: page up or 0: doing nothing and redraw
 function ListViewCtrl:draw_page(offset_direction)
-  local listobj = ListViewCtrl._viewctlobject
+  local listobj = current_delegate(self)
+  if listobj == nil then
+    return
+  end
 
   local disp_h = listobj.display_height
 
@@ -424,7 +571,7 @@ function ListViewCtrl:draw_page(offset_direction)
 end
 
 function ListViewCtrl:on_toggle()
-  local listobj = ListViewCtrl._viewctlobject
+  local listobj = current_delegate(self)
   if listobj == nil then
     log('on_toggle failed, no listviewCTRL')
     return
@@ -452,7 +599,7 @@ function ListViewCtrl:on_toggle()
 end
 
 function ListViewCtrl:on_confirm(opts)
-  local listobj = ListViewCtrl._viewctlobject
+  local listobj = current_delegate(self)
   if listobj == nil then
     log('on_confirm failed, no listviewCTRL')
     return
@@ -461,14 +608,14 @@ function ListViewCtrl:on_confirm(opts)
   if listobj.filter_applied == true then
     data_collection = listobj.filtered_data
   end
-  listobj.m_delegate:close()
-  ListViewCtrl._viewctlobject = nil -- prevent stale deferred on_leave from closing a new list view
+  local selection = data_collection[listobj.selected_line]
+  close_controller(listobj)
   -- trace(listobj.m_delegate)
   if listobj.on_confirm == ListViewCtrl.on_confirm then
     log('no on_confirm listobj and listviewctl is same')
     return
   end
-  listobj.on_confirm(data_collection[listobj.selected_line], opts)
+  listobj.on_confirm(selection, opts)
 end
 
 function ListViewCtrl:on_search()
@@ -476,7 +623,7 @@ function ListViewCtrl:on_search()
   trace(debug.traceback())
   -- trace = log
 
-  local listobj = ListViewCtrl._viewctlobject
+  local listobj = current_delegate(self)
   if listobj == nil then
     log('on search failed, no listviewCTRL')
     -- why on_search bind here?
@@ -550,7 +697,10 @@ function ListViewCtrl:on_search()
 end
 
 function ListViewCtrl:on_backspace(deleteword)
-  local listobj = ListViewCtrl._viewctlobject
+  local listobj = current_delegate(self)
+  if listobj == nil then
+    return
+  end
   local buf = listobj.m_delegate.buf or vim.api.nvim_get_current_buf()
   local filter_input = vim.api.nvim_buf_get_lines(buf, -2, -1, false)[1]
   local filter_input_trim = string.sub(filter_input, 6, #filter_input) -- hardcode 6 '󱩾 ' is 5 chars
@@ -568,7 +718,7 @@ function ListViewCtrl:on_backspace(deleteword)
   end
   vim.cmd([[normal! A]])
   vim.cmd('startinsert!')
-  ListViewCtrl:on_search()
+  self:on_search()
 
   -- log(filter_input)
   -- vim.api.nvim_buf_set_lines(buf, -2, -1, true, {filter_input})
@@ -577,7 +727,10 @@ function ListViewCtrl:on_backspace(deleteword)
 end
 
 function ListViewCtrl:on_quickfix()
-  local listobj = ListViewCtrl._viewctlobject
+  local listobj = current_delegate(self)
+  if listobj == nil then
+    return
+  end
   local data = listobj.filtered_data or listobj.data
 
   if listobj.selected_lines and next(listobj.selected_lines) then
@@ -597,21 +750,18 @@ function ListViewCtrl:on_quickfix()
   end
   log(qf)
   vim.fn.setqflist(qf)
-  ListViewCtrl:on_close()
+  self:on_close()
   vim.cmd('copen')
 end
 
 function ListViewCtrl:on_close()
   log('closer listview') -- , ListViewCtrl._viewctlobject.m_delegate)
-  if ListViewCtrl._viewctlobject == nil then
+  local listobj = current_delegate(self)
+  if listobj == nil then
     log('closer listview', debug.traceback()) --  ListViewCtrl._viewctlobject.m_delegate)
     return
   end
-  ListViewCtrl._viewctlobject.m_delegate.close()
-
-  ListViewCtrl._viewctlobject.m_delegate:on_close()
-  ListViewCtrl:on_leave(true)
-  ListViewCtrl._viewctlobject = nil
+  close_controller(listobj)
 end
 
 function ListViewCtrl:on_leave(force)
@@ -619,22 +769,22 @@ function ListViewCtrl:on_leave(force)
   -- Capture delegate NOW (at call time), not at deferred-fire time.
   -- If _viewctlobject is replaced by a new M.select() call within the 10ms window,
   -- we must only close the old delegate, not the new one.
-  local listobj = ListViewCtrl._viewctlobject
-  local delegate = listobj and listobj.m_delegate
+  local listobj, delegate = current_delegate(self)
   vim.defer_fn(function()
-    if delegate then
+    if delegate and listobj and not listobj.closed and delegate.win ~= nil and api.nvim_win_is_valid(delegate.win) then
       if force then
-        delegate:close()
+        close_controller(listobj)
+        return
       end
-      if not on_preview() then
-        delegate:close()
+      if not on_preview(listobj) and not on_popup_window() then
+        close_controller(listobj)
       end
     end
   end, 10)
 end
 
 function ListViewCtrl:on_data_update(data)
-  local listobj = ListViewCtrl._viewctlobject
+  local listobj = current_delegate(self)
   if listobj then
     listobj.data = data
   end

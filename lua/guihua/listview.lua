@@ -27,10 +27,6 @@ opts={
 function ListView:initialize(...)
   trace(debug.traceback())
 
-  if ListView.win and vim.api.nvim_win_is_valid(ListView.win) then
-    ListView.close()
-  end
-
   log('listview ctor ') -- , self)
   local opts = select(1, ...) or {}
 
@@ -85,7 +81,14 @@ function ListView:initialize(...)
   end
 
   local m = _GH_SETUP.maps
-  vim.keymap.set({ 'n', 'i' }, m.close_view, '<cmd> lua ListView.close() <CR>', { buffer = self.buf })
+  vim.keymap.set({ 'n', 'i' }, m.close_view, function()
+    local ctrl = self:get_ctrl()
+    if ctrl then
+      ctrl:on_close()
+      return
+    end
+    self:close()
+  end, { buffer = self.buf, noremap = true, silent = true })
   vim.api.nvim_set_hl(self.ns, '@error', { undercurl = false, underdouble = false, underline = false })
   vim.api.nvim_win_set_hl_ns(self.win, self.ns)
   return self
