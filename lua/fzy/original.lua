@@ -12,7 +12,7 @@
 local has_path, path = pcall(require, 'plenary.path')
 if not has_path then
   path = {
-    separator = '/'
+    separator = '/',
   }
 end
 
@@ -48,11 +48,11 @@ function fzy.has_match(needle, haystack)
 end
 
 local function is_lower(c)
-  return c:match("%l")
+  return c:match('%l')
 end
 
 local function is_upper(c)
-  return c:match("%u")
+  return c:match('%u')
 end
 
 local function precompute_bonus(haystack)
@@ -63,9 +63,9 @@ local function precompute_bonus(haystack)
     local this_char = haystack:sub(i, i)
     if last_char == path.separator then
       match_bonus[i] = SCORE_MATCH_SLASH
-    elseif last_char == "-" or last_char == "_" or last_char == " " then
+    elseif last_char == '-' or last_char == '_' or last_char == ' ' then
       match_bonus[i] = SCORE_MATCH_WORD
-    elseif last_char == "." then
+    elseif last_char == '.' then
       match_bonus[i] = SCORE_MATCH_DOT
     elseif is_lower(last_char) and is_upper(this_char) then
       match_bonus[i] = SCORE_MATCH_CAPITAL
@@ -93,7 +93,7 @@ local function compute(needle, haystack, D, M)
     haystack_chars[i] = lower_haystack:sub(i, i)
   end
 
-  for i=1,n do
+  for i = 1, n do
     D[i] = {}
     M[i] = {}
 
@@ -147,7 +147,7 @@ function fzy.positions(needle, haystack)
     return {}, SCORE_MIN
   elseif n == m then
     local consecutive = {}
-    for i=1,n do
+    for i = 1, n do
       consecutive[i] = i
     end
     return consecutive, SCORE_MAX
@@ -161,11 +161,10 @@ function fzy.positions(needle, haystack)
   local positions = {}
   local match_required = false
   local j = m
-  for i=n,1,-1 do
+  for i = n, 1, -1 do
     while j >= 1 do
       if D[i][j] ~= SCORE_MIN and (match_required or D[i][j] == M[i][j]) then
-        match_required = (i ~= 1) and (j ~= 1) and (
-        M[i][j] == D[i - 1][j - 1] + SCORE_MATCH_CONSECUTIVE)
+        match_required = (i ~= 1) and (j ~= 1) and (M[i][j] == D[i - 1][j - 1] + SCORE_MATCH_CONSECUTIVE)
         positions[i] = j
         j = j - 1
         break
@@ -215,12 +214,14 @@ function fzy.filter_table_ordered(needle, items)
     local line = items[i].text
     if line and fzy.has_match(needle, line) then
       local positions, score = fzy.positions(needle, line)
-      items[i].fzy={pos=positions, score = score}
-      table.insert(results,  items[i])
+      items[i].fzy = { pos = positions, score = score }
+      table.insert(results, items[i])
     end
   end
 
-  table.sort(results, function(i, j) return i.fzy.score > j.fzy.score end)
+  table.sort(results, function(i, j)
+    return i.fzy.score > j.fzy.score
+  end)
   return results
 end
 

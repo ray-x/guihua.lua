@@ -6,10 +6,10 @@
 -- > fzy tries to find the result the user intended. It does this by favouring
 -- > matches on consecutive letters and starts of words. This allows matching
 -- > using acronyms or different parts of the path." - J Hawthorn
-local os_aliases = {["osx"] = "darwin"}
+local os_aliases = { ['osx'] = 'darwin' }
 
 local arch_aliases = {
-  ["x64"] = "x86_64"
+  ['x64'] = 'x86_64',
 
   -- Linux `uname -m` returns 'aarch64'
   -- macOS `uname -m` returns 'arm64'
@@ -18,18 +18,18 @@ local arch_aliases = {
   -- ['arm64'] = 'aarch64',
 }
 
-local ffi = require "ffi"
+local ffi = require('ffi')
 
 local os = (os_aliases[jit.os:lower()] or jit.os:lower())
 local arch = (arch_aliases[jit.arch:lower()] or jit.arch:lower())
 
 -- ffi.load() doesn't respect anything but the actual path OR a system library path
-local dirname = string.sub(debug.getinfo(1).source, 2, string.len("/native.lua") * -1)
-local library_path = dirname .. "./static/libfzy-" .. os .. "-" .. arch .. ".so"
+local dirname = string.sub(debug.getinfo(1).source, 2, string.len('/native.lua') * -1)
+local library_path = dirname .. './static/libfzy-' .. os .. '-' .. arch .. '.so'
 
 local native = ffi.load(library_path)
 
-ffi.cdef [[
+ffi.cdef([[
 int has_match(const char *needle, const char *haystack, int is_case_sensitive);
 
 // typedef double score_t;
@@ -45,7 +45,7 @@ void match_positions_many(
   uint32_t *positions,
   int is_case_sensitive);
 
-]]
+]])
 
 -- @param positions - the C positions object
 -- @param length - length of positions
@@ -111,7 +111,7 @@ end
 
 function fzy.positions(needle, haystack, is_case_sensitive)
   local length = #needle
-  local positions = ffi.new("uint32_t[" .. length .. "]", {})
+  local positions = ffi.new('uint32_t[' .. length .. ']', {})
   is_case_sensitive = is_case_sensitive or false
 
   local score = native.match_positions(needle, haystack, positions, is_case_sensitive)
@@ -122,11 +122,11 @@ end
 function fzy.positions_many(needle, haystacks, is_case_sensitive)
   local n = #needle
   local length = #haystacks
-  local scores = ffi.new("double[" .. (length) .. "]", {})
-  local positions = ffi.new("uint32_t[" .. (n * length) .. "]", {})
+  local scores = ffi.new('double[' .. length .. ']', {})
+  local positions = ffi.new('uint32_t[' .. (n * length) .. ']', {})
   is_case_sensitive = is_case_sensitive or false
 
-  local haystacks_arg = ffi.new("const char*[" .. (length + 1) .. "]", haystacks)
+  local haystacks_arg = ffi.new('const char*[' .. (length + 1) .. ']', haystacks)
 
   native.match_positions_many(needle, haystacks_arg, length, scores, positions, is_case_sensitive)
 
@@ -159,7 +159,7 @@ function fzy.filter(needle, lines, is_case_sensitive)
     local line = lines[i]
     if native.has_match(needle, line, is_case_sensitive) == 1 then
       local positions, score = fzy.positions(needle, line, is_case_sensitive)
-      table.insert(results, {line, positions, score})
+      table.insert(results, { line, positions, score })
     end
   end
   return results
@@ -176,13 +176,13 @@ function fzy.filter_table_ordered(needle, items, is_case_sensitive)
     if line ~= nil then
       if native.has_match(needle, line, is_case_sensitive) == 1 then
         local positions, score = fzy.positions(needle, line, is_case_sensitive)
-        items[i].fzy = {pos = positions, score = score}
+        items[i].fzy = { pos = positions, score = score }
         table.insert(results, items[i])
       else
         items[i].fzy = nil -- reset previous score
       end
     else
-      print("incorrect arguments")
+      print('incorrect arguments')
     end
   end
   if #table > 1 then
