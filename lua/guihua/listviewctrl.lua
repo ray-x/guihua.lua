@@ -171,7 +171,7 @@ function ListViewCtrl:initialize(delegate, ...)
   self.on_move = opts.on_move or function(...)
     _ = { ... }
   end
-  self.on_confirm = opts.on_confirm
+  self.confirm_cb = opts.on_confirm
   if #self.data <= self.display_height then
     self.display_data = opts.data
   else
@@ -611,11 +611,11 @@ function ListViewCtrl:on_confirm(opts)
   local selection = data_collection[listobj.selected_line]
   close_controller(listobj)
   -- trace(listobj.m_delegate)
-  if listobj.on_confirm == ListViewCtrl.on_confirm then
+  if listobj.confirm_cb == nil or listobj.confirm_cb == ListViewCtrl.on_confirm then
     log('no on_confirm listobj and listviewctl is same')
     return
   end
-  listobj.on_confirm(selection, opts)
+  listobj.confirm_cb(selection, opts)
 end
 
 function ListViewCtrl:on_search()

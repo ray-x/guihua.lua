@@ -105,3 +105,23 @@ Plug 'ray-x/guihua.lua', {'do': 'cd lua/fzy && make' }
 ```
 
 Usage: check the test files on how the api is used.
+
+## Git commit agent
+
+This repository includes a repo-local commit helper at `scripts/git_commit_agent.py`.
+
+It will:
+
+- use the current staged diff, or stage everything with `--all`
+- run the repo sanity checks before committing
+- block the commit if `selene lua` or `make tests` fails
+- generate a conventional-style commit message from the staged changes
+- optionally push the commit to GitHub or GitLab remotes with `--push`
+
+Examples:
+
+```sh
+python3 scripts/git_commit_agent.py --dry-run
+python3 scripts/git_commit_agent.py --all
+python3 scripts/git_commit_agent.py --all --push
+```

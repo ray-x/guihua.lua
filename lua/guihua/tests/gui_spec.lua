@@ -137,6 +137,41 @@ describe('should create view  ', function()
     listview2:close()
   end)
 
+  it('should confirm the first select popup while another select is open', function()
+    package.loaded['guihua'] = nil
+    package.loaded['guihua.gui'] = nil
+    package.loaded['guihua.listviewctrl'] = nil
+    package.loaded['guihua.listview'] = nil
+    package.loaded['guihua.view'] = nil
+    vim.cmd('packadd guihua.lua')
+
+    local gui = require('guihua.gui')
+    local View = require('guihua.view')
+    local choice1 = nil
+    local choice2 = nil
+    local listview1 = gui.select({ 'one', 'two', 'three' }, {
+      prompt = 'First select',
+    }, function(choice)
+      choice1 = choice
+    end)
+    local listview2 = gui.select({ 'alpha', 'beta', 'gamma' }, {
+      prompt = 'Second select',
+    }, function(choice)
+      choice2 = choice
+    end)
+
+    vim.api.nvim_set_current_win(listview1.win)
+    vim.fn.maparg('<CR>', 'n', false, true).callback()
+
+    eq('three', choice1)
+    eq(nil, choice2)
+    assert.is_true(listview1.win == nil or not vim.api.nvim_win_is_valid(listview1.win))
+    assert.is_true(vim.api.nvim_win_is_valid(listview2.win))
+    eq(listview2, View.ActiveView)
+
+    listview2:close()
+  end)
+
   it('should not clear active view from a stale deferred leave', function()
     package.loaded['guihua'] = nil
     package.loaded['guihua.gui'] = nil

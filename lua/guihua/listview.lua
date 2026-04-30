@@ -105,17 +105,51 @@ function ListView:bind_ctrl(opts)
 end
 
 function ListView:unbind_ctrl()
-  if self.super.unbind_ctrl then
-    self.super.unbind_ctrl()
+  if View.unbind_ctrl then
+    View.unbind_ctrl(self)
   end
   if self.ctrl then
     self.ctrl = nil
   end
 end
 
+local function clear_static_refs(view)
+  if view == nil then
+    return
+  end
+  if ListView.static.Bufnr == view.buf then
+    ListView.static.Bufnr = nil
+  end
+  if ListView.static.Winnr == view.win then
+    ListView.static.Winnr = nil
+  end
+  if ListView.static.Closer == view.closer then
+    ListView.static.Closer = nil
+  end
+  if ListView.static.MaskBufnr == view.mask_buf then
+    ListView.static.MaskBufnr = nil
+  end
+  if ListView.static.MaskWinnr == view.mask_win then
+    ListView.static.MaskWinnr = nil
+  end
+  if ListView.static.MaskCloser == view.mask_closer then
+    ListView.static.MaskCloser = nil
+  end
+end
+
 -- Next time the ListView object will be re-create
 -- But I still feel that it is better to de-reference so it will demalloc early
-function ListView.close()
+function ListView.close(self)
+  if type(self) == 'table' and self.class ~= nil and self.class.name == 'ListView' then
+    local active_view = View.static.ActiveView
+    clear_static_refs(self)
+    View.close(self)
+    if active_view ~= nil and active_view ~= self and active_view.win ~= nil and vim.api.nvim_win_is_valid(active_view.win) then
+      View.static.ActiveView = active_view
+    end
+    return
+  end
+
   log('closing listview', ListView.name)
   trace('callback', debug.traceback())
 
