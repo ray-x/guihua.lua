@@ -138,6 +138,24 @@ local function clear_autocmds(listobj)
   listobj.augroup = nil
 end
 
+local close_attached_preview
+
+local function resolve_preview_view(preview)
+  if preview == nil or preview.class == nil or preview.class.name ~= 'TextView' then
+    return preview
+  end
+  if preview.win ~= nil and api.nvim_win_is_valid(preview.win) then
+    return preview
+  end
+  if TextView ~= nil and TextView.ActiveTextView ~= nil then
+    local active_preview = TextView.ActiveTextView
+    if active_preview.win ~= nil and api.nvim_win_is_valid(active_preview.win) then
+      return active_preview
+    end
+  end
+  return preview
+end
+
 local function close_controller(listobj)
   if listobj == nil or listobj.closed then
     return
@@ -146,8 +164,28 @@ local function close_controller(listobj)
   clear_autocmds(listobj)
   local delegate = listobj.m_delegate
   unregister_controller(listobj)
+  close_attached_preview(listobj)
   if delegate ~= nil and delegate.close ~= nil and delegate.win ~= nil and api.nvim_win_is_valid(delegate.win) then
     delegate:close()
+  end
+end
+
+close_attached_preview = function(listobj)
+  if listobj == nil or listobj.m_delegate == nil then
+    return
+  end
+
+  local preview = resolve_preview_view(listobj.m_delegate.preview_view)
+  listobj.m_delegate.preview_view = nil
+  if preview == nil or preview.class == nil or preview.class.name ~= 'TextView' then
+    return
+  end
+
+  if TextView ~= nil and TextView.ActiveTextView == preview then
+    TextView.static.ActiveTextView = nil
+  end
+  if preview.win ~= nil and api.nvim_win_is_valid(preview.win) then
+    preview:close()
   end
 end
 
@@ -272,6 +310,22 @@ function ListViewCtrl:initialize(delegate, ...)
       self:on_focus_gained(delegate.buf)
     end,
   })
+  vim.api.nvim_create_autocmd('WinClosed', {
+    group = self.augroup,
+    pattern = tostring(delegate.win),
+    callback = function()
+      close_attached_preview(self)
+      unregister_controller(self)
+      self.closed = true
+    end,
+  })
+  vim.api.nvim_create_autocmd({ 'BufHidden', 'BufDelete' }, {
+    buffer = delegate.buf,
+    group = self.augroup,
+    callback = function()
+      close_attached_preview(self)
+    end,
+  })
 
   register_controller(self)
   log('listview ctrl created ')
@@ -285,6 +339,10 @@ function ListViewCtrl:wrap_closer(o)
   if o == nil then
     log('nil closer', debug.traceback())
     return
+  end
+  local _, delegate = current_delegate(self)
+  if delegate ~= nil then
+    delegate.preview_view = resolve_preview_view(o)
   end
   if o.class and o.class.name == 'TextView' then
     -- ListViewCtrl._viewctlobject.win = o.ActiveView.win -- ListViewCtrl._viewctlobject.buf = o.ActiveView.buf

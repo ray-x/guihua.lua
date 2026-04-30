@@ -226,4 +226,112 @@ describe('should create view  ', function()
 
     listview2:close()
   end)
+
+  it('should close the preview when the listview closes', function()
+    package.loaded['guihua'] = nil
+    package.loaded['guihua.view'] = nil
+    package.loaded['guihua.viewctrl'] = nil
+    package.loaded['guihua.listview'] = nil
+    package.loaded['guihua.listviewctrl'] = nil
+    package.loaded['guihua.textview'] = nil
+    vim.cmd('packadd guihua.lua')
+
+    local ListView = require('guihua.listview')
+    local TextView = require('guihua.textview')
+    local original_win = vim.api.nvim_get_current_win()
+    local listview = ListView:new({
+      loc = 'top_center',
+      border = 'none',
+      prompt = false,
+      rect = { height = 2, width = 40 },
+      data = {
+        {
+          text = 'only item',
+        },
+      },
+      on_confirm = function(_) end,
+      on_move = function(_)
+        return TextView:new({
+          loc = 'top_center',
+          rect = { height = 2, width = 20 },
+          data = { 'preview line' },
+        })
+      end,
+    })
+
+    local ctrl = listview:get_ctrl()
+    ctrl:on_prev()
+
+    local preview = TextView.ActiveTextView
+    assert.is_true(preview ~= nil)
+    assert.is_true(vim.api.nvim_win_is_valid(preview.win))
+
+    if vim.api.nvim_win_is_valid(original_win) then
+      vim.api.nvim_set_current_win(original_win)
+    end
+    vim.api.nvim_win_close(listview.win, true)
+    vim.wait(20)
+    if vim.api.nvim_win_is_valid(original_win) then
+      vim.api.nvim_set_current_win(original_win)
+    end
+
+    assert.is_true(listview.win == nil or not vim.api.nvim_win_is_valid(listview.win))
+    assert.is_true(preview.win == nil or not vim.api.nvim_win_is_valid(preview.win))
+    assert.is_true(TextView.ActiveTextView == nil or TextView.ActiveTextView.win == nil)
+  end)
+
+  it('should close a reused preview when the listview closes from the second item', function()
+    package.loaded['guihua'] = nil
+    package.loaded['guihua.view'] = nil
+    package.loaded['guihua.viewctrl'] = nil
+    package.loaded['guihua.listview'] = nil
+    package.loaded['guihua.listviewctrl'] = nil
+    package.loaded['guihua.textview'] = nil
+    vim.cmd('packadd guihua.lua')
+
+    local ListView = require('guihua.listview')
+    local TextView = require('guihua.textview')
+    local original_win = vim.api.nvim_get_current_win()
+    local listview = ListView:new({
+      loc = 'top_center',
+      border = 'none',
+      prompt = true,
+      enter = true,
+      ft = 'go',
+      rect = { height = 2, width = 40 },
+      data = {
+        { text = 'one' },
+        { text = 'two' },
+      },
+      on_confirm = function(_) end,
+      on_move = function(item)
+        return TextView:new({
+          loc = 'top_center',
+          rect = { height = 3, width = 20 },
+          data = { 'local x = 1', item.text },
+          syntax = 'lua',
+        })
+      end,
+    })
+
+    local ctrl = listview:get_ctrl()
+    ctrl:on_item(1)
+    ctrl:on_item(2)
+
+    local preview = TextView.ActiveTextView
+    assert.is_true(preview ~= nil)
+    assert.is_true(vim.api.nvim_win_is_valid(preview.win))
+
+    if vim.api.nvim_win_is_valid(original_win) then
+      vim.api.nvim_set_current_win(original_win)
+    end
+    vim.api.nvim_win_close(listview.win, true)
+    vim.wait(20)
+    if vim.api.nvim_win_is_valid(original_win) then
+      vim.api.nvim_set_current_win(original_win)
+    end
+
+    assert.is_true(preview.win == nil or not vim.api.nvim_win_is_valid(preview.win))
+    assert.is_true(TextView.ActiveTextView == nil or TextView.ActiveTextView.win == nil)
+  end)
 end)

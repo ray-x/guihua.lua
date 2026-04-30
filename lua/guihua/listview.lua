@@ -137,10 +137,30 @@ local function clear_static_refs(view)
   end
 end
 
+local function close_attached_preview(preview)
+  if preview == nil or preview.class == nil or preview.class.name ~= 'TextView' then
+    return false
+  end
+
+  local TextView = require('guihua.textview')
+  if (preview.win == nil or not vim.api.nvim_win_is_valid(preview.win)) and TextView.ActiveTextView ~= nil then
+    preview = TextView.ActiveTextView
+  end
+  if TextView.ActiveTextView == preview then
+    TextView.static.ActiveTextView = nil
+  end
+  if preview.win ~= nil and vim.api.nvim_win_is_valid(preview.win) then
+    preview:close()
+  end
+  return true
+end
+
 -- Next time the ListView object will be re-create
 -- But I still feel that it is better to de-reference so it will demalloc early
 function ListView.close(self)
   if type(self) == 'table' and self.class ~= nil and self.class.name == 'ListView' then
+    close_attached_preview(self.preview_view)
+    self.preview_view = nil
     local active_view = View.static.ActiveView
     clear_static_refs(self)
     View.close(self)
@@ -150,7 +170,9 @@ function ListView.close(self)
       and active_view.win ~= nil
       and vim.api.nvim_win_is_valid(active_view.win)
     then
-      View.static.ActiveView = active_view
+      if active_view.class ~= nil and active_view.class.name == 'ListView' then
+        View.static.ActiveView = active_view
+      end
     end
     return
   end

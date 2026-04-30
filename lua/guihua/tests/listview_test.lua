@@ -8,7 +8,7 @@ package.loaded['guihua.util'] = nil
 
 local home = vim.env.HOME
 local github = vim.env.HOME .. '/github/'
-local gopath = vim.env.GOPATH
+local gopath = vim.env.GOPATH or vim.env.HOME .. '/go'
 
 local ListView = require('guihua.listview')
 local TextView = require('guihua.textview')
@@ -348,7 +348,7 @@ local function test_list_one_item()
   -- win:set_pos(1)
 end
 
-test_list_one_item()
+-- test_list_one_item()
 
 local function test_list_one_item_symbol()
   data = {
@@ -432,6 +432,7 @@ local function test_list_two_item_symbol()
     on_move = on_move,
     rect = { height = 2, pos_x = 0, pos_y = 0, width = 120 },
   }
+  ListView:new(opt)
 end
 
 local function test_list_page()
@@ -544,7 +545,7 @@ end
 
 -- test_list_one_item_symbol()
 -- test_list_page_customer_filter()
--- test_list_two_item_symbol()
+test_list_two_item_symbol()
 
 -- test_plaintext()
 -- test_preview()
