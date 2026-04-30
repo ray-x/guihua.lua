@@ -42,13 +42,7 @@ local function entry_prefix(node, is_last_node)
 end
 
 local function func_type(node)
-  if
-    node.type == 'function'
-    or node.type == 'method'
-    or node.kind == 12
-    or node.kind == 5
-    or node.kind == 6
-  then
+  if node.type == 'function' or node.type == 'method' or node.kind == 12 or node.kind == 5 or node.kind == 6 then
     return true
   end
 end
@@ -67,10 +61,7 @@ local function format_node(node, section)
   end
   last_leave_node = last_leave_node and nil -- true/nil-> nil, false -> false
   local str = entry_prefix(node, is_last_node)
-  str = str
-    .. panel_icons.bracket_left
-    .. (syntax_icons[node.type] or node.type or '')
-    .. panel_icons.bracket_right
+  str = str .. panel_icons.bracket_left .. (syntax_icons[node.type] or node.type or '') .. panel_icons.bracket_right
   str = str .. ' ' .. (node.node_text or node.text or node.name or '')
   if node.node_text == nil and node.text == nil then
     log('node text is empty', node)
@@ -101,11 +92,9 @@ function Panel:initialize(opts)
   self.width = opts.width or 35
   self.sections = self.sections or {}
   self.icons = {}
-  panel_icons =
-    vim.tbl_deep_extend('force', require('guihua.icons').icons().panel, opts.panel_icons or {})
+  panel_icons = vim.tbl_deep_extend('force', require('guihua.icons').icons().panel, opts.panel_icons or {})
   self.icons.panel = panel_icons
-  syntax_icons =
-    vim.tbl_deep_extend('force', require('guihua.icons').icons().syntax, opts.syntax_icons or {})
+  syntax_icons = vim.tbl_deep_extend('force', require('guihua.icons').icons().syntax, opts.syntax_icons or {})
   self.icons.syntax = syntax_icons
 
   self:add_section(opts)
@@ -564,16 +553,7 @@ function Panel.foldexpr()
   elseif line_indent <= before_indent then
     level = tostring(line_indent)
   else
-    log(
-      'unhandled case: '
-        .. line_num
-        .. ' '
-        .. line_indent
-        .. ' '
-        .. before_indent
-        .. ' '
-        .. after_indent
-    )
+    log('unhandled case: ' .. line_num .. ' ' .. line_indent .. ' ' .. before_indent .. ' ' .. after_indent)
     level = '0'
   end
 

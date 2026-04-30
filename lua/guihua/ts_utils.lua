@@ -29,12 +29,7 @@ local function recurse_local_nodes(local_def, accumulator, full_match, last_matc
     accumulator(local_def, local_def.node, full_match, last_match)
   else
     for match_key, def in pairs(local_def) do
-      recurse_local_nodes(
-        def,
-        accumulator,
-        full_match and (full_match .. '.' .. match_key) or match_key,
-        match_key
-      )
+      recurse_local_nodes(def, accumulator, full_match and (full_match .. '.' .. match_key) or match_key, match_key)
     end
   end
 end

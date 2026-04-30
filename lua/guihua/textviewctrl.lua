@@ -45,7 +45,12 @@ function TextViewCtrl:initialize(delegate, ...)
   -- ... is the view
   -- todo location, readonly? and filetype
   vim.keymap.set('n', m.save, '<cmd>lua TextViewCtrl:on_save()<CR>', { buffer = delegate.buf, noremap = true })
-  vim.keymap.set('n', m.jump_to_list, '<cmd>lua ListViewCtrl:gh_jump_to_list()<CR>', { buffer = delegate.buf, noremap = true })
+  vim.keymap.set(
+    'n',
+    m.jump_to_list,
+    '<cmd>lua ListViewCtrl:gh_jump_to_list()<CR>',
+    { buffer = delegate.buf, noremap = true }
+  )
 
   log('bind close', self.m_delegate.win, delegate.buf)
   if opts.edit then
@@ -146,13 +151,7 @@ function TextViewCtrl:on_save()
   if range == nil or range.start == nil or file_info == nil then
     return
   end
-  vim.api.nvim_buf_set_lines(
-    bufnr,
-    range.start.line,
-    range.start.line + file_info.lines,
-    true,
-    contents
-  )
+  vim.api.nvim_buf_set_lines(bufnr, range.start.line, range.start.line + file_info.lines, true, contents)
 end
 
 return TextViewCtrl

@@ -1,6 +1,6 @@
-set rtp +=.
-set rtp +=../plenary.nvim/
-set rtp +=../guihua.lua/
+set rtp^=.
+set rtp^=../plenary.nvim/
+set rtp^=../guihua.lua/
 
 runtime! plugin/plenary.vim
 runtime! plugin/guihua.vim

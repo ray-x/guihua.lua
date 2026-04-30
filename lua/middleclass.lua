@@ -113,15 +113,12 @@ local function _createClass(name, super)
     })
   end
 
-  setmetatable(
-    aClass,
-    {
-      __index = aClass.static,
-      __tostring = _tostring,
-      __call = _call,
-      __newindex = _declareInstanceMethod,
-    }
-  )
+  setmetatable(aClass, {
+    __index = aClass.static,
+    __tostring = _tostring,
+    __call = _call,
+    __newindex = _declareInstanceMethod,
+  })
 
   return aClass
 end
@@ -165,28 +162,19 @@ local DefaultMixin = {
 
   static = {
     allocate = function(self)
-      assert(
-        type(self) == 'table',
-        "Make sure that you are using 'Class:allocate' instead of 'Class.allocate'"
-      )
+      assert(type(self) == 'table', "Make sure that you are using 'Class:allocate' instead of 'Class.allocate'")
       return setmetatable({ class = self }, self.__instanceDict)
     end,
 
     new = function(self, ...)
-      assert(
-        type(self) == 'table',
-        "Make sure that you are using 'Class:new' instead of 'Class.new'"
-      )
+      assert(type(self) == 'table', "Make sure that you are using 'Class:new' instead of 'Class.new'")
       local instance = self:allocate()
       instance:initialize(...)
       return instance
     end,
 
     subclass = function(self, name)
-      assert(
-        type(self) == 'table',
-        "Make sure that you are using 'Class:subclass' instead of 'Class.subclass'"
-      )
+      assert(type(self) == 'table', "Make sure that you are using 'Class:subclass' instead of 'Class.subclass'")
       assert(type(name) == 'string', 'You must provide a name(string) for your class')
 
       local subclass = _createClass(name, self)
@@ -215,10 +203,7 @@ local DefaultMixin = {
     end,
 
     include = function(self, ...)
-      assert(
-        type(self) == 'table',
-        "Make sure you that you are using 'Class:include' instead of 'Class.include'"
-      )
+      assert(type(self) == 'table', "Make sure you that you are using 'Class:include' instead of 'Class.include'")
       for _, mixin in ipairs({ ... }) do
         _includeMixin(self, mixin)
       end

@@ -1,8 +1,8 @@
-local class = require 'middleclass'
+local class = require('middleclass')
 local ViewController = class('ViewController')
-local util = require 'guihua.util'
-local log = require 'guihua.log'.info
-local trace = require 'guihua.log'.trace
+local util = require('guihua.util')
+local log = require('guihua.log').info
+local trace = require('guihua.log').trace
 
 function ViewController:initialize(delegate, ...)
   self.m_delegate = delegate
@@ -12,7 +12,7 @@ function ViewController:initialize(delegate, ...)
   trace('view ctrl')
   -- log("viewctrl", delegate)
   if delegate and delegate.win then
-    util.close_view_autocmd({'BufHidden', 'BufDelete'}, delegate.win) -- , "BufLeave"
+    util.close_view_autocmd({ 'BufHidden', 'BufDelete' }, delegate.win) -- , "BufLeave"
   end
 
   -- ... is the view

@@ -171,10 +171,7 @@ end
 
 ---@deprecated Use vim.treesitter.get_node({ bufnr = bufnr, pos = { row, col } })
 function M.get_node_at_cursor(winnr, ignore_injected_langs)
-  vim.notify_once(
-    'ts_utils.get_node_at_cursor() is deprecated: use vim.treesitter.get_node()',
-    vim.log.levels.WARN
-  )
+  vim.notify_once('ts_utils.get_node_at_cursor() is deprecated: use vim.treesitter.get_node()', vim.log.levels.WARN)
   if ts.get_node then
     winnr = winnr or 0
     local buf = api.nvim_win_get_buf(winnr)
@@ -361,10 +358,7 @@ end
 
 ---@deprecated Use vim.treesitter.get_node_range(node_or_range)
 function M.get_node_range(node_or_range)
-  vim.notify_once(
-    'ts_utils.get_node_range() is deprecated: use vim.treesitter.get_node_range()',
-    vim.log.levels.WARN
-  )
+  vim.notify_once('ts_utils.get_node_range() is deprecated: use vim.treesitter.get_node_range()', vim.log.levels.WARN)
   return ts.get_node_range(node_or_range)
 end
 

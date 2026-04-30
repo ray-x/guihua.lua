@@ -19,7 +19,7 @@ local M = {}
 ---@field L number
 ---@field rgb string
 local Color = {}
-local Color_mt = {__metatable = {}, __index = Color}
+local Color_mt = { __metatable = {}, __index = Color }
 
 local rgb_string_to_hsl -- defined below
 
@@ -33,10 +33,10 @@ local rgb_string_to_hsl -- defined below
 -- @return               an instance of Color
 -----------------------------------------------------------------------------
 local function new(H, S, L, rgb)
-   if type(H) == "string" and H:sub(1,1)=="#" and H:len() == 7 then
-      H, S, L = rgb_string_to_hsl(H)
-   end
-   return setmetatable({H = H, S = S, L = L, rgb = rgb}, Color_mt)
+  if type(H) == 'string' and H:sub(1, 1) == '#' and H:len() == 7 then
+    H, S, L = rgb_string_to_hsl(H)
+  end
+  return setmetatable({ H = H, S = S, L = L, rgb = rgb }, Color_mt)
 end
 M.new = new
 
@@ -51,30 +51,34 @@ M.new = new
 -----------------------------------------------------------------------------
 
 local function hsl_to_rgb(h, s, L)
-   h = h/360
-   local m1, m2
-   if L<=0.5 then
-      m2 = L*(s+1)
-   else
-      m2 = L+s-L*s
-   end
-   m1 = L*2-m2
+  h = h / 360
+  local m1, m2
+  if L <= 0.5 then
+    m2 = L * (s + 1)
+  else
+    m2 = L + s - L * s
+  end
+  m1 = L * 2 - m2
 
-   local function _h2rgb(_m1, _m2, _h)
-      if _h<0 then _h = _h+1 end
-      if _h>1 then _h = _h-1 end
-      if _h*6<1 then
-         return _m1+(_m2-_m1)*_h*6
-      elseif _h*2<1 then
-         return _m2
-      elseif _h*3<2 then
-         return _m1+(_m2-_m1)*(2/3-_h)*6
-      else
-         return _m1
-      end
-   end
+  local function _h2rgb(_m1, _m2, _h)
+    if _h < 0 then
+      _h = _h + 1
+    end
+    if _h > 1 then
+      _h = _h - 1
+    end
+    if _h * 6 < 1 then
+      return _m1 + (_m2 - _m1) * _h * 6
+    elseif _h * 2 < 1 then
+      return _m2
+    elseif _h * 3 < 2 then
+      return _m1 + (_m2 - _m1) * (2 / 3 - _h) * 6
+    else
+      return _m1
+    end
+  end
 
-   return _h2rgb(m1, m2, h+1/3), _h2rgb(m1, m2, h), _h2rgb(m1, m2, h-1/3)
+  return _h2rgb(m1, m2, h + 1 / 3), _h2rgb(m1, m2, h), _h2rgb(m1, m2, h - 1 / 3)
 end
 M.hsl_to_rgb = hsl_to_rgb
 
@@ -89,43 +93,53 @@ M.hsl_to_rgb = hsl_to_rgb
 -----------------------------------------------------------------------------
 
 local function rgb_to_hsl(r, g, b)
-   --r, g, b = r/255, g/255, b/255
-   local min = math.min(r, g, b)
-   local max = math.max(r, g, b)
-   local delta = max - min
+  --r, g, b = r/255, g/255, b/255
+  local min = math.min(r, g, b)
+  local max = math.max(r, g, b)
+  local delta = max - min
 
-   local h, s, l = 0, 0, ((min+max)/2)
+  local h, s, l = 0, 0, ((min + max) / 2)
 
-   if l > 0 and l < 0.5 then s = delta/(max+min) end
-   if l >= 0.5 and l < 1 then s = delta/(2-max-min) end
+  if l > 0 and l < 0.5 then
+    s = delta / (max + min)
+  end
+  if l >= 0.5 and l < 1 then
+    s = delta / (2 - max - min)
+  end
 
-   if delta > 0 then
-      if max == r and max ~= g then h = h + (g-b)/delta end
-      if max == g and max ~= b then h = h + 2 + (b-r)/delta end
-      if max == b and max ~= r then h = h + 4 + (r-g)/delta end
-      h = h / 6;
-   end
+  if delta > 0 then
+    if max == r and max ~= g then
+      h = h + (g - b) / delta
+    end
+    if max == g and max ~= b then
+      h = h + 2 + (b - r) / delta
+    end
+    if max == b and max ~= r then
+      h = h + 4 + (r - g) / delta
+    end
+    h = h / 6
+  end
 
-   if h < 0 then h = h + 1 end
-   if h > 1 then h = h - 1 end
+  if h < 0 then
+    h = h + 1
+  end
+  if h > 1 then
+    h = h - 1
+  end
 
-   return h * 360, s, l
+  return h * 360, s, l
 end
 M.rgb_to_hsl = rgb_to_hsl
 
 -- already local, see at the bottom
 function rgb_string_to_hsl(rgb)
-   return rgb_to_hsl(tonumber(rgb:sub(2,3), 16)/255,
-                     tonumber(rgb:sub(4,5), 16)/255,
-                     tonumber(rgb:sub(6,7), 16)/255)
+  return rgb_to_hsl(
+    tonumber(rgb:sub(2, 3), 16) / 255,
+    tonumber(rgb:sub(4, 5), 16) / 255,
+    tonumber(rgb:sub(6, 7), 16) / 255
+  )
 end
 M.rgb_string_to_hsl = rgb_string_to_hsl
-
-
-
-
-
-
 
 -----------------------------------------------------------------------------
 -- Converts the color to an RGB string.
@@ -135,14 +149,16 @@ M.rgb_string_to_hsl = rgb_string_to_hsl
 -----------------------------------------------------------------------------
 
 function Color:to_rgb()
-   if self.rgb then return self.rgb end
-   local rgb = {hsl_to_rgb(self.H, self.S, self.L)}
-   local buffer = "#"
-   for _,v in ipairs(rgb) do
-	  buffer = buffer..string.format("%02x",math.floor(v*255+0.5))
-   end
-   self.rgb = buffer
-   return buffer
+  if self.rgb then
+    return self.rgb
+  end
+  local rgb = { hsl_to_rgb(self.H, self.S, self.L) }
+  local buffer = '#'
+  for _, v in ipairs(rgb) do
+    buffer = buffer .. string.format('%02x', math.floor(v * 255 + 0.5))
+  end
+  self.rgb = buffer
+  return buffer
 end
 
 -----------------------------------------------------------------------------
@@ -152,7 +168,7 @@ end
 -- @return               a new instance of Color.
 -----------------------------------------------------------------------------
 function Color:hue_offset(delta)
-   return new((self.H + delta) % 360, self.S, self.L)
+  return new((self.H + delta) % 360, self.S, self.L)
 end
 
 -----------------------------------------------------------------------------
@@ -161,7 +177,7 @@ end
 -- @return               a new instance of Color
 -----------------------------------------------------------------------------
 function Color:complementary()
-   return self:hue_offset(180)
+  return self:hue_offset(180)
 end
 
 -----------------------------------------------------------------------------
@@ -172,8 +188,8 @@ end
 -- @return               two new instances of Color
 -----------------------------------------------------------------------------
 function Color:neighbors(angle)
-   angle = angle or 30
-   return self:hue_offset(angle), self:hue_offset(360-angle)
+  angle = angle or 30
+  return self:hue_offset(angle), self:hue_offset(360 - angle)
 end
 
 -----------------------------------------------------------------------------
@@ -182,7 +198,7 @@ end
 -- @return               two new instances of Color
 -----------------------------------------------------------------------------
 function Color:triadic()
-   return self:neighbors(120)
+  return self:neighbors(120)
 end
 
 -----------------------------------------------------------------------------
@@ -193,7 +209,7 @@ end
 -- @return               two new instances of Color
 -----------------------------------------------------------------------------
 function Color:split_complementary(angle)
-   return self:neighbors(180-(angle or 30))
+  return self:neighbors(180 - (angle or 30))
 end
 
 -----------------------------------------------------------------------------
@@ -203,7 +219,7 @@ end
 -- @return               a new instance of Color
 -----------------------------------------------------------------------------
 function Color:desaturate_to(saturation)
-   return new(self.H, saturation, self.L)
+  return new(self.H, saturation, self.L)
 end
 
 -----------------------------------------------------------------------------
@@ -213,7 +229,7 @@ end
 -- @return               a new instance of Color
 -----------------------------------------------------------------------------
 function Color:desaturate_by(r)
-   return new(self.H, self.S*r, self.L)
+  return new(self.H, self.S * r, self.L)
 end
 
 -----------------------------------------------------------------------------
@@ -223,7 +239,7 @@ end
 -- @return               a new instance of Color
 -----------------------------------------------------------------------------
 function Color:lighten_to(lightness)
-   return new(self.H, self.S, lightness)
+  return new(self.H, self.S, lightness)
 end
 
 -----------------------------------------------------------------------------
@@ -233,7 +249,7 @@ end
 -- @return               a new instance of Color
 -----------------------------------------------------------------------------
 function Color:lighten_by(r)
-   return new(self.H, self.S, self.L*r)
+  return new(self.H, self.S, self.L * r)
 end
 
 -----------------------------------------------------------------------------
@@ -245,12 +261,12 @@ end
 -- @return               a table with n values containing the new colors
 -----------------------------------------------------------------------------
 function Color:variations(f, n)
-   n = n or 5
-   local results = {}
-   for i=1,n do
-	  table.insert(results, f(self, i, n))
-   end
-   return results
+  n = n or 5
+  local results = {}
+  for i = 1, n do
+    table.insert(results, f(self, i, n))
+  end
+  return results
 end
 
 -----------------------------------------------------------------------------
@@ -262,10 +278,10 @@ end
 ---@return table               a table with n values containing the new colors
 -----------------------------------------------------------------------------
 function Color:tints(n, length)
-   local f = function (color, i)
-                return color:lighten_to(color.L + (1-color.L)/n*i)
-             end
-   return self:variations(f, length or n)
+  local f = function(color, i)
+    return color:lighten_to(color.L + (1 - color.L) / n * i)
+  end
+  return self:variations(f, length or n)
 end
 
 -----------------------------------------------------------------------------
@@ -277,22 +293,26 @@ end
 ---@return table              a table with n values containing the new colors
 -----------------------------------------------------------------------------
 function Color:shades(n, length)
-   local f = function (color, i)
-                return color:lighten_to(color.L - (color.L)/n*i)
-             end
-   return self:variations(f, length or n)
+  local f = function(color, i)
+    return color:lighten_to(color.L - color.L / n * i)
+  end
+  return self:variations(f, length or n)
 end
 
 function Color:tint(r)
-      return self:lighten_to(self.L + (1-self.L)*r)
+  return self:lighten_to(self.L + (1 - self.L) * r)
 end
 
 function Color:shade(r)
-      return self:lighten_to(self.L - self.L*r)
+  return self:lighten_to(self.L - self.L * r)
 end
 
 Color_mt.__tostring = Color.to_rgb
 
 -- allow to use `colors(...)` instead of `colors.new(...)`
-setmetatable(M, {__call=function(_, ...) return new(...) end})
+setmetatable(M, {
+  __call = function(_, ...)
+    return new(...)
+  end,
+})
 return M

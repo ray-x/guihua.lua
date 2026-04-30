@@ -243,7 +243,9 @@ function M.new_list_view(opts)
       split_opts = split_opts or {}
       if item.filename ~= nil then
         log('openfile ', item.filename, item.lnum, item.col)
-        util.open_file_at(item.filename, item.lnum, item.col, split_opts.split)
+        vim.schedule(function()
+          util.open_file_at(item.filename, item.lnum, item.col, split_opts.split)
+        end)
       end
     end,
     transparency = transparency,
@@ -773,7 +775,6 @@ end
 
 M.input = require('guihua.input').input
 M.input_callback = require('guihua.input').input_callback
-
 --[[
 M.select({ 'tabs', 'spaces', 'enter' }, {
   prompt = 'Select tabs or spaces:\nUse tabs for indentation, or spaces? This is a sample prompt that is intentionally long to demonstrate wrapping behavior.',
