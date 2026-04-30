@@ -232,7 +232,7 @@ local function test_preview()
   package.loaded['guihua.listview'] = nil
   package.loaded['guihua.listviewctrl'] = nil
   -- package.loaded.packer_plugins['guihua.lua'].loaded = false
-  vim.cmd('packadd guihua.lua')
+  -- vim.cmd('packadd guihua.lua')
   local win = ListView:new({
     loc = 'top_center',
     prompt = true,

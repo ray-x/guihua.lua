@@ -226,7 +226,7 @@ function ListViewCtrl:initialize(delegate, ...)
     { mode = 'n', key = m.close_view, cmd = function() self:on_close() end,                  desc = 'ListViewCtrl:on_close()' },
     { mode = 'n', key = m.send_qf,    cmd = function() self:on_quickfix() end,               desc = 'ListViewCtrl:on_quickfix()' },
     { mode = 'n', key = '<C-c>',      cmd = function() self:on_close() end,                  desc = 'ListViewCtrl:on_close()' },
-    { mode = 'n', key = '<ESC>',      cmd = function() self:on_close() end,                  desc = 'ListViewCtrl:on_close()' },
+    { mode = 'n', key = '<ESC><ESC>',      cmd = function() self:on_close() end,                  desc = 'ListViewCtrl:on_close()' },
     { mode = 'i', key = '<BS>',       cmd = function() self:on_backspace() end,              desc = 'ListViewCtrl:on_backspace()' },
     { mode = 'i', key = '<C-W>',      cmd = function() self:on_backspace(true) end,          desc = 'ListViewCtrl:on_backspace()' },
   }

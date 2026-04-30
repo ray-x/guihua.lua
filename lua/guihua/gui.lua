@@ -1,6 +1,5 @@
 local M = {}
 local ListView = require('guihua.listview')
-local ListViewCtrl = require('guihua.listviewctrl')
 local TextView = require('guihua.textview')
 local util = require('guihua.util')
 local log = require('guihua.log').info
@@ -36,6 +35,38 @@ local function word_wrap(text, width)
     end
   end
   return lines
+end
+
+local function first_selectable_index(data)
+  for i, item in ipairs(data) do
+    if type(item) == 'table' and item.header ~= true and (item.value ~= nil or item.idx ~= nil) then
+      return i
+    end
+  end
+  return 1
+end
+
+local function preselect_first_item(listview)
+  local ctrl = listview:get_ctrl()
+  if ctrl == nil or ctrl.data == nil or #ctrl.data == 0 then
+    return
+  end
+
+  local selected_line = first_selectable_index(ctrl.data)
+  local display_height = ctrl.display_height or #ctrl.data
+  local display_start_at = 1
+
+  if selected_line > display_height then
+    display_start_at = selected_line - display_height + 1
+    ctrl.display_start_at = display_start_at
+    ctrl.display_data = {
+      unpack(ctrl.data, display_start_at, display_start_at + display_height - 1),
+    }
+    listview:on_draw(ctrl.display_data)
+  end
+
+  ctrl.selected_line = selected_line
+  listview:set_pos(selected_line - display_start_at + 1)
 end
 -- local path_sep = require('navigator.util').path_sep()
 -- local path_cur = require('navigator.util').path_cur()
@@ -290,10 +321,6 @@ M.select = function(items, opts, on_choice)
   local win_title = prompt_in_content and hint or (prompt .. '  ' .. hint)
 
   local data = {}
-  if vim.fn.has('nvim-0.9') == 0 then
-    win_title = ' ' .. win_title
-    data = { { text = win_title } }
-  end
 
   local width = #win_title + 8
   local max_width = math.floor(api.nvim_get_option_value('columns', {}) * (opts.width or 0.9))
@@ -396,6 +423,7 @@ M.select = function(items, opts, on_choice)
     relative = 'cursor',
     rawdata = true,
     data = data,
+    ft = opts.ft or 'markdown',
     on_confirm = function(item, idx)
       if item.header then
         return -- non-selectable prompt header lines
@@ -411,10 +439,7 @@ M.select = function(items, opts, on_choice)
   if listview == nil then
     return
   end
-  -- Advance cursor past any header lines and land on the first real item.
-  for _ = 1, 2 + header_count do
-    ListViewCtrl:on_next()
-  end
+  preselect_first_item(listview)
 
   return listview
 end
@@ -686,7 +711,7 @@ M.confirm = function(opts, on_confirm)
   vim.keymap.set({ 'n', 'i' }, 'q', function()
     do_confirm(false)
   end, bmap)
-  vim.keymap.set({ 'n', 'i' }, '<ESC>', function()
+  vim.keymap.set({ 'n', 'i' }, '<ESC><ESC>', function()
     do_confirm(false)
   end, bmap)
   vim.keymap.set({ 'n', 'i' }, '<CR>', function()
@@ -766,7 +791,10 @@ M.confirm = function(opts, on_confirm)
   end
   vim.keymap.set('n', '<CR>', return_to_btn, cmap)
   vim.keymap.set('n', 'q', return_to_btn, cmap)
-  vim.keymap.set('n', '<ESC>', function()
+  vim.keymap.set('n', 'ZQ', function()
+    do_confirm(false)
+  end, cmap)
+  vim.keymap.set('n', '<ESC><ESC>', function()
     do_confirm(false)
   end, cmap)
 
@@ -777,7 +805,7 @@ M.input = require('guihua.input').input
 M.input_callback = require('guihua.input').input_callback
 --[[
 M.select({ 'tabs', 'spaces', 'enter' }, {
-  prompt = 'Select tabs or spaces:\nUse tabs for indentation, or spaces? This is a sample prompt that is intentionally long to demonstrate wrapping behavior.',
+  prompt = 'Select tabs or spaces:\nUse tabs for indentation, or spaces? This is a sample prompt that is intentionally long to demonstrate wrapping behavior. please run command `bash ls -f`',
   format_item = function(item)
     return "I'd like to choose " .. item
   end,

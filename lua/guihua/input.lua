@@ -141,7 +141,7 @@ local function input(opts, on_confirm)
     ctx.on_confirm(new_text)
   end, { silent = true, buffer = bufnr })
 
-  vim.keymap.set('n', '<ESC>', function()
+  vim.keymap.set('n', '<ESC><ESC>', function()
     local new_text = current_text(ctx)
     ctx.on_cancel(new_text)
     close_input(ctx)

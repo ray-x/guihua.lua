@@ -46,7 +46,7 @@ function ListView:initialize(...)
   -- ListView.static.active_view = self
   log('listview created')
   -- trace(self.win, self.class)
-  local ft = 'guihua'
+  local ft = opts.ft or 'guihua'
   if opts.ft == 'rust' then
     ft = 'guihua_rust'
   end
@@ -144,7 +144,12 @@ function ListView.close(self)
     local active_view = View.static.ActiveView
     clear_static_refs(self)
     View.close(self)
-    if active_view ~= nil and active_view ~= self and active_view.win ~= nil and vim.api.nvim_win_is_valid(active_view.win) then
+    if
+      active_view ~= nil
+      and active_view ~= self
+      and active_view.win ~= nil
+      and vim.api.nvim_win_is_valid(active_view.win)
+    then
       View.static.ActiveView = active_view
     end
     return

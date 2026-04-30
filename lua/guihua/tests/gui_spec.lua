@@ -92,13 +92,35 @@ describe('should create view  ', function()
     assert.is_true(vim.api.nvim_win_is_valid(select_win))
     assert.is_true(vim.api.nvim_win_is_valid(input_win))
 
-    local selected_line = ctrl.selected_line
+    eq(1, ctrl.selected_line)
     vim.api.nvim_set_current_win(select_win)
     ctrl:on_prev()
-    eq(selected_line - 1, ctrl.selected_line)
+    eq(1, ctrl.selected_line)
 
     vim.api.nvim_win_close(input_win, true)
     listview:close()
+  end)
+
+  it('should preselect the first item when prompt text is rendered in the popup', function()
+    package.loaded['guihua'] = nil
+    package.loaded['guihua.gui'] = nil
+    package.loaded['guihua.listviewctrl'] = nil
+    package.loaded['guihua.listview'] = nil
+    package.loaded['guihua.view'] = nil
+    vim.cmd('packadd guihua.lua')
+
+    local choice = nil
+    local gui = require('guihua.gui')
+    local listview = gui.select({ 'one', 'two', 'three' }, {
+      prompt = 'Select the first item from this popup even when the prompt is long enough to wrap into the popup body.',
+    }, function(item)
+      choice = item
+    end)
+
+    vim.api.nvim_set_current_win(listview.win)
+    vim.fn.maparg('<CR>', 'n', false, true).callback()
+
+    eq('one', choice)
   end)
 
   it('should keep concurrent select popups independent', function()
@@ -122,16 +144,19 @@ describe('should create view  ', function()
     local ctrl1_line = ctrl1.selected_line
     local ctrl2_line = ctrl2.selected_line
 
+    eq(1, ctrl1_line)
+    eq(1, ctrl2_line)
+
     assert.is_true(vim.api.nvim_win_is_valid(listview1.win))
     assert.is_true(vim.api.nvim_win_is_valid(listview2.win))
 
-    ctrl1:on_prev()
-    eq(ctrl1_line - 1, ctrl1.selected_line)
+    ctrl1:on_next()
+    eq(ctrl1_line + 1, ctrl1.selected_line)
     eq(ctrl2_line, ctrl2.selected_line)
 
-    ctrl2:on_prev()
-    eq(ctrl1_line - 1, ctrl1.selected_line)
-    eq(ctrl2_line - 1, ctrl2.selected_line)
+    ctrl2:on_next()
+    eq(ctrl1_line + 1, ctrl1.selected_line)
+    eq(ctrl2_line + 1, ctrl2.selected_line)
 
     listview1:close()
     listview2:close()
@@ -163,7 +188,7 @@ describe('should create view  ', function()
     vim.api.nvim_set_current_win(listview1.win)
     vim.fn.maparg('<CR>', 'n', false, true).callback()
 
-    eq('three', choice1)
+    eq('one', choice1)
     eq(nil, choice2)
     assert.is_true(listview1.win == nil or not vim.api.nvim_win_is_valid(listview1.win))
     assert.is_true(vim.api.nvim_win_is_valid(listview2.win))

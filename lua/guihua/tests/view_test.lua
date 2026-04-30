@@ -25,7 +25,7 @@ local function view_mask_test()
   package.loaded['guihua'] = nil
   package.loaded['guihua.view'] = nil
   -- package.loaded.packer_plugins['guihua.lua'].loaded = false
-  vim.cmd('packadd guihua.lua')
+  -- vim.cmd('packadd guihua.lua')
 
   local data = { 'View: test line should show', 'view line2', 'view line3', 'view line4' }
   local win = View:new({
@@ -41,4 +41,4 @@ local function view_mask_test()
   -- vim.cmd("startinsert!")
 end
 
-view_mask_test()
+-- view_mask_test()
