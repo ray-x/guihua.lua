@@ -50,6 +50,7 @@ describe('should create view  ', function()
 
     local listview = require('guihua.gui').select({ 'tabs', 'spaces', 'enter' }, {
       prompt = 'Select tabs or spaces',
+      ft = 'guihua',
     }, function(_) end)
 
     local ctrl = listview:get_ctrl()
@@ -81,6 +82,7 @@ describe('should create view  ', function()
     local gui = require('guihua.gui')
     local listview = gui.select({ 'tabs', 'spaces', 'enter' }, {
       prompt = 'Select tabs or spaces',
+      ft = 'guihua',
     }, function(_) end)
     local ctrl = listview:get_ctrl()
     local select_win = listview.win
@@ -113,10 +115,13 @@ describe('should create view  ', function()
     local gui = require('guihua.gui')
     local listview = gui.select({ 'one', 'two', 'three' }, {
       prompt = 'Select the first item from this popup even when the prompt is long enough to wrap into the popup body.',
+      ft = 'guihua',
     }, function(item)
       choice = item
     end)
 
+    vim.wait(20)
+    eq(listview:get_ctrl().state:cursor_line(), vim.api.nvim_win_get_cursor(listview.win)[1])
     vim.api.nvim_set_current_win(listview.win)
     vim.fn.maparg('<CR>', 'n', false, true).callback()
 
@@ -134,9 +139,11 @@ describe('should create view  ', function()
     local gui = require('guihua.gui')
     local listview1 = gui.select({ 'one', 'two', 'three' }, {
       prompt = 'First select',
+      ft = 'guihua',
     }, function(_) end)
     local listview2 = gui.select({ 'alpha', 'beta', 'gamma' }, {
       prompt = 'Second select',
+      ft = 'guihua',
     }, function(_) end)
 
     local ctrl1 = listview1:get_ctrl()
@@ -171,16 +178,18 @@ describe('should create view  ', function()
     vim.cmd('packadd guihua.lua')
 
     local gui = require('guihua.gui')
-    local View = require('guihua.view')
+    local SessionRegistry = require('guihua.session_registry')
     local choice1 = nil
     local choice2 = nil
     local listview1 = gui.select({ 'one', 'two', 'three' }, {
       prompt = 'First select',
+      ft = 'guihua',
     }, function(choice)
       choice1 = choice
     end)
     local listview2 = gui.select({ 'alpha', 'beta', 'gamma' }, {
       prompt = 'Second select',
+      ft = 'guihua',
     }, function(choice)
       choice2 = choice
     end)
@@ -192,7 +201,7 @@ describe('should create view  ', function()
     eq(nil, choice2)
     assert.is_true(listview1.win == nil or not vim.api.nvim_win_is_valid(listview1.win))
     assert.is_true(vim.api.nvim_win_is_valid(listview2.win))
-    eq(listview2, View.ActiveView)
+    eq(listview2, SessionRegistry.get_active().list_view)
 
     listview2:close()
   end)
@@ -206,9 +215,10 @@ describe('should create view  ', function()
     vim.cmd('packadd guihua.lua')
 
     local gui = require('guihua.gui')
-    local View = require('guihua.view')
+    local SessionRegistry = require('guihua.session_registry')
     local listview1 = gui.select({ 'one', 'two', 'three' }, {
       prompt = 'First select',
+      ft = 'guihua',
     }, function(_) end)
     local ctrl1 = listview1:get_ctrl()
 
@@ -217,12 +227,13 @@ describe('should create view  ', function()
 
     local listview2 = gui.select({ 'alpha', 'beta', 'gamma' }, {
       prompt = 'Second select',
+      ft = 'guihua',
     }, function(_) end)
 
     vim.wait(20)
 
     assert.is_true(vim.api.nvim_win_is_valid(listview2.win))
-    eq(listview2, View.ActiveView)
+    eq(listview2, SessionRegistry.get_active().list_view)
 
     listview2:close()
   end)
@@ -238,6 +249,7 @@ describe('should create view  ', function()
 
     local ListView = require('guihua.listview')
     local TextView = require('guihua.textview')
+    local SessionRegistry = require('guihua.session_registry')
     local original_win = vim.api.nvim_get_current_win()
     local listview = ListView:new({
       loc = 'top_center',
@@ -291,6 +303,7 @@ describe('should create view  ', function()
 
     local ListView = require('guihua.listview')
     local TextView = require('guihua.textview')
+    local SessionRegistry = require('guihua.session_registry')
     local original_win = vim.api.nvim_get_current_win()
     local listview = ListView:new({
       loc = 'top_center',
@@ -305,7 +318,7 @@ describe('should create view  ', function()
       },
       on_confirm = function(_) end,
       on_move = function(item)
-        return TextView:new({
+        return TextView.preview_spec({
           loc = 'top_center',
           rect = { height = 3, width = 20 },
           data = { 'local x = 1', item.text },
@@ -316,9 +329,11 @@ describe('should create view  ', function()
 
     local ctrl = listview:get_ctrl()
     ctrl:on_item(1)
+    local first_preview = SessionRegistry.get(listview.session.id).preview_view
     ctrl:on_item(2)
 
-    local preview = TextView.ActiveTextView
+    local preview = SessionRegistry.get(listview.session.id).preview_view
+    eq(first_preview, preview)
     assert.is_true(preview ~= nil)
     assert.is_true(vim.api.nvim_win_is_valid(preview.win))
 

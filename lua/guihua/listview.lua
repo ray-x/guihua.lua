@@ -4,6 +4,7 @@ local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 local util = require('guihua.util')
 local ListViewCtrl = require('guihua.listviewctrl')
+local SessionRegistry = require('guihua.session_registry')
 
 _GH_SETUP = _GH_SETUP or nil
 if _GH_SETUP == nil then
@@ -29,6 +30,8 @@ function ListView:initialize(...)
 
   log('listview ctor ') -- , self)
   local opts = select(1, ...) or {}
+  self.session = SessionRegistry.ensure(opts.session)
+  opts.session = self.session
 
   -- vim.cmd([[hi default GuihuaListDark guifg=#e0d8f4 guibg=#272755]])
   -- vim.cmd([[hi default GuihuaListDark guifg=#e0d8f4 guibg=#103234]])
@@ -42,6 +45,7 @@ function ListView:initialize(...)
     opts.enter = true
   end
   View.initialize(self, opts)
+  SessionRegistry.attach_list_view(self.session, self)
   self:bind_ctrl(opts)
   -- ListView.static.active_view = self
   log('listview created')
@@ -95,6 +99,8 @@ function ListView:initialize(...)
 end
 
 function ListView:bind_ctrl(opts)
+  opts = opts or {}
+  opts.session = opts.session or self.session
   if self.ctrl and self.ctrl.class_name == 'ListViewCtrl' then
     log('already binded', self.ctrl)
     return false
@@ -137,43 +143,20 @@ local function clear_static_refs(view)
   end
 end
 
-local function close_attached_preview(preview)
-  if preview == nil or preview.class == nil or preview.class.name ~= 'TextView' then
-    return false
-  end
-
-  local TextView = require('guihua.textview')
-  if (preview.win == nil or not vim.api.nvim_win_is_valid(preview.win)) and TextView.ActiveTextView ~= nil then
-    preview = TextView.ActiveTextView
-  end
-  if TextView.ActiveTextView == preview then
-    TextView.static.ActiveTextView = nil
-  end
-  if preview.win ~= nil and vim.api.nvim_win_is_valid(preview.win) then
-    preview:close()
-  end
-  return true
-end
-
 -- Next time the ListView object will be re-create
 -- But I still feel that it is better to de-reference so it will demalloc early
 function ListView.close(self)
   if type(self) == 'table' and self.class ~= nil and self.class.name == 'ListView' then
-    close_attached_preview(self.preview_view)
-    self.preview_view = nil
-    local active_view = View.static.ActiveView
+    SessionRegistry.close_preview(self.session)
     clear_static_refs(self)
     View.close(self)
-    if
-      active_view ~= nil
-      and active_view ~= self
-      and active_view.win ~= nil
-      and vim.api.nvim_win_is_valid(active_view.win)
-    then
-      if active_view.class ~= nil and active_view.class.name == 'ListView' then
-        View.static.ActiveView = active_view
-      end
-    end
+    SessionRegistry.detach_list_view(self.session, self)
+    return
+  end
+
+  local active_session = SessionRegistry.get_active()
+  if active_session ~= nil and active_session.list_view ~= nil then
+    active_session.list_view:close()
     return
   end
 
@@ -220,16 +203,7 @@ function ListView.close(self)
   ListView.static.MaskWinnr = nil
   ListView.static.MaskCloser = nil
 
-  if ListView.ActiveView and ListView.ActiveView.win then
-    ListView.ActiveView.on_close()
-    ListView.static.Bufnr = nil
-    ListView.static.Winnr = nil
-  end
-
   ListView:unbind_ctrl()
-  if ListView.ActiveView ~= nil then
-    ListView.ActiveView.data = nil
-  end
   ListView.data = nil
   View.data = nil
   vim.cmd([[stopinsert]])
@@ -254,8 +228,6 @@ function ListView:set_pos(i)
     self.selected_line = i
   end
   local selhighlight = vim.api.nvim_create_namespace('guihua_selhighlight')
-  local cursor = vim.api.nvim_win_get_cursor(self.win)
-  cursor[1] = i
 
   vim.schedule(function()
     log('setpos', self.buf, self.selected_line)
@@ -263,6 +235,9 @@ function ListView:set_pos(i)
     if not vim.api.nvim_buf_is_valid(self.buf) then
       log('setpos error buf not valid')
       return
+    end
+    if self.prompt ~= true and self.win ~= nil and vim.api.nvim_win_is_valid(self.win) then
+      vim.api.nvim_win_set_cursor(self.win, { self.selected_line, 0 })
     end
     vim.api.nvim_buf_clear_namespace(self.buf, selhighlight, 0, -1)
     local ListviewHl = 'GuihuaListSelHl'

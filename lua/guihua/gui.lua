@@ -48,29 +48,29 @@ end
 
 local function preselect_first_item(listview)
   local ctrl = listview:get_ctrl()
-  if ctrl == nil or ctrl.data == nil or #ctrl.data == 0 then
+  local state = ctrl and ctrl.state or nil
+  local data = state and state.data or (ctrl and ctrl.data) or nil
+  if ctrl == nil or data == nil or #data == 0 then
     return
   end
 
-  local selected_line = first_selectable_index(ctrl.data)
-  local display_height = ctrl.display_height or #ctrl.data
-  local display_start_at = 1
-
-  if selected_line > display_height then
-    display_start_at = selected_line - display_height + 1
-    ctrl.display_start_at = display_start_at
-    ctrl.display_data = {
-      unpack(ctrl.data, display_start_at, display_start_at + display_height - 1),
-    }
-    listview:on_draw(ctrl.display_data)
+  local selected_line = first_selectable_index(data)
+  if state ~= nil then
+    local result = state:set_selection(selected_line)
+    ctrl:sync_state()
+    if result.redraw then
+      listview:on_draw(state.display_data)
+    end
+    listview:set_pos(result.cursor_line)
+    return
   end
 
   ctrl.selected_line = selected_line
-  listview:set_pos(selected_line - display_start_at + 1)
+  listview:set_pos(selected_line)
 end
 -- local path_sep = require('navigator.util').path_sep()
 -- local path_cur = require('navigator.util').path_cur()
-function M._preview_location(opts) -- location, width, pos_x, pos_y
+local function build_preview_location_opts(opts)
   trace(opts)
   local uri = opts.uri
   if uri == nil then
@@ -157,9 +157,30 @@ function M._preview_location(opts) -- location, width, pos_x, pos_y
     status_line = opts.status_line,
   }
 
+  return text_view_opts
+end
+
+function M._preview_location(opts) -- location, width, pos_x, pos_y
+  local text_view_opts = build_preview_location_opts(opts)
   log(text_view_opts)
-  local w = TextView:new(text_view_opts)
-  return w
+  return TextView.open(text_view_opts)
+end
+
+function M.preview_uri_spec(opts)
+  local line_beg = (opts.lnum or 2) - 1
+  if line_beg >= (opts.preview_lines_before or 1) then
+    line_beg = line_beg - (opts.preview_lines_before or 1)
+  elseif line_beg >= 2 then
+    line_beg = line_beg - 2
+  end
+  local loc = { uri = opts.uri, range = { start = { line = line_beg } } }
+
+  loc.range['end'] = { line = opts.lnum + (opts.preview_height or opts.height) }
+  opts.height = loc.range['end'].line - loc.range.start.line + 1
+  opts.location = loc
+
+  trace('uri', opts.uri, opts.lnum, opts.location.range.start.line, opts.location.range['end'].line)
+  return TextView.preview_spec(build_preview_location_opts(opts))
 end
 
 function M.preview_uri(opts) -- uri, width, line, col, offset_x, offset_y
@@ -288,7 +309,7 @@ function M.new_list_view(opts)
       if item.uri == nil then
         item.uri = 'file:///' .. item.filename
       end
-      return M.preview_uri({
+      return M.preview_uri_spec({
         uri = item.uri,
         status_line = item.status_line,
         width_ratio = opts.width_ratio,
@@ -805,6 +826,7 @@ M.input = require('guihua.input').input
 M.input_callback = require('guihua.input').input_callback
 --[[
 M.select({ 'tabs', 'spaces', 'enter' }, {
+  ft = 'markdown',
   prompt = 'Select tabs or spaces:\nUse tabs for indentation, or spaces? This is a sample prompt that is intentionally long to demonstrate wrapping behavior. please run command `bash ls -f`',
   format_item = function(item)
     return "I'd like to choose " .. item
@@ -816,5 +838,5 @@ M.select({ 'tabs', 'spaces', 'enter' }, {
     print('tab')
   end
 end)
-]]
+--]]
 return M

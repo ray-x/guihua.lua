@@ -18,17 +18,7 @@ function TextViewCtrl:initialize(delegate, ...)
 
   local opts = select(1, ...) or {}
   log('textview ctrl opts', opts.uri)
-
-  self.file_info = opts
   self.display_height = self.m_delegate.display_height or 10
-  self.file_info.lines = self.display_height
-  if opts.data == nil and (opts.uri == nil or not next(opts.data or {})) then
-    log('data not provided opts', opts)
-    -- self.on_load(opts)
-    -- local data = self:on_load(opts)
-    -- log("will displaying", data)
-    -- self.m_delegate:on_draw(data)
-  end
 
   local m = _GH_SETUP.maps
   if not opts.enter then
@@ -62,70 +52,12 @@ function TextViewCtrl:initialize(delegate, ...)
   log('textview ctrl created ')
 end
 
--- load file uri if data is nil
--- need to call after floatwind is created or caller need pass the winnr
-function TextViewCtrl:on_load(opts) -- location, width, pos_x, pos_y
-  opts = opts or {}
-  trace(opts)
-  local uri = opts.uri
-  if opts.uri == nil then
-    log('invalid/nil uri ', opts)
-    return
-  end
-  local bufnr = vim.uri_to_bufnr(uri)
-  if not api.nvim_buf_is_loaded(bufnr) then
-    log('load buf', uri, bufnr)
-    vim.fn.bufload(bufnr)
-  end
-  --
-
-  local range = opts.display_range or opts.range
-  if range == nil or range.start == nil then
-    log('error: invalid/missing range')
-    return nil
-  end
-  if range.start == nil then
-    vim.notify('error invalid range: nil')
-    return
-  end
-  log(bufnr, range.start.line, uri)
-  local s = range.start.line
-  local e = range['end'].line
-  if e == s then
-    if s < 2 then
-      s = 0
-    else
-      s = s - 2
-    end
-    e = math.max(e + 2, s + opts.rect.height)
-
-    log('not going to show 1 line range:', s, e)
-  end
-  range.start.line = s
-  range['end'].line = e
-  local contents = api.nvim_buf_get_lines(bufnr, s, e, false)
-  local lines = #contents
-  local syntax = opts.syntax
-  if syntax == nil or #syntax < 1 then
-    syntax = api.nvim_buf_get_option_value(bufnr, 'ft')
-  end
-
-  -- TODO: for saving, need update file_info based on data loaded, e.g. if we only load 1 line, but display_height is 10
-  self.file_info.lines = lines
-  -- TODO should we create a float win based on opened buffer?
-  trace(syntax, contents, self.file_info)
-  if opts.status_line then
-    table.insert(contents, #contents + 1, opts.status_line)
-  end
-  return contents, syntax -- allow contents be handled by caller
-end
-
 -- call from event
 -- get floatwin bufnr, get content, get file range and write to file range
 function TextViewCtrl:on_save()
   local txtbufnr = TextViewCtrl._viewctlobject.m_delegate.buf
 
-  local file_info = TextViewCtrl._viewctlobject.file_info
+  local file_info = TextViewCtrl._viewctlobject.m_delegate.file_info
   if file_info == nil or file_info.uri == nil then
     log('on_save: invalid file_info')
     return

@@ -3,6 +3,7 @@ local View = require('guihua.view')
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 local util = require('guihua.util')
+local TextViewData = require('guihua.textview_data')
 
 local TextViewCtrl = require('guihua.textviewctrl')
 -- local TextView = {}
@@ -40,6 +41,7 @@ with file uri {
 --]]
 
 local ns_id = vim.api.nvim_create_namespace('guihua_textview')
+local PREVIEW_SPEC_KIND = 'guihua.textview.preview'
 
 local function set_highlight(buf, line, hl_group)
   if buf == nil or not vim.api.nvim_buf_is_valid(buf) then
@@ -53,73 +55,77 @@ local function set_highlight(buf, line, hl_group)
   })
 end
 
-function TextView:initialize(...)
-  trace(debug.traceback())
-
-  local opts = select(1, ...) or {}
-
-  log('ctor TextView start:')
-  trace(opts)
-  -- local bg = util.bgcolor(0x050812)
-
+local function normalize_textview_opts(opts)
+  opts = opts or {}
   opts.bg = opts.preview_bg or opts.bg or 'GuihuaTextViewDark'
 
   if opts.width or opts.height then
     opts.rect = { width = opts.width or 60, height = opts.height or 30 }
   end
 
-  if TextView.ActiveTextView ~= nil then
-    if
-      TextView.ActiveTextView.win ~= nil
-      and vim.api.nvim_win_is_valid(TextView.ActiveTextView.win)
-      and vim.api.nvim_buf_is_valid(TextView.ActiveTextView.buf)
-      and opts.rect ~= nil
-      and TextView.static.ActiveTextView.rect.height == opts.rect.height
-    then
-      log('active view ', TextView.ActiveTextView.buf, TextView.ActiveTextView.win)
-      if TextView.hl_id ~= nil then
-        vim.api.nvim_buf_clear_namespace(TextView.static.buf or 0, TextView.hl_id, 0, -1)
-        TextView.static.hl_id = nil
-        TextView.static.hl_line = nil
-      end
-      trace('active view already existed')
-      self = TextView.ActiveTextView
-      TextView.ActiveTextView.ctrl.file_info = opts
-      -- TODO: delegate, on_load
-      if opts.data then
-        TextView.ActiveTextView:on_draw(opts.data)
-      else
-        TextView.ActiveTextView:on_draw(opts)
-      end
-      if opts.hl_line ~= nil then
-        if opts.hl_line == 0 then
-          opts.hl_line = 1
-        end
-        log('hl buf', self.buf, 'l ', opts.hl_line)
-        TextView.static.hl_id = set_highlight(self.buf, opts.hl_line, 'GuihuaListSelHl')
-        TextView.static.hl_line = opts.hl_line
-      end
-      log('ctor TextView: end, already existed') -- , View.ActiveView)--, self)
-      return TextView.ActiveTextView
-    else
-      TextView.ActiveTextView:close()
-      TextView.ActiveTextView = nil
-    end
+  opts.enter = opts.enter or false
+  return opts
+end
+
+local function apply_highlight(view, opts)
+  if view.buf ~= nil and vim.api.nvim_buf_is_valid(view.buf) then
+    vim.api.nvim_buf_clear_namespace(view.buf, ns_id, 0, -1)
   end
+  TextView.static.hl_id = nil
+  TextView.static.hl_line = nil
+
+  if opts.hl_line == nil then
+    return
+  end
+
+  if opts.hl_line == 0 then
+    opts.hl_line = 1
+  end
+  log('buf', view.buf, 'hl_line: ', opts.hl_line)
+  TextView.static.hl_id = set_highlight(view.buf, opts.hl_line, 'GuihuaListSelHl')
+  TextView.static.hl_line = opts.hl_line
+end
+
+local function apply_syntax(view, opts)
+  if opts.syntax then
+    view.syntax = opts.syntax
+    log('hl ', view.buf, opts.syntax)
+    require('guihua.util').highlighter(view.buf, opts.syntax, opts.lnum)
+  end
+end
+
+local function can_update_preview(view, opts)
+  return view ~= nil
+    and view.win ~= nil
+    and vim.api.nvim_win_is_valid(view.win)
+    and view.buf ~= nil
+    and vim.api.nvim_buf_is_valid(view.buf)
+    and view.rect ~= nil
+    and opts.rect ~= nil
+    and view.rect.height == opts.rect.height
+    and view.rect.width == opts.rect.width
+end
+
+local function resolve_preview_opts(opts)
+  return TextViewData.resolve(normalize_textview_opts(opts))
+end
+
+function TextView:initialize(...)
+  trace(debug.traceback())
+
+  local opts = resolve_preview_opts(select(1, ...) or {})
+
+  log('ctor TextView start:')
+  trace(opts)
   if opts.allow_edit then
     vim.api.nvim_command('autocmd InsertEnter ' .. " <buffer> ++once echo 'use <C-s> to save your changes'")
   end
-
-  opts.enter = opts.enter or false
   View.initialize(self, opts)
 
   trace('textview after super', self, opts)
   self.cursor_pos = { 1, 1 }
-  if opts.syntax then
-    self.syntax = opts.syntax
-    log('hl ', self.buf, opts.syntax)
-    require('guihua.util').highlighter(self.buf, opts.syntax, opts.lnum)
-  end
+  self.file_info = opts.file_info
+  apply_syntax(self, opts)
 
   if not opts.enter then
     -- currsor move will close textview. currently disabled because user can edit inside preview
@@ -132,27 +138,15 @@ function TextView:initialize(...)
   end
 
   util.close_view_autocmd({ 'BufHidden', 'BufDelete' }, self.win)
-  -- controller and data
-  if opts.uri then -- well this is a feature flag for early phase dev
+  if opts.uri then
     log('ctor TextView: ctrl') -- , View.ActiveView)--, self)
     self:bind_ctrl(opts)
-
-    local content = self.ctrl:on_load(opts)
-    if content then
-      self:on_draw(content, opts.status_line)
-    else
-      log('on_load returned nil for uri', opts.uri)
-    end
+  end
+  if opts.data then
+    self:on_draw(opts.data, opts.status_line)
   end
 
-  if opts.hl_line ~= nil then
-    if opts.hl_line == 0 then
-      opts.hl_line = 1
-    end
-    log('buf', self.buf, 'hl_line: ', opts.hl_line)
-    TextView.static.hl_id = set_highlight(self.buf, opts.hl_line, 'GuihuaListSelHl')
-    TextView.static.hl_line = opts.hl_line
-  end
+  apply_highlight(self, opts)
 
   if opts.ft then
     vim.api.nvim_set_option_value('filetype', opts.ft, { buf = self.buf })
@@ -169,6 +163,64 @@ function TextView:initialize(...)
   log('ctor TextView: end') -- , View.ActiveView)--, self)
   trace(self)
   return self
+end
+
+function TextView.preview_spec(opts)
+  return {
+    kind = PREVIEW_SPEC_KIND,
+    opts = normalize_textview_opts(vim.deepcopy(opts or {})),
+  }
+end
+
+function TextView.is_preview_spec(preview)
+  return type(preview) == 'table' and preview.kind == PREVIEW_SPEC_KIND and type(preview.opts) == 'table'
+end
+
+function TextView:apply_preview(opts)
+  opts = resolve_preview_opts(opts)
+
+  self.file_info = opts.file_info
+  apply_syntax(self, opts)
+
+  if opts.uri ~= nil and self.ctrl == nil then
+    self:bind_ctrl(opts)
+  end
+
+  self:on_draw(opts.data or {}, opts.status_line)
+
+  apply_highlight(self, opts)
+
+  if opts.ft then
+    vim.api.nvim_set_option_value('filetype', opts.ft, { buf = self.buf })
+  end
+  if opts.allow_edit then
+    vim.api.nvim_set_option_value('readonly', false, { buf = self.buf })
+  end
+
+  TextView.static.ActiveTextView = self
+  return self
+end
+
+function TextView.open_preview(current_preview, preview)
+  local opts = TextView.is_preview_spec(preview) and preview.opts or preview
+  opts = resolve_preview_opts(opts)
+
+  if can_update_preview(current_preview, opts) then
+    return current_preview:apply_preview(opts)
+  end
+
+  if current_preview ~= nil then
+    current_preview:close()
+  end
+  if TextView.ActiveTextView == current_preview then
+    TextView.static.ActiveTextView = nil
+  end
+
+  return TextView:new(opts)
+end
+
+function TextView.open(opts)
+  return TextView.open_preview(nil, TextView.preview_spec(opts))
 end
 
 function TextView.Active()
@@ -190,12 +242,7 @@ function TextView:on_draw(opts, status_line)
     log('buf id invalid', self)
     return
   end
-  if opts.uri ~= nil then
-    data = self.ctrl:on_load(opts)
-  else
-    log('on_draw opts uri nil')
-    data = opts
-  end
+  data = opts
   local content = {}
   if type(data) == 'string' then
     content = { data }
@@ -217,9 +264,6 @@ function TextView:on_draw(opts, status_line)
   end
   local end_at = -1
   local bufnr = self.buf
-  if bufnr == nil or bufnr == 0 then
-    bufnr = TextView.ActiveTextView and TextView.ActiveTextView.buf
-  end
   if bufnr == nil or bufnr == 0 then
     print('Error: plugin failure, please submit a issue')
     return
@@ -247,13 +291,16 @@ end
 
 function TextView.on_close()
   trace(debug.traceback())
-  if TextView.ActiveTextView == nil then
+  local active_view = TextView.ActiveTextView
+  if active_view == nil then
     log('view onclose nil')
     return
   end
-  log('TextView onclose ', TextView.ActiveTextView.win)
-  TextView.ActiveTextView:close()
-  TextView.static.ActiveView = nil
+  log('TextView onclose ', active_view.win)
+  active_view:close()
+  if TextView.ActiveTextView == active_view then
+    TextView.static.ActiveTextView = nil
+  end
 end
 
 function TextView:bind_ctrl(opts)

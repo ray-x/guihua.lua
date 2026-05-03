@@ -118,17 +118,34 @@ function View:initialize(...)
     log('create prompt view')
   end
 
-  View.static.ActiveView = self
-  self:bind_ctrl(opts)
-
   trace('ctor View: end')
 end
 
+local function get_active_session()
+  local SessionRegistry = require('guihua.session_registry')
+  return SessionRegistry.get_active()
+end
+
 function View.Active()
-  if View.ActiveView ~= nil then
-    return true
+  return get_active_session() ~= nil
+end
+
+function View:is_valid()
+  return self ~= nil
+    and self.win ~= nil
+    and api.nvim_win_is_valid(self.win)
+    and self.buf ~= nil
+    and api.nvim_buf_is_valid(self.buf)
+end
+
+function View:focus()
+  if not self:is_valid() then
+    return false
   end
-  return false
+  if api.nvim_get_current_win() ~= self.win then
+    api.nvim_set_current_win(self.win)
+  end
+  return true
 end
 
 function View:set_hl(opts)
@@ -315,19 +332,20 @@ function View:close(...)
   end
 
   self:unbind_ctrl()
-  View.static.ActiveView = nil
   log('view closed ')
   -- trace("Viewobj after close", View)
 end
 
 function View.on_close()
   trace(debug.traceback())
-  if View.ActiveView == nil then
+  local active_session = get_active_session()
+  local active_view = active_session and active_session.list_view or nil
+  if active_view == nil then
     log('view onclose nil')
     return
   end
-  log('view onclose ', View.ActiveView.win)
-  View.ActiveView:close()
+  log('view onclose ', active_view.win)
+  active_view:close()
   trace(View)
 end
 

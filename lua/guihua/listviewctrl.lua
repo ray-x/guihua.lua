@@ -6,6 +6,8 @@ local util = require('guihua.util')
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 local api = vim.api
+local ListState = require('guihua.liststate')
+local SessionRegistry = require('guihua.session_registry')
 _GH_SETUP = _GH_SETUP or require('guihua.maps').setup()
 ListView = ListView or nil
 if _GH_SETUP == nil then
@@ -16,39 +18,22 @@ if ListViewCtrl == nil then
   ListViewCtrl = class('ListViewCtrl', ViewController)
 end
 
-local controllers = {}
 local current_delegate
 
-local function register_controller(listobj)
-  if listobj == nil or listobj.m_delegate == nil or listobj.m_delegate.buf == nil then
-    return
+local function current_preview(listobj)
+  local session = listobj and listobj.session
+  local preview = session and session.preview_view or nil
+  if preview ~= nil and preview.win ~= nil and vim.api.nvim_win_is_valid(preview.win) then
+    return preview
   end
-  controllers[listobj.m_delegate.buf] = listobj
-  ListViewCtrl._viewctlobject = listobj
+  return nil
 end
 
-local function unregister_controller(listobj)
-  if listobj == nil or listobj.m_delegate == nil then
-    return
+local function active_data(listobj)
+  if listobj == nil or listobj.state == nil then
+    return {}
   end
-  local buf = listobj.m_delegate.buf
-  if buf ~= nil and controllers[buf] == listobj then
-    controllers[buf] = nil
-  end
-  if ListViewCtrl._viewctlobject == listobj then
-    ListViewCtrl._viewctlobject = controllers[api.nvim_get_current_buf()]
-    if ListViewCtrl._viewctlobject == listobj then
-      ListViewCtrl._viewctlobject = nil
-    end
-    if ListViewCtrl._viewctlobject == nil then
-      for _, ctrl in pairs(controllers) do
-        if ctrl ~= listobj then
-          ListViewCtrl._viewctlobject = ctrl
-          break
-        end
-      end
-    end
-  end
+  return listobj.state:active_data()
 end
 
 function ListViewCtrl:gh_jump_to_list()
@@ -62,10 +47,11 @@ function ListViewCtrl:gh_jump_to_list()
 end
 
 function ListViewCtrl:gh_jump_to_preview()
-  if TextView == nil or TextView.ActiveTextView == nil then
+  local preview = current_preview(self)
+  if preview == nil then
     return
   end
-  local jumpto = TextView.ActiveTextView.win
+  local jumpto = preview.win
   if jumpto ~= nil and vim.api.nvim_win_is_valid(jumpto) then
     log('jump to', jumpto)
     vim.cmd(string.format('noa call nvim_set_current_win(%s)', jumpto))
@@ -77,10 +63,11 @@ local function on_preview(listobj)
   if listobj ~= nil and listobj.preview ~= true then
     return false
   end
-  if TextView == nil or TextView.ActiveTextView == nil then
+  local preview = current_preview(listobj)
+  if preview == nil then
     return false
   end
-  local jumpto = TextView.ActiveTextView.win
+  local jumpto = preview.win
   return jumpto ~= nil and vim.api.nvim_win_is_valid(jumpto)
 end
 
@@ -90,7 +77,7 @@ local function on_popup_window()
     return false
   end
   local current_buf = api.nvim_win_get_buf(current_win)
-  if controllers[current_buf] ~= nil then
+  if SessionRegistry.get_by_buf(current_buf) ~= nil then
     return true
   end
   local ok, cfg = pcall(api.nvim_win_get_config, current_win)
@@ -103,18 +90,24 @@ local function on_popup_window()
 end
 
 current_delegate = function(self_or_bufnr, bufnr)
+  local session = nil
   local listobj = nil
   if type(self_or_bufnr) == 'table' and self_or_bufnr.class ~= nil and self_or_bufnr.m_delegate ~= nil then
     listobj = self_or_bufnr
+    session = listobj.session or (listobj.m_delegate and listobj.m_delegate.session)
     bufnr = bufnr or (listobj.m_delegate and listobj.m_delegate.buf)
   elseif type(self_or_bufnr) == 'number' then
     bufnr = self_or_bufnr
+    session = SessionRegistry.get_by_buf(bufnr)
   end
-  if listobj == nil and bufnr ~= nil then
-    listobj = controllers[bufnr]
+  if session == nil and bufnr ~= nil then
+    session = SessionRegistry.get_by_buf(bufnr)
   end
-  if listobj == nil then
-    listobj = controllers[api.nvim_get_current_buf()] or ListViewCtrl._viewctlobject
+  if session == nil then
+    session = SessionRegistry.current()
+  end
+  if listobj == nil and session ~= nil then
+    listobj = session.controller
   end
   if listobj == nil or listobj.m_delegate == nil then
     return nil, nil
@@ -124,7 +117,8 @@ current_delegate = function(self_or_bufnr, bufnr)
     return nil, nil
   end
   if delegate.win == nil or not vim.api.nvim_win_is_valid(delegate.win) then
-    unregister_controller(listobj)
+    SessionRegistry.detach_controller(listobj.session, listobj)
+    SessionRegistry.detach_list_view(listobj.session, delegate)
     return nil, nil
   end
   return listobj, delegate
@@ -138,24 +132,6 @@ local function clear_autocmds(listobj)
   listobj.augroup = nil
 end
 
-local close_attached_preview
-
-local function resolve_preview_view(preview)
-  if preview == nil or preview.class == nil or preview.class.name ~= 'TextView' then
-    return preview
-  end
-  if preview.win ~= nil and api.nvim_win_is_valid(preview.win) then
-    return preview
-  end
-  if TextView ~= nil and TextView.ActiveTextView ~= nil then
-    local active_preview = TextView.ActiveTextView
-    if active_preview.win ~= nil and api.nvim_win_is_valid(active_preview.win) then
-      return active_preview
-    end
-  end
-  return preview
-end
-
 local function close_controller(listobj)
   if listobj == nil or listobj.closed then
     return
@@ -163,29 +139,10 @@ local function close_controller(listobj)
   listobj.closed = true
   clear_autocmds(listobj)
   local delegate = listobj.m_delegate
-  unregister_controller(listobj)
-  close_attached_preview(listobj)
+  SessionRegistry.detach_controller(listobj.session, listobj)
+  SessionRegistry.close_preview(listobj.session)
   if delegate ~= nil and delegate.close ~= nil and delegate.win ~= nil and api.nvim_win_is_valid(delegate.win) then
     delegate:close()
-  end
-end
-
-close_attached_preview = function(listobj)
-  if listobj == nil or listobj.m_delegate == nil then
-    return
-  end
-
-  local preview = resolve_preview_view(listobj.m_delegate.preview_view)
-  listobj.m_delegate.preview_view = nil
-  if preview == nil or preview.class == nil or preview.class.name ~= 'TextView' then
-    return
-  end
-
-  if TextView ~= nil and TextView.ActiveTextView == preview then
-    TextView.static.ActiveTextView = nil
-  end
-  if preview.win ~= nil and api.nvim_win_is_valid(preview.win) then
-    preview:close()
   end
 end
 
@@ -193,31 +150,26 @@ function ListViewCtrl:initialize(delegate, ...)
   trace(debug.traceback())
   ViewController:initialize(delegate, ...)
   self.m_delegate = delegate
-  self.selected_line = 1
-  self.selected_lines = {}
   --
   local opts = select(1, ...) or {}
   trace('listview ctrl opts', opts)
-  self.data = opts.data or {}
+  self.session = SessionRegistry.ensure(opts.session or delegate.session)
+  delegate.session = self.session
   self.preview = opts.preview or false
   self.prompt = opts.prompt
   self.prompt_mode = opts.prompt_mode
   self.enter = opts.enter
   self.on_input_filter = opts.on_input_filter
-  self.display_height = self.m_delegate.display_height or 10
-  self.display_start_at = 1
+  self.state = ListState.new({
+    data = opts.data or {},
+    display_height = self.m_delegate.display_height or 10,
+    prompt = opts.prompt,
+  })
   self.on_move = opts.on_move or function(...)
     _ = { ... }
   end
   self.confirm_cb = opts.on_confirm
-  if #self.data <= self.display_height then
-    self.display_data = opts.data
-  else
-    self.display_data = {}
-    for i = 1, self.display_height, 1 do
-      table.insert(self.display_data, self.data[i])
-    end
-  end
+  self:sync_state()
 
   log('init display: ', self.display_height, self.selected_line)
   trace('init display: ', self.display_data, self.display_height, self.selected_line)
@@ -314,8 +266,9 @@ function ListViewCtrl:initialize(delegate, ...)
     group = self.augroup,
     pattern = tostring(delegate.win),
     callback = function()
-      close_attached_preview(self)
-      unregister_controller(self)
+      SessionRegistry.close_preview(self.session)
+      SessionRegistry.detach_controller(self.session, self)
+      SessionRegistry.detach_list_view(self.session, delegate)
       self.closed = true
     end,
   })
@@ -323,12 +276,51 @@ function ListViewCtrl:initialize(delegate, ...)
     buffer = delegate.buf,
     group = self.augroup,
     callback = function()
-      close_attached_preview(self)
+      SessionRegistry.close_preview(self.session)
     end,
   })
 
-  register_controller(self)
+  SessionRegistry.attach_controller(self.session, self)
+  SessionRegistry.activate(self.session)
   log('listview ctrl created ')
+end
+
+function ListViewCtrl:sync_state()
+  if self.state == nil then
+    return
+  end
+
+  self.selected_line = self.state.selected_line
+  self.selected_lines = self.state.selected_lines
+  self.display_start_at = self.state.display_start_at
+  self.display_data = self.state.display_data
+  self.data = self.state.data
+  self.filtered_data = self.state.filtered_data
+  self.filter_applied = self.state.filter_applied
+  self.display_height = self.state.display_height
+  self.search_item = self.state.search_item
+end
+
+function ListViewCtrl:apply_state_result(result, opts)
+  if result == nil then
+    return nil
+  end
+
+  self:sync_state()
+  if result.redraw then
+    self.m_delegate:on_draw(self.state.display_data)
+  end
+
+  self.m_delegate:set_pos(result.cursor_line or self.state:cursor_line())
+  if opts == nil or opts.preview ~= false then
+    local item = result.item
+    if item ~= nil then
+      self:wrap_closer(self.on_move(item))
+    end
+    return item
+  end
+
+  return result.item
 end
 
 function ListViewCtrl:get_ui()
@@ -342,10 +334,9 @@ function ListViewCtrl:wrap_closer(o)
   end
   local _, delegate = current_delegate(self)
   if delegate ~= nil then
-    delegate.preview_view = resolve_preview_view(o)
+    SessionRegistry.attach_preview(self.session or delegate.session, o)
   end
   if o.class and o.class.name == 'TextView' then
-    -- ListViewCtrl._viewctlobject.win = o.ActiveView.win -- ListViewCtrl._viewctlobject.buf = o.ActiveView.buf
     log('bind closer', o.class.name)
   end
 end
@@ -360,7 +351,7 @@ function ListViewCtrl:on_focus_gained(bufnr)
   if listobj == nil or delegate == nil or on_preview(listobj) then
     return
   end
-  ListViewCtrl._viewctlobject = listobj
+  SessionRegistry.activate(listobj.session)
 
   if vim.api.nvim_get_current_win() ~= delegate.win then
     vim.api.nvim_set_current_win(delegate.win)
@@ -377,80 +368,17 @@ function ListViewCtrl:on_next()
     log('failed to find ListViewObject')
     return
   end
-
-  if listobj.selected_line == nil then
-    listobj.selected_line = 1
-  end
-  local l = listobj.selected_line + 1
-  local data_collection = listobj.data
-  if listobj.filter_applied == true then
-    log('filter applied')
-    data_collection = listobj.filtered_data
-  end
-  if #data_collection == 0 then
-    return {}
-  end
-
-  local disp_h = listobj.display_height
-  if listobj.m_delegate.prompt == true then
-    disp_h = disp_h - 1
-  end
-
-  trace('next: ', listobj.selected_line, listobj.display_start_at, listobj.display_height, l, disp_h)
-
-  if l > #data_collection then
-    -- stylua: ignore
-    log(
-      'out of boundary next should show at: ',
-      #listobj.data, 'set: l', l, 'collection', #data_collection,
-      'disp_h', disp_h, listobj.display_height)
-    return {}
-  end
-  local skipped_fn = 1
-  if data_collection[l].filename_only and not listobj.filter_applied == true then
-    if l + 1 <= #data_collection then
-      l = l + 1
-      skipped_fn = 2
-    else
-      return {}
-    end
-  end
-
-  if l + 1 > listobj.display_start_at + disp_h then
-    -- need to scroll next
-    listobj.display_start_at = listobj.display_start_at + skipped_fn
-    listobj.display_data = {
-      unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1),
-    }
-    trace('disp', listobj.display_data, disp_h, listobj.display_start_at)
-    listobj.m_delegate:on_draw(listobj.display_data)
-    listobj.m_delegate:set_pos(disp_h)
-  else
-    -- preview here
-    -- listobj.m_delegate:on_draw(listobj.display_data)
-    listobj.m_delegate:set_pos(l - listobj.display_start_at + 1)
-  end
-
-  -- log("next should show: ", listobj.display_data[l].text or listobj.display_data[l], listobj.display_start_at)
-  listobj.selected_line = l
-  self:wrap_closer(listobj.on_move(data_collection[l]))
-  return data_collection[listobj.selected_line]
+  trace(
+    'next: ',
+    listobj.selected_line,
+    listobj.display_start_at,
+    listobj.display_height,
+    listobj.selected_line + 1,
+    listobj.state:visible_height()
+  )
+  return listobj:apply_state_result(listobj.state:move_next())
 end
 
-local function item_text(data_collection, idx)
-  local text
-  if idx < 1 or idx > #data_collection then
-    error('error: idx out of range', #data_collection, idx)
-  end
-  if type(data_collection[idx]) == 'string' then
-    text = data_collection[idx]
-  elseif data_collection[idx].display_data ~= nil then
-    text = data_collection[idx].display_data
-  elseif data_collection[idx].text ~= nil then
-    text = data_collection[idx].text
-  end
-  return text
-end
 -- if list start with [i] then select the [i], otherwise return ith item
 function ListViewCtrl:on_item(i)
   if i < 1 then
@@ -461,41 +389,9 @@ function ListViewCtrl:on_item(i)
     log('incorrect on_prev context', ListViewCtrl)
     return
   end
-
-  local data_collection = listobj.data
-
-  if i > #data_collection then
-    i = #data_collection
-  end
-
-  local idx
-  for j = i, i + 3 do
-    log(data_collection[j])
-    if j > #data_collection then
-      break
-    end
-    if data_collection[j] and data_collection[j].idx == i then
-      idx = j
-      break
-    end
-    local t = item_text(data_collection, j)
-    local f = string.find(t or '', tostring(i))
-    if f ~= nil and f < 4 then
-      idx = j
-      break
-    end
-  end
-
-  if idx then
-    i = idx
-  end
-
-  listobj.m_delegate:set_pos(i)
-  listobj.selected_line = i
-  log('select ', i, data_collection[listobj.selected_line])
-  self:wrap_closer(listobj.on_move(data_collection[i]))
-
-  return data_collection[listobj.selected_line]
+  local item = listobj:apply_state_result(listobj.state:select_item(i))
+  log('select ', listobj.selected_line, item)
+  return item
 end
 
 function ListViewCtrl:on_prev()
@@ -505,64 +401,15 @@ function ListViewCtrl:on_prev()
     return
   end
 
-  local disp_h = listobj.display_height
-  if listobj.m_delegate.prompt == true then
-    disp_h = disp_h - 1
-  end
-
   log(
     'on prev: ',
     listobj.selected_line,
     listobj.display_start_at,
-    disp_h,
+    listobj.state:visible_height(),
     listobj.display_height,
     listobj.m_delegate.prompt
   )
-
-  local data_collection = listobj.data
-  if listobj.filter_applied == true then
-    data_collection = listobj.filtered_data
-  end
-
-  if #data_collection == 0 then
-    return {}
-  end
-  if listobj.selected_line == nil then
-    listobj.selected_line = 1
-  end
-
-  local l = listobj.selected_line - 1
-  if l < 1 then
-    listobj.m_delegate:set_pos(1)
-    self:wrap_closer(listobj.on_move(data_collection[1]))
-    return
-  end
-  local skipped_fn = 1
-  if data_collection[l].filename_only and l > 1 then
-    trace('skip filename')
-    skipped_fn = 2
-    l = l - 1
-  end
-  if l < listobj.display_start_at and listobj.display_start_at >= 1 then
-    -- need to scroll back
-    log('roll back to ', listobj.display_start_at - 1)
-    listobj.display_start_at = listobj.display_start_at - skipped_fn
-    listobj.display_data = {
-      unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1),
-    }
-
-    trace('dispdata', listobj.display_data)
-    listobj.m_delegate:on_draw(listobj.display_data)
-    listobj.m_delegate:set_pos(1)
-  else
-    log('move to', l, listobj.display_start_at, l - listobj.display_start_at + 1)
-    listobj.m_delegate:set_pos(l - listobj.display_start_at + 1)
-  end
-  log('prev: ', l)
-  -- log("prev: ", l, listobj.display_data[l].text or listobj.display_data[l])
-  listobj.selected_line = l
-  self:wrap_closer(listobj.on_move(data_collection[l]))
-  return data_collection[listobj.selected_line]
+  return listobj:apply_state_result(listobj.state:move_prev())
 end
 
 function ListViewCtrl:on_pagedown()
@@ -579,53 +426,15 @@ function ListViewCtrl:draw_page(offset_direction)
   if listobj == nil then
     return
   end
-
-  local disp_h = listobj.display_height
-
-  if listobj.selected_line == nil then
-    listobj.selected_line = 1
-  end
-  local data_collection = listobj.data
-  if listobj.filter_applied == true then
-    data_collection = listobj.filtered_data
-  end
-  -- local disp_h = listobj.display_height
-  if listobj.m_delegate.prompt == true then
-    disp_h = disp_h - 1
-  end
-
-  local l = listobj.display_start_at + offset_direction * disp_h
-
-  trace('pagedown: ', listobj.selected_line, listobj.display_start_at, listobj.display_height, l, disp_h)
-
-  if l < 1 then
-    listobj.m_delegate:set_pos(1)
-    listobj.on_move(data_collection[1])
-    log('prev should show at: ', #listobj.data, 'set: ', disp_h, listobj.display_height)
-    return
-  end
-
-  if l > #data_collection then
-    listobj.m_delegate:set_pos(disp_h)
-    listobj.on_move(data_collection[#data_collection])
-    log('next should show at: ', #listobj.data, 'set: ', disp_h, listobj.display_height)
-    return
-  end
-
-  listobj.display_start_at = l
-  listobj.display_data = {
-    unpack(data_collection, listobj.display_start_at, listobj.display_start_at + disp_h - 1),
-  }
-  trace('disp', listobj.display_data, disp_h, listobj.display_start_at)
-  listobj.m_delegate:on_draw(listobj.display_data)
-  if offset_direction ~= 0 then
-    listobj.m_delegate:set_pos(disp_h)
-    listobj.selected_line = l
-    self:wrap_closer(listobj.on_move(data_collection[l]))
-  end
-
-  -- log("next should show: ", listobj.display_data[l].text or listobj.display_data[l], listobj.display_start_at)
-  return data_collection[listobj.selected_line]
+  trace(
+    'pagedown: ',
+    listobj.selected_line,
+    listobj.display_start_at,
+    listobj.display_height,
+    listobj.display_start_at + offset_direction * listobj.state:visible_height(),
+    listobj.state:visible_height()
+  )
+  return listobj:apply_state_result(listobj.state:draw_page(offset_direction))
 end
 
 function ListViewCtrl:on_toggle()
@@ -634,26 +443,8 @@ function ListViewCtrl:on_toggle()
     log('on_toggle failed, no listviewCTRL')
     return
   end
-  -- local data_collection = listobj.data
-  if listobj.selected_lines == nil then
-    listobj.selected_lines = {}
-  end
-  local on = false
-  if vim.tbl_contains(listobj.selected_lines, listobj.selected_line) then
-    util.tbl_remove(listobj.selected_lines, listobj.selected_line)
-  else
-    on = true
-  end
-
-  if listobj.filter_applied == true then
-    listobj.filtered_data[listobj.selected_line].selected = on
-  else
-    listobj.data[listobj.selected_line].selected = on
-  end
-
-  listobj.selected_lines[#listobj.selected_lines + 1] = listobj.selected_line
-  log('selected lines: ', listobj.selected_lines, listobj.data[listobj.selected_line])
-  listobj:draw_page(0)
+  local item = listobj:apply_state_result(listobj.state:toggle_current(), { preview = false })
+  log('selected lines: ', listobj.selected_lines, item)
 end
 
 function ListViewCtrl:on_confirm(opts)
@@ -662,11 +453,7 @@ function ListViewCtrl:on_confirm(opts)
     log('on_confirm failed, no listviewCTRL')
     return
   end
-  local data_collection = listobj.data
-  if listobj.filter_applied == true then
-    data_collection = listobj.filtered_data
-  end
-  local selection = data_collection[listobj.selected_line]
+  local selection = listobj.state:current_item()
   close_controller(listobj)
   -- trace(listobj.m_delegate)
   if listobj.confirm_cb == nil or listobj.confirm_cb == ListViewCtrl.on_confirm then
@@ -715,16 +502,9 @@ function ListViewCtrl:on_search()
   if listobj.search_item == filter_input_trim then
     return -- same filter may caused by none-search field change
   end
-  listobj.search_item = filter_input_trim
-
   if #filter_input_trim == 0 or #listobj.data == nil or #listobj.data == 0 then
     log('no filter')
-    listobj.filter_applied = false
-    listobj.filtered_data = vim.deepcopy(listobj.data) -- filter is not applied, clean up cache data
-
-    listobj.display_data = { unpack(listobj.filtered_data, 1, listobj.display_height) }
-    listobj.display_start_at = 1 -- reset
-    listobj:on_draw(listobj.display_data)
+    listobj:apply_state_result(listobj.state:apply_filter(nil, filter_input_trim), { preview = false })
     _GH_SEARCH_NS = _GH_SEARCH_NS or nil
     if _GH_SEARCH_NS == nil then
       return
@@ -733,17 +513,10 @@ function ListViewCtrl:on_search()
     return
   else
     log('filter applied ', filter_input_trim)
-    listobj.filtered_data = filter(filter_input_trim, listobj.data)
+    listobj:apply_state_result(listobj.state:apply_filter(filter(filter_input_trim, listobj.data), filter_input_trim), {
+      preview = false,
+    })
   end
-  trace('filtered data', listobj.filtered_data)
-  listobj.display_data = { unpack(listobj.filtered_data, 1, listobj.display_height) }
-  listobj.filter_applied = true
-  listobj.display_start_at = 1 -- reset
-  --
-  trace('filtered data', listobj.display_data)
-  listobj:on_draw(listobj.display_data)
-  listobj.selected_line = 1
-  listobj.m_delegate:set_pos(1)
 
   vim.api.nvim_buf_set_lines(buf, -2, -1, true, { filter_input })
 
@@ -789,7 +562,7 @@ function ListViewCtrl:on_quickfix()
   if listobj == nil then
     return
   end
-  local data = listobj.filtered_data or listobj.data
+  local data = active_data(listobj)
 
   if listobj.selected_lines and next(listobj.selected_lines) then
     local data_sel = {}
@@ -844,7 +617,8 @@ end
 function ListViewCtrl:on_data_update(data)
   local listobj = current_delegate(self)
   if listobj then
-    listobj.data = data
+    listobj.state:set_data(data)
+    listobj:sync_state()
   end
 end
 
