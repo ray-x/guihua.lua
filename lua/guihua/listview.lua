@@ -174,40 +174,32 @@ function ListView.close()
 end
 
 function ListView:set_pos(i)
-  if not vim.api.nvim_buf_is_valid(self.buf) then
-    log('invalid bufid', self.buf)
+  if not self.buf or not vim.api.nvim_buf_is_valid(self.buf) then
     return
   end
-  if #vim.api.nvim_buf_get_lines(self.buf, 0, -1, false) < 2 then
-    log('empty buf')
+
+  if not self.win or not vim.api.nvim_win_is_valid(self.win) then
     return
   end
-  if i < 0 then
-    log('incorrect select_line -1', self.display_height, self.selected_line, self.display_start_at)
-    log(debug.traceback())
-    self.selected_line = 1
-  else
-    self.selected_line = i
+
+  local line_count = vim.api.nvim_buf_line_count(self.buf)
+
+  if line_count < 1 then
+    return
   end
-  local selhighlight = vim.api.nvim_create_namespace('guihua_selhighlight')
-  local cursor = vim.api.nvim_win_get_cursor(self.win)
-  cursor[1] = i
 
-  vim.schedule(function()
-    log('setpos', self.buf, self.selected_line)
+  i = math.max(1, math.min(i, line_count))
 
-    if not vim.api.nvim_buf_is_valid(self.buf) then
-      log('setpos error buf not valid')
-      return
-    end
-    vim.api.nvim_buf_clear_namespace(self.buf, selhighlight, 0, -1)
-    local ListviewHl = 'GuihuaListSelHl'
-    vim.api.nvim_buf_set_extmark(self.buf, selhighlight, self.selected_line - 1, 0, {
-      hl_group = ListviewHl,
-      end_row = self.selected_line - 1,
-      line_hl_group = 'GuihuaListSelHl', -- Highlight the whole line
-      priority = 1000,
-    })
+  self.selected_line = i
+
+  vim.api.nvim_win_set_cursor(self.win, { i, 0 })
+
+  vim.api.nvim_set_option_value('cursorline', true, { win = self.win })
+
+  vim.wo[self.win].winhighlight = 'CursorLine:GuihuaListSelHl'
+
+  vim.api.nvim_win_call(self.win, function()
+    vim.cmd('normal! zz')
   end)
 end
 
