@@ -10,10 +10,6 @@ if Sprite == nil then
 end
 
 local uv = vim.uv or vim.loop
-_GH_SETUP = _GH_SETUP or nil
-if _GH_SETUP == nil then
-  require('guihua.maps').setup()
-end
 local dots = { '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏' }
 local dots2 = { '⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷' }
 local moon = { '🌑 ', '🌒 ', '🌓 ', '🌔 ', '🌕 ', '🌖 ', '🌗 ', '🌘 ' }

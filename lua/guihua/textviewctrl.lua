@@ -7,7 +7,6 @@ local api = vim.api
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 
-_GH_SETUP = _GH_SETUP or require('guihua.maps').setup()
 if TextViewCtrl == nil then
   TextViewCtrl = class('TextViewCtrl')
 end -- no need to subclass from viewctrl
@@ -20,7 +19,7 @@ function TextViewCtrl:initialize(delegate, ...)
   log('textview ctrl opts', opts.uri)
   self.display_height = self.m_delegate.display_height or 10
 
-  local m = _GH_SETUP.maps
+  local m = require('guihua').ensure_setup().maps
   if not opts.enter then
     -- currsor move will close textview. currently disabled because user can edit inside preview
     log('auto close on cursor move disabled')

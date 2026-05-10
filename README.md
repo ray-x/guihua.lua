@@ -15,7 +15,7 @@ Guihua: A Lua Gui and util library for nvim plugins
 
 ![multigrid](https://user-images.githubusercontent.com/1681295/133234734-93817aaa-23a3-4c28-b164-b129be449dee.jpg)
 
-* Neovim vim.ui.input and vim.ui.select patch
+- Neovim vim.ui.input and vim.ui.select patch
 
 This cool screen shows an external terminal running lazygit and an external floating window running guihua listview
 
@@ -36,12 +36,79 @@ Plugin has implementation of fzy with both ffi and native lua. If you like to tr
  use {'ray-x/guihua.lua', run = 'cd lua/fzy && make'}
 ```
 
+## lazy.nvim
+
+```lua
+{
+  'ray-x/guihua.lua',
+  build = 'cd lua/fzy && make',
+  lazy = true,
+  init = function()
+    local configured = false
+
+    local function ensure_guihua()
+      if configured then
+        return
+      end
+
+      configured = true
+      require('guihua').setup({})
+    end
+
+    vim.ui.select = function(...)
+      ensure_guihua()
+      return require('guihua.gui').select(...)
+    end
+
+    vim.ui.input = function(...)
+      ensure_guihua()
+      return require('guihua.gui').input(...)
+    end
+  end,
+}
+```
+
+The lazy.nvim example above keeps guihua unloaded until the first `vim.ui.select()` or
+`vim.ui.input()` call, which avoids paying the UI startup cost during Neovim startup.
+
 ## Setup
 
 ```lua
-  -- default mapping
+local icons = {
+  panel_icons = {
+    section_separator = '─', -- '',
+    line_num_left = ':', -- '',
+    line_num_right = '', -- '',
+
+    range_left = '', -- '',
+    range_right = '',
+    inner_node = '', -- '├○',
+    folded = '◉',
+    unfolded = '○',
+
+    outer_node = '', -- '╰○',
+    bracket_left = '', -- '⟪',
+    bracket_right = '', -- '⟫',
+  },
+  syntax_icons = {
+    var = ' ', -- "👹", -- Vampire
+    method = 'ƒ ', -- "🍔", -- mac
+    ['function'] = ' ', -- "🤣", -- Fun
+    ['arrow_function'] = ' ', -- "🤣", -- Fun
+    parameter = '', -- Pi
+    associated = '🤝',
+    namespace = '🚀',
+    type = ' ',
+    field = '🏈',
+    interface = '',
+    module = '📦',
+    flag = '🎏',
+  },
+}
+
+require('guihua').setup({
   maps = {
-    close_view = '<C-e>',
+    close_view = '<C-x>',
     send_qf = '<C-q>',
     save = '<C-s>',
     jump_to_list = '<C-w>k',
@@ -54,48 +121,9 @@ Plugin has implementation of fzy with both ffi and native lua. If you like to tr
     split = '<C-s>',
     vsplit = '<C-v>',
     tabnew = '<C-t>',
-  }
-
-  -- default icons for panel
-  -- will be tbl_deep_extend() if you override any of those
-  local icons = {
-    panel_icons = {
-      section_separator = '─', --'',
-      line_num_left = ':', --'',
-      line_num_right = '', --',
-
-      range_left = '', --'',
-      range_right = '',
-      inner_node = '', --├○',
-      folded = '◉',
-      unfolded = '○',
-
-      outer_node = '', -- '╰○',
-      bracket_left = '', -- ⟪',
-      bracket_right = '', -- '⟫',
-    },
-    syntax_icons = {
-      var = ' ', -- "👹", -- Vampaire
-        method = 'ƒ ', --  "🍔", -- mac
-        ['function'] = ' ', -- "🤣", -- Fun
-        ['arrow_function'] = ' ', -- "🤣", -- Fun
-          parameter = '', -- Pi
-            associated = '🤝',
-      namespace = '🚀',
-      type = ' ',
-      field = '🏈',
-      interface = '',
-      module = '📦',
-      flag = '🎏',
-    }
-  }
-
-  --
-  require('guihua.maps').setup({
-  maps = {
-    close_view = '<C-x>',
-  }
-  })
+  },
+  icons = icons,
+})
 ```
 
 ## Plug

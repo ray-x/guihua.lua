@@ -8,12 +8,6 @@ local is_windows = os_name == 'Windows' or os_name == 'Windows_NT'
 -- Check whether current buffer contains main function
 
 local HAS_NVIM_0_9 = vim.fn.has('nvim-0.9') == 1
-function M.sep()
-  if is_windows then
-    return '\\'
-  end
-  return '/'
-end
 
 function M.close_view_autocmd(events, winnr)
   vim.cmd(
@@ -170,6 +164,61 @@ M.get_hl_color = function(group_name)
     local bg = hl.background and '#' .. bit.tohex(hl.background, 6)
     return fg, bg
   end
+end
+
+local function get_hl_definition(group_name)
+  if HAS_NVIM_0_9 and vim.api.nvim_get_hl then
+    local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = group_name, link = false })
+    if ok and type(hl) == 'table' then
+      return vim.tbl_extend('force', {}, hl)
+    end
+  end
+
+  local ok, hl = pcall(vim.api.nvim_get_hl_by_name, group_name, true)
+  if not ok or type(hl) ~= 'table' then
+    return {}
+  end
+
+  local normalized = {
+    fg = hl.foreground,
+    bg = hl.background,
+    sp = hl.special,
+  }
+
+  for _, key in ipairs({
+    'bold',
+    'italic',
+    'reverse',
+    'standout',
+    'underline',
+    'undercurl',
+    'underdouble',
+    'underdotted',
+    'underdashed',
+    'strikethrough',
+    'nocombine',
+  }) do
+    if hl[key] ~= nil then
+      normalized[key] = hl[key]
+    end
+  end
+
+  return normalized
+end
+
+function M.disable_win_strikethrough(winid, ns, group_name)
+  if vim.api.nvim_win_set_hl_ns == nil or winid == nil or not vim.api.nvim_win_is_valid(winid) then
+    return ns
+  end
+
+  local group = group_name or '@markup.strikethrough'
+  local hl = get_hl_definition(group)
+  hl.strikethrough = false
+
+  ns = ns or vim.api.nvim_create_namespace('guihua_prompt_hl')
+  vim.api.nvim_set_hl(ns, group, hl)
+  vim.api.nvim_win_set_hl_ns(winid, ns)
+  return ns
 end
 
 function M.close_view_event(_, key, winnr, bufnr, enter)
@@ -539,33 +588,45 @@ local is_uri = function(filename)
   return string.match(filename, '^%w+://') ~= nil
 end
 
-M.shorten = (function()
-  if jit and M.sep ~= '\\' then
-    local ffi = require('ffi')
-    ffi.cdef([[
-    typedef unsigned char char_u;
-    void shorten_dir(char_u *str);
-    ]])
-    return function(filename)
-      if not filename or is_uri(filename) then
-        return filename
-      end
+local shorten_impl
+M.shorten = function(filename)
+  if shorten_impl == nil then
+    if jit and M.sep ~= '\\' then
+      local ffi = require('ffi')
+      ffi.cdef([[
+      typedef unsigned char char_u;
+      void shorten_dir(char_u *str);
+      ]])
+      shorten_impl = function(path)
+        if not path or is_uri(path) then
+          return path
+        end
 
-      local c_str = ffi.new('char[?]', #filename + 1)
-      ffi.copy(c_str, filename)
-      ffi.C.shorten_dir(c_str)
-      return ffi.string(c_str)
+        local c_str = ffi.new('char[?]', #path + 1)
+        ffi.copy(c_str, path)
+        ffi.C.shorten_dir(c_str)
+        return ffi.string(c_str)
+      end
+    else
+      shorten_impl = function(path)
+        return M.shorten_len(path, 1)
+      end
     end
   end
-  return function(filename)
-    return M.shorten_len(filename, 1)
-  end
-end)()
 
-local hsl = require('guihua.hsl')
+  return shorten_impl(filename)
+end
+
+local hsl
+local function get_hsl()
+  hsl = hsl or require('guihua.hsl')
+  return hsl
+end
+
 M.rgb_to_hsl = function(rgb)
-  local h, s, l = hsl.rgb_string_to_hsl(rgb)
-  return hsl.new(h, s, l, rgb)
+  local hsl_mod = get_hsl()
+  local h, s, l = hsl_mod.rgb_string_to_hsl(rgb)
+  return hsl_mod.new(h, s, l, rgb)
 end
 
 M.get_hsl_color = function(hl)

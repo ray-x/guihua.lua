@@ -6,10 +6,6 @@ local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 local columns = api.nvim_get_option_value('columns', {})
 local lines = api.nvim_get_option_value('lines', {})
-_GH_SETUP = _GH_SETUP or nil
-if _GH_SETUP == nil then
-  require('guihua').setup()
-end
 
 local title_options = utils.title_options
 
@@ -312,7 +308,7 @@ local term = function(opts)
   api.nvim_command('setlocal nobuflisted')
   local var_key = opts.term_name or 'guihua_floating_term'
   api.nvim_buf_set_var(buf, var_key, { buf, win })
-  local m = _GH_SETUP.maps
+  local m = require('guihua').ensure_setup().maps
   local f = string.format('lua require("guihua.floating").close(%s)<CR>', var_key)
   vim.keymap.set({ 'n', 'i' }, m.close_view, f, { buffer = buf })
   return buf, win, closer

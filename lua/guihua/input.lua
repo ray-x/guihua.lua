@@ -66,11 +66,20 @@ local function input(opts, on_confirm)
 
   local prompt = opts.prompt or ''
   local placeholder = opts.placeholder or opts.default or ''
-  local setup_confirm = ctx.on_confirm
+
+  local setup_confirm = type(ctx.on_confirm) == 'function' and ctx.on_confirm or nil
   ctx.on_confirm = function(new_name)
-    setup_confirm(new_name)
-    if on_confirm then
-      on_confirm(new_name)
+    if type(setup_confirm) == 'function' then
+      local ok, err = pcall(setup_confirm, new_name)
+      if not ok then
+        log('input: setup_confirm error: ' .. tostring(err))
+      end
+    end
+    if type(on_confirm) == 'function' then
+      local ok2, err2 = pcall(on_confirm, new_name)
+      if not ok2 then
+        log('input: on_confirm error: ' .. tostring(err2))
+      end
     end
   end
 
@@ -105,6 +114,7 @@ local function input(opts, on_confirm)
   ctx.win = winnr
   input_contexts[bufnr] = ctx
   api.nvim_set_option_value('winhl', 'Normal:NormalFloat,NormalNC:Normal', { win = winnr })
+  ctx.hl_ns = utils.disable_win_strikethrough(winnr, ctx.hl_ns)
   api.nvim_create_autocmd('BufWipeout', {
     buffer = bufnr,
     once = true,
@@ -131,32 +141,48 @@ local function input(opts, on_confirm)
     log('confirm_callback')
     local new_text = current_text(ctx)
     vim.cmd([[stopinsert]])
-    close_input(ctx)
     if #new_text == 0 or new_text == ctx.opts.default then
       log('no change')
-      ctx.on_cancel(new_text)
+      if type(ctx.on_cancel) == 'function' then
+        log('on cancel called')
+        pcall(ctx.on_cancel, new_text)
+      end
+      log('closing input')
+      close_input(ctx)
       return
     end
     log('on_confirm: new text: ' .. new_text)
-    ctx.on_confirm(new_text)
+    if type(ctx.on_confirm) == 'function' then
+      pcall(ctx.on_confirm, new_text)
+    end
+    close_input(ctx)
   end, { silent = true, buffer = bufnr })
 
   vim.keymap.set('n', '<ESC><ESC>', function()
     local new_text = current_text(ctx)
-    ctx.on_cancel(new_text)
+    if type(ctx.on_cancel) == 'function' then
+      pcall(ctx.on_cancel, new_text)
+    end
     close_input(ctx)
   end, { silent = true, buffer = bufnr })
   vim.keymap.set({ 'n', 'i' }, '<BS>', [[<ESC>"_cl]], { silent = true, buffer = bufnr })
   vim.cmd(string.format('normal i%s', placeholder))
-  vim.fn.feedkeys('A', 'n')
+  -- vim.fn.feedkeys('A', 'n')
   return winnr
 end
 
 -- functional test
 -- input({ prompt = 'replace: ', placeholder = 'old', title = 'title' }, function(text)
---   print('replace old' .. 'with: ' .. text)
--- end, function(text)
---   print('on change: ' .. text)
+-- print('replace old' .. 'with: ' .. text)
+-- print('on change: ' .. text)
+-- local f, err = io.open('/tmp/log.txt', 'w')
+-- print('file open result: ' .. tostring(f) .. ', error: ' .. tostring(err))
+-- if not f then
+-- print('Error opening file: ' .. tostring(err))
+-- return nil, err
+-- end
+-- f:write(text)
+-- f:close()
 -- end)
 
 -- input({ prompt = 'replace: ', placeholder = 'old text' }, function(text)
@@ -167,4 +193,5 @@ return {
   setup = setup,
   input = input,
   onchange_callback = onchange_callback,
+  input_callback = onchange_callback,
 }

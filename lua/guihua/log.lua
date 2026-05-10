@@ -15,7 +15,7 @@ local default_config = {
   highlights = true,
   -- Should write to a file
   use_file = true,
-  log_file = 'gh',
+  log_file = 'gh2',
   -- Any messages above this level will be logged.
   level = 'warn',
   -- Level configuration
@@ -37,7 +37,7 @@ local log = {}
 
 local unpack = unpack or table.unpack
 
-local uv = vim.uv or vim.loop
+local uv = vim.uv
 local os_name = uv.os_uname().sysname
 local is_windows = os_name == 'Windows' or os_name == 'Windows_NT'
 -- Check whether current buffer contains main function
@@ -193,38 +193,15 @@ log.new = function(config, standalone)
   return obj
 end
 
-log.new(default_config, true)
+-- log.new(default_config, true)
 
--- function log.log(...)
---   local arg = {...}
---   if vim.g.debug_output == true then
---     local str = " "
---     for i, v in ipairs(arg) do
---       if type(v) == "table" then
---         str = str .. " |" .. tostring(i) .. ": " .. vim.inspect(v) .. "\n"
---       else
---         str = str .. " |" .. tostring(i) .. ": " .. tostring(v)
---       end
---     end
---     if #str > 2 then
---       if M.log_path ~= nil and #M.log_path > 3 then
---         local f = io.open(M.log_path, "a+")
---         io.output(f)
---         io.write(str)
---         io.close(f)
---       else
---         print(str .. '\n')
---       end
---     end
---   end
--- end
---
--- function log.trace(...)
---   if vim.g.debug_trace_output == true then
---     M.log(...)
---   end
--- end
-
--- local l = log.new ({level = "info"}, true)
---
-return log
+-- local l = log.new({ level = 'info' }, true)
+-- l.info('This is an info message')
+if true then
+  -- user do not need to call log.new. I use it to debug guihua.lua
+  default_config.level = 'info'
+  return log.new(default_config, true)
+else
+  -- user need to call log.new in their setup, used in navigator
+  return log
+end

@@ -1,13 +1,25 @@
 local M = {}
-local ListView = require('guihua.listview')
-local TextView = require('guihua.textview')
-local util = require('guihua.util')
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 local api = vim.api
-local top_center = require('guihua.location').top_center
 
 local ns_id = vim.api.nvim_create_namespace('guihua_gui')
+
+local function get_listview()
+  return require('guihua.listview')
+end
+
+local function get_textview()
+  return require('guihua.textview')
+end
+
+local function get_util()
+  return require('guihua.util')
+end
+
+local function top_center(...)
+  return require('guihua.location').top_center(...)
+end
 
 -- Word-wrap `text` to `width` columns, honoring existing newlines.
 local function word_wrap(text, width)
@@ -124,8 +136,7 @@ local function build_preview_location_opts(opts)
   end
 
   -- win_opts.items = contents
-  local target_lnum = opts.lnum
-    or ((opts.range and opts.range.start and opts.range.start.line) or display_range.start.line)
+  local target_lnum = opts.lnum or ((opts.range and opts.range.start and opts.range.start.line) or display_range.start.line)
   win_opts.hl_line = target_lnum - display_range.start.line
   if win_opts.hl_line < 0 then
     win_opts.hl_line = 1
@@ -163,7 +174,7 @@ end
 function M._preview_location(opts) -- location, width, pos_x, pos_y
   local text_view_opts = build_preview_location_opts(opts)
   log(text_view_opts)
-  return TextView.open(text_view_opts)
+  return get_textview().open(text_view_opts)
 end
 
 function M.preview_uri_spec(opts)
@@ -180,7 +191,7 @@ function M.preview_uri_spec(opts)
   opts.location = loc
 
   trace('uri', opts.uri, opts.lnum, opts.location.range.start.line, opts.location.range['end'].line)
-  return TextView.preview_spec(build_preview_location_opts(opts))
+  return get_textview().preview_spec(build_preview_location_opts(opts))
 end
 
 function M.preview_uri(opts) -- uri, width, line, col, offset_x, offset_y
@@ -256,7 +267,7 @@ function M.new_list_view(opts)
   end
 
   log(r, lheight, #data, wheight, opts.height_ratio, offset_y)
-  local _ = require('guihua.util').fzy_idx
+  local _ = get_util().fzy_idx
   local transparency = opts.transparency
   if transparency == 100 then
     transparency = nil
@@ -266,7 +277,7 @@ function M.new_list_view(opts)
     opts.relative = nil
   end
 
-  return ListView:new({
+  return get_listview():new({
     loc = loc,
     prompt = prompt,
     prompt_mode = opts.prompt_mode,
@@ -296,7 +307,7 @@ function M.new_list_view(opts)
       if item.filename ~= nil then
         log('openfile ', item.filename, item.lnum, item.col)
         vim.schedule(function()
-          util.open_file_at(item.filename, item.lnum, item.col, split_opts.split)
+          get_util().open_file_at(item.filename, item.lnum, item.col, split_opts.split)
         end)
       end
     end,
@@ -444,7 +455,9 @@ M.select = function(items, opts, on_choice)
     relative = 'cursor',
     rawdata = true,
     data = data,
+    persist = true,
     ft = opts.ft or 'markdown',
+    disable_strikethrough = true,
     on_confirm = function(item, idx)
       if item.header then
         return -- non-selectable prompt header lines
@@ -603,7 +616,7 @@ M.confirm = function(opts, on_confirm)
     zindex = 50,
   }
   if vim.fn.has('nvim-0.9') == 1 then
-    local t = util.title_options(title)
+    local t = get_util().title_options(title)
     if t then
       cwin_opts.title = t
       cwin_opts.title_pos = 'center'
@@ -673,6 +686,7 @@ M.confirm = function(opts, on_confirm)
 
   -- ── Close helpers ────────────────────────────────────────────────────────
   local closed = false
+  local finalized = false
   local function close_all()
     if closed then
       return
@@ -682,7 +696,11 @@ M.confirm = function(opts, on_confirm)
     pcall(api.nvim_win_close, btn_win, true)
   end
 
-  local function do_confirm(choice)
+  local function finalize(choice)
+    if finalized then
+      return
+    end
+    finalized = true
     close_all()
     on_confirm(choice)
   end
@@ -692,14 +710,14 @@ M.confirm = function(opts, on_confirm)
     pattern = tostring(content_win),
     once = true,
     callback = function()
-      pcall(api.nvim_win_close, btn_win, true)
+      finalize(false)
     end,
   })
   api.nvim_create_autocmd('WinClosed', {
     pattern = tostring(btn_win),
     once = true,
     callback = function()
-      pcall(api.nvim_win_close, content_win, true)
+      finalize(false)
     end,
   })
 
@@ -718,25 +736,25 @@ M.confirm = function(opts, on_confirm)
   local bmap = { noremap = true, silent = true, buffer = btn_buf }
 
   vim.keymap.set({ 'n', 'i' }, 'y', function()
-    do_confirm(true)
+    finalize(true)
   end, bmap)
   vim.keymap.set({ 'n', 'i' }, 'Y', function()
-    do_confirm(true)
+    finalize(true)
   end, bmap)
   vim.keymap.set({ 'n', 'i' }, 'n', function()
-    do_confirm(false)
+    finalize(false)
   end, bmap)
   vim.keymap.set({ 'n', 'i' }, 'N', function()
-    do_confirm(false)
+    finalize(false)
   end, bmap)
   vim.keymap.set({ 'n', 'i' }, 'q', function()
-    do_confirm(false)
+    finalize(false)
   end, bmap)
   vim.keymap.set({ 'n', 'i' }, '<ESC><ESC>', function()
-    do_confirm(false)
+    finalize(false)
   end, bmap)
   vim.keymap.set({ 'n', 'i' }, '<CR>', function()
-    do_confirm(selected_yes)
+    finalize(selected_yes)
   end, bmap)
 
   vim.keymap.set({ 'n', 'i' }, '<Tab>', function()
@@ -813,30 +831,20 @@ M.confirm = function(opts, on_confirm)
   vim.keymap.set('n', '<CR>', return_to_btn, cmap)
   vim.keymap.set('n', 'q', return_to_btn, cmap)
   vim.keymap.set('n', 'ZQ', function()
-    do_confirm(false)
+    finalize(false)
   end, cmap)
   vim.keymap.set('n', '<ESC><ESC>', function()
-    do_confirm(false)
+    finalize(false)
   end, cmap)
 
   return content_win, btn_win
 end
 
-M.input = require('guihua.input').input
-M.input_callback = require('guihua.input').input_callback
---[[
-M.select({ 'tabs', 'spaces', 'enter' }, {
-  ft = 'markdown',
-  prompt = 'Select tabs or spaces:\nUse tabs for indentation, or spaces? This is a sample prompt that is intentionally long to demonstrate wrapping behavior. please run command `bash ls -f`',
-  format_item = function(item)
-    return "I'd like to choose " .. item
-  end,
-}, function(choice)
-  if choice == 'spaces' then
-    print('space')
-  else
-    print('tab')
-  end
-end)
---]]
+M.input = function(...)
+  return require('guihua.input').input(...)
+end
+
+M.input_callback = function(...)
+  return require('guihua.input').input_callback(...)
+end
 return M

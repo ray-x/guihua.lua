@@ -11,11 +11,6 @@ local TextViewCtrl = require('guihua.textviewctrl')
 if TextView == nil then
   TextView = class('TextView', View)
 end
-
-_GH_SETUP = _GH_SETUP or nil
-if _GH_SETUP == nil then
-  require('guihua.maps').setup()
-end
 -- Note, Support only one active view
 -- ActiveView = nil
 --[[
@@ -114,6 +109,7 @@ function TextView:initialize(...)
   trace(debug.traceback())
 
   local opts = resolve_preview_opts(select(1, ...) or {})
+  local setup = require('guihua').ensure_setup()
 
   log('ctor TextView start:')
   trace(opts)
@@ -132,7 +128,7 @@ function TextView:initialize(...)
     log('auto close on cursor move disabled')
   else
     -- for user case of symbol definition preview, <c-e> close win/buf
-    local m = _GH_SETUP.maps
+    local m = setup.maps
     util.close_view_event('n', m.close_view, self.win, self.buf, opts.enter)
     util.close_view_event('i', m.close_view, self.win, self.buf, opts.enter)
   end

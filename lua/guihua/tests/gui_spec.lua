@@ -38,6 +38,50 @@ describe('should create view  ', function()
     print(view.buf)
   end)
 
+  it('should lazy load top-level guihua exports', function()
+    package.loaded['guihua'] = nil
+    package.loaded['guihua.view'] = nil
+    package.loaded['guihua.listview'] = nil
+    vim.cmd('packadd guihua.lua')
+
+    local guihua = require('guihua')
+
+    assert.is_nil(package.loaded['guihua.view'])
+    assert.is_nil(package.loaded['guihua.listview'])
+
+    local view = guihua.view
+
+    assert.is_not_nil(view)
+    assert.is_not_nil(package.loaded['guihua.view'])
+    assert.is_nil(package.loaded['guihua.listview'])
+  end)
+
+  it('should lazy load gui submodules until used', function()
+    package.loaded['guihua'] = nil
+    package.loaded['guihua.gui'] = nil
+    package.loaded['guihua.listview'] = nil
+    package.loaded['guihua.textview'] = nil
+    package.loaded['guihua.input'] = nil
+    vim.cmd('packadd guihua.lua')
+
+    local gui = require('guihua.gui')
+
+    assert.is_nil(package.loaded['guihua.listview'])
+    assert.is_nil(package.loaded['guihua.textview'])
+    assert.is_nil(package.loaded['guihua.input'])
+
+    local input_win = gui.input({
+      prompt = 'Rename',
+      placeholder = 'target',
+    }, function(_) end)
+
+    assert.is_not_nil(package.loaded['guihua.input'])
+    assert.is_nil(package.loaded['guihua.listview'])
+    assert.is_nil(package.loaded['guihua.textview'])
+
+    vim.api.nvim_win_close(input_win, true)
+  end)
+
   it('should restore focus for select popup after focus changes', function()
     package.loaded['guihua'] = nil
     package.loaded['guihua.gui'] = nil
@@ -101,6 +145,59 @@ describe('should create view  ', function()
 
     vim.api.nvim_win_close(input_win, true)
     listview:close()
+  end)
+
+  it('should disable strikethrough in select popups only', function()
+    if vim.api.nvim_win_get_hl_ns == nil or vim.api.nvim_get_hl == nil then
+      return
+    end
+    package.loaded['guihua'] = nil
+    package.loaded['guihua.gui'] = nil
+    package.loaded['guihua.listviewctrl'] = nil
+    package.loaded['guihua.listview'] = nil
+    package.loaded['guihua.view'] = nil
+    vim.cmd('packadd guihua.lua')
+
+    vim.api.nvim_set_hl(0, '@markup.strikethrough', { fg = 0xabcdef, strikethrough = true })
+
+    local gui = require('guihua.gui')
+    local listview = gui.select({ 'one', 'two', 'three' }, {
+      prompt = 'Select ~~value~~',
+      ft = 'markdown',
+    }, function(_) end)
+
+    local ns = vim.api.nvim_win_get_hl_ns(listview.win)
+    local hl = vim.api.nvim_get_hl(ns, { name = '@markup.strikethrough', link = false })
+
+    eq(0xabcdef, hl.fg)
+    assert.is_not_true(hl.strikethrough)
+
+    listview:close()
+  end)
+
+  it('should disable strikethrough in input popups only', function()
+    if vim.api.nvim_win_get_hl_ns == nil or vim.api.nvim_get_hl == nil then
+      return
+    end
+    package.loaded['guihua'] = nil
+    package.loaded['guihua.gui'] = nil
+    package.loaded['guihua.input'] = nil
+    vim.cmd('packadd guihua.lua')
+
+    vim.api.nvim_set_hl(0, '@markup.strikethrough', { fg = 0x123456, strikethrough = true })
+
+    local input_win = require('guihua.gui').input({
+      prompt = 'Rename ~~value~~',
+      placeholder = 'target',
+    }, function(_) end)
+
+    local ns = vim.api.nvim_win_get_hl_ns(input_win)
+    local hl = vim.api.nvim_get_hl(ns, { name = '@markup.strikethrough', link = false })
+
+    eq(0x123456, hl.fg)
+    assert.is_not_true(hl.strikethrough)
+
+    vim.api.nvim_win_close(input_win, true)
   end)
 
   it('should preselect the first item when prompt text is rendered in the popup', function()

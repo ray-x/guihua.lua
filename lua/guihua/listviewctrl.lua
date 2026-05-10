@@ -8,12 +8,7 @@ local trace = require('guihua.log').trace
 local api = vim.api
 local ListState = require('guihua.liststate')
 local SessionRegistry = require('guihua.session_registry')
-_GH_SETUP = _GH_SETUP or require('guihua.maps').setup()
 ListView = ListView or nil
-if _GH_SETUP == nil then
-  _GH_SETUP = require('guihua.maps').setup()
-end
-TextView = TextView or require('guihua.textview')
 if ListViewCtrl == nil then
   ListViewCtrl = class('ListViewCtrl', ViewController)
 end
@@ -178,7 +173,7 @@ function ListViewCtrl:initialize(delegate, ...)
   if delegate.buf == nil or delegate.buf == 0 then
     log('should not bind to current buffer')
   end
-  local m = _GH_SETUP.maps
+  local m = require('guihua').ensure_setup().maps
   if m == nil then
     return
   end
@@ -249,13 +244,17 @@ function ListViewCtrl:initialize(delegate, ...)
       self:on_search()
     end,
   })
-  vim.api.nvim_create_autocmd('WinLeave', {
-    buffer = delegate.buf,
-    group = self.augroup,
-    callback = function()
-      self:on_leave()
-    end,
-  })
+  -- Only auto-close on focus loss for non-prompt, non-persistent listviews (default behavior).
+  if not (delegate.prompt or delegate.persist) then
+    vim.api.nvim_create_autocmd('WinLeave', {
+      buffer = delegate.buf,
+      group = self.augroup,
+      callback = function()
+        -- force close for non-prompt views to preserve previous behavior
+        self:on_leave(true)
+      end,
+    })
+  end
   vim.api.nvim_create_autocmd('FocusGained', {
     group = self.augroup,
     callback = function()
@@ -596,20 +595,15 @@ function ListViewCtrl:on_close()
 end
 
 function ListViewCtrl:on_leave(force)
-  log('closer background')
-  -- Capture delegate NOW (at call time), not at deferred-fire time.
-  -- If _viewctlobject is replaced by a new M.select() call within the 10ms window,
-  -- we must only close the old delegate, not the new one.
+  -- Do not auto-close when focus leaves. Only close when forced.
+  if not force then
+    return
+  end
+  log('closer background (forced)')
   local listobj, delegate = current_delegate(self)
   vim.defer_fn(function()
     if delegate and listobj and not listobj.closed and delegate.win ~= nil and api.nvim_win_is_valid(delegate.win) then
-      if force then
-        close_controller(listobj)
-        return
-      end
-      if not on_preview(listobj) and not on_popup_window() then
-        close_controller(listobj)
-      end
+      close_controller(listobj)
     end
   end, 10)
 end

@@ -5,11 +5,6 @@ local trace = require('guihua.log').trace
 local util = require('guihua.util')
 local ListViewCtrl = require('guihua.listviewctrl')
 local SessionRegistry = require('guihua.session_registry')
-
-_GH_SETUP = _GH_SETUP or nil
-if _GH_SETUP == nil then
-  require('guihua').setup()
-end
 -- _VT_GHLIST = vim.api.nvim_create_namespace("guihua_listview")
 
 if ListView == nil then
@@ -30,6 +25,7 @@ function ListView:initialize(...)
 
   log('listview ctor ') -- , self)
   local opts = select(1, ...) or {}
+  local setup = require('guihua').ensure_setup()
   self.session = SessionRegistry.ensure(opts.session)
   opts.session = self.session
 
@@ -46,6 +42,8 @@ function ListView:initialize(...)
   end
   View.initialize(self, opts)
   SessionRegistry.attach_list_view(self.session, self)
+  -- preserve explicit persist flag for controllers
+  self.persist = opts.persist == true and true or false
   self:bind_ctrl(opts)
   -- ListView.static.active_view = self
   log('listview created')
@@ -72,6 +70,9 @@ function ListView:initialize(...)
     self.hl_group = opts.hl_group
   end
   self.ns = self.ns or vim.api.nvim_create_namespace('guihua_listview')
+  if opts.disable_strikethrough then
+    util.disable_win_strikethrough(self.win, self.ns)
+  end
 
   ListView.static.Winnr = self.win
   ListView.static.Bufnr = self.buf
@@ -84,7 +85,7 @@ function ListView:initialize(...)
     ListView.static.MaskCloser = self.mask_closer
   end
 
-  local m = _GH_SETUP.maps
+  local m = setup.maps
   vim.keymap.set({ 'n', 'i' }, m.close_view, function()
     local ctrl = self:get_ctrl()
     if ctrl then
