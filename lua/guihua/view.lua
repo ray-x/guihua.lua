@@ -143,6 +143,56 @@ function View:initialize(...)
     })
   end
 
+  -- Provide a guihua-only double-tilde fallback when requested: disable existing
+  -- strikethrough groups locally and add extmarks that only strike ~~...~~ spans.
+  local patch_ts = gh_setup.patch_markdown_strikethrough_query
+  if patch_ts and (self.ft == 'markdown' or (self.ft and self.ft:match('markdown'))) then
+    -- ensure we have a namespace for window-local disables
+    self.ns = self.ns or api.nvim_create_namespace('guihua_view')
+    -- disable common strike groups in window namespace
+    for _, g in ipairs(_strike_groups) do
+      util.disable_win_strikethrough(self.win, self.ns, g)
+    end
+
+    -- apply extmarks for double-tilde spans
+    local function apply_double_tilde_extmarks()
+      if not api.nvim_buf_is_valid(self.buf) then
+        return
+      end
+      pcall(vim.api.nvim_set_hl, 0, 'GuihuaDoubleTildeStrike', { default = true, strikethrough = true })
+      self._double_ns = self._double_ns or api.nvim_create_namespace('guihua_double_tilde')
+      api.nvim_buf_clear_namespace(self.buf, self._double_ns, 0, -1)
+      local ok, lines = pcall(api.nvim_buf_get_lines, self.buf, 0, -1, false)
+      if not ok or not lines then
+        return
+      end
+      for i, line in ipairs(lines) do
+        local start = 1
+        while true do
+          local s, e = string.find(line, '~~.-~~', start)
+          if not s then
+            break
+          end
+          api.nvim_buf_set_extmark(self.buf, self._double_ns, i - 1, s - 1, { end_row = i - 1, end_col = e, hl_group = 'GuihuaDoubleTildeStrike' })
+          start = e + 1
+        end
+      end
+    end
+
+    apply_double_tilde_extmarks()
+    local aug_name2 = 'GuihuaDoubleTilde' .. tostring(self.win)
+    local aug2 = api.nvim_create_augroup(aug_name2, { clear = true })
+    api.nvim_create_autocmd({ 'WinEnter', 'BufWinEnter', 'BufEnter' }, {
+      group = aug2,
+      buffer = self.buf,
+      callback = function()
+        if api.nvim_win_is_valid(self.win) and api.nvim_buf_is_valid(self.buf) then
+          apply_double_tilde_extmarks()
+        end
+      end,
+    })
+  end
+
   if self.prompt and self.enter and self.prompt_mode == 'insert' then
     vim.cmd('startinsert!')
     log('create prompt view')

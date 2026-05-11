@@ -16,14 +16,14 @@ local function apply_setup()
   end
   -- Default: disable strikethrough in views to avoid single-tilde issues; user may override in setup()
   if _GH_SETUP.disable_strikethrough_in_views == nil then
-    _GH_SETUP.disable_strikethrough_in_views = true
+    _GH_SETUP.disable_strikethrough_in_views = false
   end
 
   -- Optional Treesitter highlights query patch: when enabled, set a highlights query
   -- so only explicit strikethrough nodes are linked to @markup.strikethrough. Useful
   -- if you want double-tilde (~~) to be strikethrough and single-tilde (~) not to be.
   if _GH_SETUP.patch_markdown_strikethrough_query == nil then
-    _GH_SETUP.patch_markdown_strikethrough_query = false
+    _GH_SETUP.patch_markdown_strikethrough_query = true
   end
   if _GH_SETUP.patch_markdown_strikethrough_query then
     local ok, _ = pcall(function()
