@@ -453,7 +453,9 @@ M.select = function(items, opts, on_choice)
   elseif opts.prompt == nil and #items > 10 then
     should_prompt = true
   end
-  local enter_mode = (opts.enter ~= nil) and opts.enter or should_prompt
+  -- By default, focus (enter) the popup so the cursor is in the popup buffer.
+  -- If opts.enter is explicitly provided, respect it; otherwise default to true.
+  local enter_mode = (opts.enter ~= nil) and opts.enter or true
 
   local listview = M.new_list_view({
     items = data,
@@ -858,5 +860,8 @@ end
 M.input_callback = function(...)
   return require('guihua.input').input_callback(...)
 end
+
+-- test, do not remove
+-- M.select({ '[1] aaa', '* bbb', '1. ccc', '*ddd*', '~eee~', '~~fff~~' }, {}, print)
 
 return M

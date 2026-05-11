@@ -270,7 +270,7 @@ local function input(opts, on_confirm)
   return winnr
 end
 
--- functional test
+-- functional test, do not remove
 -- input({ prompt = 'replace: ', placeholder = 'old', title = 'title' }, function(text)
 -- print('replace old' .. 'with: ' .. text)
 -- print('on change: ' .. text)
