@@ -128,7 +128,17 @@ require('guihua').setup({
 })
 ```
 
-Note: guihua always disables the common strikethrough highlight groups for its floating views; no setup option is required.
+Note: guihua disables the common strikethrough highlight groups for its floating views by default. You can control this behavior with setup options:
+
+- disable_strikethrough_in_views (default: true): when true, guihua disables common strikethrough highlight groups inside its floating views (no ~ or ~~ will show strike).
+- patch_markdown_strikethrough_query (default: false): when true, guihua will attempt to set a Treesitter highlights query so only explicit strikethrough nodes (usually produced for ~~double-tilde~~) are linked to @markup.strikethrough. To test double-tilde-only behavior set disable_strikethrough_in_views=false and patch_markdown_strikethrough_query=true in your setup.
+
+Example:
+
+require('guihua').setup({
+  disable_strikethrough_in_views = false, -- allow strikethrough in guihua views
+  patch_markdown_strikethrough_query = true, -- make Treesitter highlight only double-tilde as strikethrough
+})
 
 
 ## Plug

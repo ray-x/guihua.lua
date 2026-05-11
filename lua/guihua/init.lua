@@ -19,6 +19,27 @@ local function apply_setup()
     _GH_SETUP.disable_strikethrough_in_views = true
   end
 
+  -- Optional Treesitter highlights query patch: when enabled, set a highlights query
+  -- so only explicit strikethrough nodes are linked to @markup.strikethrough. Useful
+  -- if you want double-tilde (~~) to be strikethrough and single-tilde (~) not to be.
+  if _GH_SETUP.patch_markdown_strikethrough_query == nil then
+    _GH_SETUP.patch_markdown_strikethrough_query = false
+  end
+  if _GH_SETUP.patch_markdown_strikethrough_query then
+    local ok, _ = pcall(function()
+      local q = [[
+((strikethrough) @markup.strikethrough)
+((deleted) @markup.strikethrough)
+((del) @markup.strikethrough)
+]]
+      -- Try both common markdown parser names
+      pcall(vim.treesitter.query.set_query, 'markdown', 'highlights', q)
+      pcall(vim.treesitter.query.set_query, 'markdown_inline', 'highlights', q)
+    end)
+    if not ok then
+      vim.notify('guihua: failed to apply markdown strikethrough query patch', vim.log.levels.WARN)
+    end
+  end
 
   setup_complete = true
   return _GH_SETUP
