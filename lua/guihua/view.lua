@@ -114,17 +114,13 @@ function View:initialize(...)
     self:on_draw(opts.data)
   end
 
-  -- Optionally disable markdown/strikethrough highlights inside guihua views
-  local gh_setup = require('guihua').ensure_setup()
-  local disable_views = gh_setup.disable_strikethrough_in_views
-  if disable_views then
-    local util = require('guihua.util')
-    self.ns = self.ns or vim.api.nvim_create_namespace('guihua_view')
-    util.disable_win_strikethrough(self.win, self.ns, '@markup.strikethrough')
-    util.disable_win_strikethrough(self.win, self.ns, '@text.strike')
-    util.disable_win_strikethrough(self.win, self.ns, 'markdownStrike')
-    util.disable_win_strikethrough(self.win, self.ns, 'markdownDeleted')
-  end
+  -- Disable markdown/strikethrough highlights inside guihua views
+  local util = require('guihua.util')
+  self.ns = self.ns or vim.api.nvim_create_namespace('guihua_view')
+  util.disable_win_strikethrough(self.win, self.ns, '@markup.strikethrough')
+  util.disable_win_strikethrough(self.win, self.ns, '@text.strike')
+  util.disable_win_strikethrough(self.win, self.ns, 'markdownStrike')
+  util.disable_win_strikethrough(self.win, self.ns, 'markdownDeleted')
 
   if self.prompt and self.enter and self.prompt_mode == 'insert' then
     vim.cmd('startinsert!')
