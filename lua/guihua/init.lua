@@ -10,6 +10,14 @@ local function apply_setup()
   require('guihua.maps').setup(setup_opts)
   require('guihua.highlight').setup(setup_opts)
   require('guihua.icons').setup(setup_opts)
+  -- Merge user-provided setup flags into _GH_SETUP so modules can read configuration.
+  if type(setup_opts) == 'table' and _GH_SETUP ~= nil then
+    _GH_SETUP = vim.tbl_deep_extend('force', _GH_SETUP, setup_opts)
+  end
+  -- Default: disable strikethrough in views to avoid single-tilde issues; user may override in setup()
+  if _GH_SETUP.disable_strikethrough_in_views == nil then
+    _GH_SETUP.disable_strikethrough_in_views = true
+  end
   setup_complete = true
   return _GH_SETUP
 end

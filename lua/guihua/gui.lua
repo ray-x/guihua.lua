@@ -446,6 +446,15 @@ M.select = function(items, opts, on_choice)
   end
   -- vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<esc>', true, false, true), 'x', true)
   width = math.min(width + 4, max_width)
+  -- Determine whether this select should behave as a prompt (insert/fuzzy)
+  local should_prompt = false
+  if opts.prompt == true then
+    should_prompt = true
+  elseif opts.prompt == nil and #items > 10 then
+    should_prompt = true
+  end
+  local enter_mode = (opts.enter ~= nil) and opts.enter or should_prompt
+
   local listview = M.new_list_view({
     items = data,
     title = win_title,
@@ -455,6 +464,8 @@ M.select = function(items, opts, on_choice)
     relative = 'cursor',
     rawdata = true,
     data = data,
+    prompt = should_prompt,
+    enter = enter_mode,
     persist = true,
     ft = opts.ft or 'markdown',
     disable_strikethrough = true,

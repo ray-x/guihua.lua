@@ -123,8 +123,34 @@ require('guihua').setup({
     tabnew = '<C-t>',
   },
   icons = icons,
+
+  -- Optional: disable markdown/strikethrough highlights inside guihua views.
+  -- This avoids accidental single-tilde (~) strikethrough rendering (useful for paths like ~/foo).
+  -- Default: true
+  disable_strikethrough_in_views = true,
 })
 ```
+
+Addendum: Treating only double-tilde (~~) as strikethrough
+
+The official Markdown/GFM syntax uses double tildes (~~) for strikethrough. Treesitter grammars or highlight queries sometimes mark single tildes as strikethrough depending on the parser or injected inline grammar. There are two approaches to ensure only double-tilde is highlighted as strikethrough:
+
+1) Prefer disabling guihua's window-local strikethrough override (see above) and instead adjust your Treesitter highlight queries so that only true strikethrough nodes are linked to the strikethrough highlight. Create or override the highlights query for markdown:
+
+- Create a file at: ~/.config/nvim/queries/markdown/highlights.scm (or queries/markdown_inline depending on your parser)
+- Add patterns that explicitly capture the strikethrough node, for example:
+
+```
+;; match markdown strikethrough nodes and link them to @markup.strikethrough
+((strikethrough) @markup.strikethrough)
+```
+
+This ensures only nodes the parser recognizes as `strikethrough` (usually created for double-tilde syntax) get the highlight.
+
+2) Keep guihua's default override (recommended for safety):
+- guihua disables several common strikethrough groups inside its floating views to avoid incorrect single-tilde rendering. If you want double-tilde highlighting inside guihua views, first enable disable_strikethrough_in_views=false, then use approach (1) to make the parser highlight only double-tilde nodes.
+
+If you'd like, I can implement an automatic query patch that prefers double-tilde nodes, or expose which highlight groups guihua adjusts so you can tune them in setup().
 
 ## Plug
 

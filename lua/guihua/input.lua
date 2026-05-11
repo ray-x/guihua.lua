@@ -15,6 +15,82 @@ local input_defaults = {
 }
 local input_contexts = {}
 
+local function strwidth(text)
+  return vim.fn.strdisplaywidth(text or '')
+end
+
+local function clamp(value, min_value, max_value)
+  return math.max(min_value, math.min(value, max_value))
+end
+
+local function line_text(ctx)
+  if ctx == nil or ctx.buf == nil or not api.nvim_buf_is_valid(ctx.buf) then
+    return (ctx and ctx.prompt) or ''
+  end
+  return api.nvim_buf_get_lines(ctx.buf, 0, 1, false)[1] or ''
+end
+
+local function buffer_lines(ctx)
+  if ctx == nil or ctx.buf == nil or not api.nvim_buf_is_valid(ctx.buf) then
+    return {}
+  end
+  return api.nvim_buf_get_lines(ctx.buf, 0, -1, false)
+end
+
+local function display_metrics(ctx)
+  local lines = buffer_lines(ctx)
+  if vim.tbl_isempty(lines) then
+    return 0, 1
+  end
+
+  local max_line_width = 0
+  for _, line in ipairs(lines) do
+    max_line_width = math.max(max_line_width, strwidth(line))
+  end
+  return max_line_width, #lines
+end
+
+local function input_max_width(ctx)
+  local columns = api.nvim_get_option_value('columns', {})
+  local screen_max = math.max(20, columns - 4)
+  local configured = ctx.opts.max_width or math.floor(columns * 0.9)
+  return clamp(configured, 20, screen_max)
+end
+
+local function input_min_width(ctx)
+  local preferred = ctx.opts.width or 20
+  local seed = (ctx.prompt or '') .. (ctx.placeholder or '')
+  return math.max(preferred, math.min(strwidth(seed) + 2, input_max_width(ctx)))
+end
+
+local function resize_input(ctx)
+  if ctx == nil or ctx.win == nil or not api.nvim_win_is_valid(ctx.win) then
+    return
+  end
+
+  local max_width = input_max_width(ctx)
+  local max_line_width, line_count = display_metrics(ctx)
+  local width = math.min(max_width, math.max(input_min_width(ctx), max_line_width + 1))
+  local wrapped_height = 0
+  for _, line in ipairs(buffer_lines(ctx)) do
+    wrapped_height = wrapped_height + math.max(1, math.ceil(strwidth(line) / math.max(width, 1)))
+  end
+  wrapped_height = math.max(wrapped_height, line_count, 1)
+
+  local lines = api.nvim_get_option_value('lines', {})
+  local screen_max_height = math.max(1, lines - 6)
+  local configured_max_height = ctx.opts.max_height or screen_max_height
+  local height = math.min(wrapped_height, clamp(configured_max_height, 1, screen_max_height))
+
+  local cfg = api.nvim_win_get_config(ctx.win)
+  cfg.width = width
+  cfg.height = height
+  if ctx.dynamic_row then
+    cfg.row = -(height + 2)
+  end
+  api.nvim_win_set_config(ctx.win, cfg)
+end
+
 local function current_context(bufnr)
   return input_contexts[bufnr or api.nvim_get_current_buf()]
 end
@@ -29,8 +105,17 @@ local function current_text(ctx)
   if ctx == nil then
     return ''
   end
-  local line = vim.fn.getline('.')
-  return vim.trim(line:sub(#ctx.prompt + 1, -1))
+  local lines = buffer_lines(ctx)
+  if vim.tbl_isempty(lines) then
+    return ''
+  end
+
+  local prompt = ctx.prompt or ''
+  if prompt ~= '' and vim.startswith(lines[1], prompt) then
+    lines[1] = lines[1]:sub(#prompt + 1, -1)
+  end
+
+  return vim.trim(table.concat(lines, '\n'))
 end
 
 local function close_input(ctx)
@@ -88,7 +173,7 @@ local function input(opts, on_confirm)
   api.nvim_set_option_value('buftype', 'prompt', { buf = bufnr })
   api.nvim_set_option_value('bufhidden', 'wipe', { buf = bufnr })
   local title_options = utils.title_options
-  local width = #placeholder + #prompt + (opts.width or 20)
+  local width = opts.width or math.max(20, strwidth(prompt .. placeholder) + 2)
   local wopts = {
     relative = opts.relative or 'cursor',
     width = width,
@@ -108,12 +193,16 @@ local function input(opts, on_confirm)
   end
 
   ctx.prompt = prompt
+  ctx.placeholder = placeholder
+  ctx.dynamic_row = opts.row == nil and wopts.relative == 'cursor'
   vim.fn.prompt_setprompt(bufnr, prompt)
   local winnr = api.nvim_open_win(bufnr, true, wopts)
   ctx.buf = bufnr
   ctx.win = winnr
   input_contexts[bufnr] = ctx
   api.nvim_set_option_value('winhl', 'Normal:NormalFloat,NormalNC:Normal', { win = winnr })
+  api.nvim_set_option_value('wrap', true, { win = winnr })
+  api.nvim_set_option_value('linebreak', false, { win = winnr })
   ctx.hl_ns = utils.disable_win_strikethrough(winnr, ctx.hl_ns)
   api.nvim_create_autocmd('BufWipeout', {
     buffer = bufnr,
@@ -123,18 +212,19 @@ local function input(opts, on_confirm)
     end,
   })
 
-  if ctx.on_change then
-    api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, {
-      buffer = bufnr,
-      callback = function()
-        local new_text = current_text(ctx)
-        log('text changed', new_text)
+  api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, {
+    buffer = bufnr,
+    callback = function()
+      resize_input(ctx)
+      local new_text = current_text(ctx)
+      log('text changed', new_text)
+      if type(ctx.on_change) == 'function' then
         ctx.on_change(new_text)
-      end,
-    })
-    api.nvim_set_option_value('modifiable', true, { buf = bufnr })
-    api.nvim_set_option_value('buftype', 'prompt', { buf = bufnr })
-  end
+      end
+    end,
+  })
+  api.nvim_set_option_value('modifiable', true, { buf = bufnr })
+  api.nvim_set_option_value('buftype', 'prompt', { buf = bufnr })
 
   api.nvim_set_option_value('filetype', 'guihua', { buf = bufnr })
   vim.keymap.set({ 'n', 'i' }, '<CR>', function()
@@ -167,6 +257,15 @@ local function input(opts, on_confirm)
   end, { silent = true, buffer = bufnr })
   vim.keymap.set({ 'n', 'i' }, '<BS>', [[<ESC>"_cl]], { silent = true, buffer = bufnr })
   vim.cmd(string.format('normal i%s', placeholder))
+  -- Enter insert mode and place cursor at end of default value by default.
+  local start_insert = true
+  if opts.startinsert ~= nil then
+    start_insert = opts.startinsert
+  end
+  if start_insert then
+    vim.cmd('startinsert!')
+  end
+  resize_input(ctx)
   -- vim.fn.feedkeys('A', 'n')
   return winnr
 end
@@ -183,10 +282,6 @@ end
 -- end
 -- f:write(text)
 -- f:close()
--- end)
-
--- input({ prompt = 'replace: ', placeholder = 'old text' }, function(text)
---   print('replace old' .. 'with: ' .. text)
 -- end)
 
 return {

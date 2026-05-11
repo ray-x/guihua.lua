@@ -200,6 +200,52 @@ describe('should create view  ', function()
     vim.api.nvim_win_close(input_win, true)
   end)
 
+  it('should expand input popups for long text instead of clipping the tail', function()
+    package.loaded['guihua'] = nil
+    package.loaded['guihua.gui'] = nil
+    package.loaded['guihua.input'] = nil
+    vim.cmd('packadd guihua.lua')
+
+    local long_text = string.rep('segment/', 20) .. 'file.lua'
+    local input_win = require('guihua.gui').input({
+      prompt = 'Rename',
+      placeholder = long_text,
+      width = 20,
+    }, function(_) end)
+
+    local cfg = vim.api.nvim_win_get_config(input_win)
+    local buf = vim.api.nvim_win_get_buf(input_win)
+    local line = vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1]
+
+    assert.is_true(cfg.height > 1)
+    assert.is_true(vim.api.nvim_get_option_value('wrap', { win = input_win }))
+    assert.is_truthy(line:find(long_text, 1, true))
+
+    vim.api.nvim_win_close(input_win, true)
+  end)
+
+  it('should pass multiline input content to the callback', function()
+    package.loaded['guihua'] = nil
+    package.loaded['guihua.gui'] = nil
+    package.loaded['guihua.input'] = nil
+    vim.cmd('packadd guihua.lua')
+
+    local captured = nil
+    local input_win = require('guihua.gui').input({
+      prompt = 'Rename',
+      placeholder = '',
+    }, function(text)
+      captured = text
+    end)
+
+    local buf = vim.api.nvim_win_get_buf(input_win)
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, { ' first line', 'second line' })
+    vim.api.nvim_set_current_win(input_win)
+    vim.fn.maparg('<CR>', 'n', false, true).callback()
+
+    eq('first line\nsecond line', captured)
+  end)
+
   it('should preselect the first item when prompt text is rendered in the popup', function()
     package.loaded['guihua'] = nil
     package.loaded['guihua.gui'] = nil

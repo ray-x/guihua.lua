@@ -70,8 +70,17 @@ function ListView:initialize(...)
     self.hl_group = opts.hl_group
   end
   self.ns = self.ns or vim.api.nvim_create_namespace('guihua_listview')
-  if opts.disable_strikethrough then
-    util.disable_win_strikethrough(self.win, self.ns)
+  -- Disable markdown strikethrough highlights inside listview windows to avoid
+  -- accidental strike rendering for single-tilde characters (e.g. paths).
+  -- Apply to common groups used by markdown / treesitter: @markup.strikethrough,
+  -- @text.strike, markdownStrike, markdownDeleted. Use util helper to set
+  -- window-local namespace overrides.
+  local ft = opts.ft or self.ft or ''
+  if ft == 'markdown' or opts.disable_strikethrough then
+    util.disable_win_strikethrough(self.win, self.ns, '@markup.strikethrough')
+    util.disable_win_strikethrough(self.win, self.ns, '@text.strike')
+    util.disable_win_strikethrough(self.win, self.ns, 'markdownStrike')
+    util.disable_win_strikethrough(self.win, self.ns, 'markdownDeleted')
   end
 
   ListView.static.Winnr = self.win
