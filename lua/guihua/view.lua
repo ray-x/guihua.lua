@@ -117,10 +117,10 @@ function View:initialize(...)
   -- Optional: disable markdown/strikethrough highlights inside guihua views
   local gh_setup = require('guihua').ensure_setup()
   local disable_views = gh_setup.disable_strikethrough_in_views
+  local util = require('guihua.util')
+  self.ns = self.ns or api.nvim_create_namespace('guihua_view')
+  local _strike_groups = { '@markup.strikethrough', '@text.strike', 'markdownStrike', 'markdownDeleted' }
   if disable_views then
-    local util = require('guihua.util')
-    self.ns = self.ns or api.nvim_create_namespace('guihua_view')
-    local _strike_groups = { '@markup.strikethrough', '@text.strike', 'markdownStrike', 'markdownDeleted' }
     for _, g in ipairs(_strike_groups) do
       util.disable_win_strikethrough(self.win, self.ns, g)
     end
