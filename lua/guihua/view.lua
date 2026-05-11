@@ -117,10 +117,27 @@ function View:initialize(...)
   -- Disable markdown/strikethrough highlights inside guihua views
   local util = require('guihua.util')
   self.ns = self.ns or vim.api.nvim_create_namespace('guihua_view')
-  util.disable_win_strikethrough(self.win, self.ns, '@markup.strikethrough')
-  util.disable_win_strikethrough(self.win, self.ns, '@text.strike')
-  util.disable_win_strikethrough(self.win, self.ns, 'markdownStrike')
-  util.disable_win_strikethrough(self.win, self.ns, 'markdownDeleted')
+  local _strike_groups = { '@markup.strikethrough', '@text.strike', 'markdownStrike', 'markdownDeleted' }
+  for _, g in ipairs(_strike_groups) do
+    util.disable_win_strikethrough(self.win, self.ns, g)
+  end
+
+  -- Re-apply the window-local highlight override when the view/buffer regains focus.
+  -- Some highlight updates (treesitter/syntax) may re-evaluate when the window becomes active
+  -- so re-assert the window-local namespace on WinEnter/BufEnter/BufWinEnter.
+  local aug_name = 'GuihuaDisableStrike' .. tostring(self.win)
+  local aug = api.nvim_create_augroup(aug_name, { clear = true })
+  api.nvim_create_autocmd({ 'WinEnter', 'BufWinEnter', 'BufEnter' }, {
+    group = aug,
+    buffer = self.buf,
+    callback = function()
+      if api.nvim_win_is_valid(self.win) and api.nvim_buf_is_valid(self.buf) then
+        for _, g in ipairs(_strike_groups) do
+          util.disable_win_strikethrough(self.win, self.ns, g)
+        end
+      end
+    end,
+  })
 
   if self.prompt and self.enter and self.prompt_mode == 'insert' then
     vim.cmd('startinsert!')
