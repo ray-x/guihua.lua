@@ -173,7 +173,13 @@ function View:initialize(...)
           if not s then
             break
           end
-          api.nvim_buf_set_extmark(self.buf, self._double_ns, i - 1, s - 1, { end_row = i - 1, end_col = e, hl_group = 'GuihuaDoubleTildeStrike' })
+          -- set extmark with high priority so it survives other highlight updates
+          api.nvim_buf_set_extmark(self.buf, self._double_ns, i - 1, s - 1, {
+            end_row = i - 1,
+            end_col = e,
+            hl_group = 'GuihuaDoubleTildeStrike',
+            priority = 2000,
+          })
           start = e + 1
         end
       end
@@ -182,11 +188,17 @@ function View:initialize(...)
     apply_double_tilde_extmarks()
     local aug_name2 = 'GuihuaDoubleTilde' .. tostring(self.win)
     local aug2 = api.nvim_create_augroup(aug_name2, { clear = true })
-    api.nvim_create_autocmd({ 'WinEnter', 'BufWinEnter', 'BufEnter' }, {
+    api.nvim_create_autocmd({ 'WinEnter', 'BufWinEnter', 'BufEnter', 'CursorMoved', 'CursorMovedI', 'ModeChanged', 'TextChanged', 'TextChangedI' }, {
       group = aug2,
       buffer = self.buf,
       callback = function()
         if api.nvim_win_is_valid(self.win) and api.nvim_buf_is_valid(self.buf) then
+          -- reapply window-local disables and extmarks; some highlight updates run after enter
+          if disable_views then
+            for _, g in ipairs(_strike_groups) do
+              util.disable_win_strikethrough(self.win, self.ns, g)
+            end
+          end
           apply_double_tilde_extmarks()
         end
       end,
