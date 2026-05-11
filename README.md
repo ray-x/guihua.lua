@@ -128,8 +128,17 @@ require('guihua').setup({
   -- This avoids accidental single-tilde (~) strikethrough rendering (useful for paths like ~/foo).
   -- Default: true
   disable_strikethrough_in_views = true,
+  -- When true, guihua will attempt to patch Treesitter markdown highlight queries
+  -- so that only explicit strikethrough nodes (usually produced for double-tilde
+  -- syntax like ~~strike~~) are linked to @markup.strikethrough. Default: true
+  patch_markdown_strikethrough_query = true,
 })
 ```
+
+Defaults
+
+- patch_markdown_strikethrough_query: true — guihua will attempt to set a Treesitter highlights query so double-tilde (~~) is treated as strikethrough. Set to false to skip the patch.
+- disable_strikethrough_in_views: true — guihua disables several common strikethrough highlight groups inside its floating views by default to avoid accidental single-tilde (~) highlighting.
 
 Addendum: Treating only double-tilde (~~) as strikethrough
 

@@ -19,6 +19,11 @@ local function apply_setup()
     _GH_SETUP.disable_strikethrough_in_views = true
   end
 
+  -- Default patch flag: enable Treesitter markdown strikethrough query patch by default
+  if _GH_SETUP.patch_markdown_strikethrough_query == nil then
+    _GH_SETUP.patch_markdown_strikethrough_query = true
+  end
+
   -- Optional: patch Treesitter markdown highlight queries so that only explicit
   -- strikethrough nodes (usually created for double-tilde/~~) are linked to
   -- @markup.strikethrough. This avoids single-tilde cases being highlighted as
