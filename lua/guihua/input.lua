@@ -1,6 +1,7 @@
 local utils = require('guihua.util')
 local log = require('guihua.log').info
 local api = vim.api
+local win_title_width = 40
 
 local input_defaults = {
   opts = {},
@@ -21,6 +22,38 @@ end
 
 local function clamp(value, min_value, max_value)
   return math.max(min_value, math.min(value, max_value))
+end
+
+local function split_lines(text)
+  return vim.split(text or '', '\n', { plain = true })
+end
+
+local function wrap_text(text, width)
+  local lines = {}
+  width = math.max(1, width)
+  for _, paragraph in ipairs(split_lines(text)) do
+    if paragraph == '' then
+      table.insert(lines, '')
+    elseif strwidth(paragraph) <= width then
+      table.insert(lines, paragraph)
+    else
+      local current = ''
+      for word in paragraph:gmatch('%S+') do
+        if current == '' then
+          current = word
+        elseif strwidth(current .. ' ' .. word) <= width then
+          current = current .. ' ' .. word
+        else
+          table.insert(lines, current)
+          current = word
+        end
+      end
+      if current ~= '' then
+        table.insert(lines, current)
+      end
+    end
+  end
+  return lines
 end
 
 local function line_text(ctx)
@@ -52,13 +85,48 @@ end
 
 local function input_max_width(ctx)
   local columns = api.nvim_get_option_value('columns', {})
-  local screen_max = math.max(20, columns - 4)
+  local screen_max = math.max(win_title_width, columns - 4)
   local configured = ctx.opts.max_width or math.floor(columns * 0.9)
-  return clamp(configured, 20, screen_max)
+  return clamp(configured, win_title_width, screen_max)
+end
+
+local function should_use_content_box(ctx)
+  local prompt = ctx.prompt_text or ''
+  local title = ctx.explicit_title or ''
+  if prompt:find('\n', 1, true) or title:find('\n', 1, true) then
+    return true
+  end
+  return strwidth(prompt) > input_max_width(ctx) or strwidth(title) > input_max_width(ctx)
+end
+
+local function build_content_lines(ctx, width)
+  local lines = {}
+  local inner_width = math.max(1, width - 2)
+  if ctx.prompt_text and ctx.prompt_text ~= '' then
+    vim.list_extend(lines, wrap_text(ctx.prompt_text, inner_width))
+  end
+  return lines
+end
+
+local function build_separator_line(width)
+  return string.rep('─', math.max(1, width - 2))
+end
+
+local function derive_window_title(ctx)
+  local explicit = ctx.explicit_title or ''
+  if explicit ~= '' then
+    return explicit
+  end
+  local prompt = ctx.prompt_text or ''
+  local first_line = split_lines(prompt)[1] or ''
+  if first_line == '' then
+    return nil
+  end
+  return vim.fn.strcharpart(first_line, 0, win_title_width)
 end
 
 local function input_min_width(ctx)
-  local preferred = ctx.opts.width or 20
+  local preferred = ctx.opts.width or win_title_width
   local seed = (ctx.prompt or '') .. (ctx.placeholder or '')
   return math.max(preferred, math.min(strwidth(seed) + 2, input_max_width(ctx)))
 end
@@ -70,7 +138,7 @@ local function resize_input(ctx)
 
   local max_width = input_max_width(ctx)
   local max_line_width, line_count = display_metrics(ctx)
-  local width = math.min(max_width, math.max(input_min_width(ctx), max_line_width + 1))
+  local width = math.min(max_width, math.max(input_min_width(ctx), max_line_width + 1, ctx.min_width or 0))
   local wrapped_height = 0
   for _, line in ipairs(buffer_lines(ctx)) do
     wrapped_height = wrapped_height + math.max(1, math.ceil(strwidth(line) / math.max(width, 1)))
@@ -85,10 +153,16 @@ local function resize_input(ctx)
   local cfg = api.nvim_win_get_config(ctx.win)
   cfg.width = width
   cfg.height = height
-  if ctx.dynamic_row then
+  if ctx.dynamic_row and not ctx.composite then
     cfg.row = -(height + 2)
   end
   api.nvim_win_set_config(ctx.win, cfg)
+
+  if ctx.composite and ctx.content_win ~= nil and api.nvim_win_is_valid(ctx.content_win) then
+    local content_cfg = api.nvim_win_get_config(ctx.content_win)
+    content_cfg.width = width
+    api.nvim_win_set_config(ctx.content_win, content_cfg)
+  end
 end
 
 local function current_context(bufnr)
@@ -109,22 +183,31 @@ local function current_text(ctx)
   if vim.tbl_isempty(lines) then
     return ''
   end
-
+  local start_line = ctx.input_start or 1
   local prompt = ctx.prompt or ''
-  if prompt ~= '' and vim.startswith(lines[1], prompt) then
-    lines[1] = lines[1]:sub(#prompt + 1, -1)
+  local sliced = {}
+  for i = start_line, #lines do
+    sliced[#sliced + 1] = lines[i]
   end
-
-  return vim.trim(table.concat(lines, '\n'))
+  if #sliced == 0 then
+    return ''
+  end
+  if prompt ~= '' and vim.startswith(sliced[1], prompt) then
+    sliced[1] = sliced[1]:sub(#prompt + 1, -1)
+  end
+  return vim.trim(table.concat(sliced, '\n'))
 end
 
 local function close_input(ctx)
   if ctx == nil then
     return
   end
+  if ctx.closed then
+    return
+  end
+  ctx.closed = true
   if ctx.win ~= nil and api.nvim_win_is_valid(ctx.win) then
     api.nvim_win_close(ctx.win, true)
-    return
   end
   if ctx.buf ~= nil and api.nvim_buf_is_valid(ctx.buf) then
     api.nvim_buf_delete(ctx.buf, { force = true })
@@ -151,6 +234,14 @@ local function input(opts, on_confirm)
 
   local prompt = opts.prompt or ''
   local placeholder = opts.placeholder or opts.default or ''
+  local explicit_title = opts.title or ctx.title or ''
+  local window_title = derive_window_title({
+    explicit_title = explicit_title,
+    prompt_text = prompt,
+  })
+  ctx.prompt_text = prompt
+  ctx.explicit_title = explicit_title
+  ctx.window_title = window_title
 
   local setup_confirm = type(ctx.on_confirm) == 'function' and ctx.on_confirm or nil
   ctx.on_confirm = function(new_name)
@@ -173,28 +264,49 @@ local function input(opts, on_confirm)
   api.nvim_set_option_value('buftype', 'prompt', { buf = bufnr })
   api.nvim_set_option_value('bufhidden', 'wipe', { buf = bufnr })
   local title_options = utils.title_options
-  local width = opts.width or math.max(20, strwidth(prompt .. placeholder) + 2)
+  local use_content_box = should_use_content_box(ctx)
+  local prompt_icon = ' '
+  local prompt_prefix = use_content_box and '│  ' or prompt_icon
+  local width = opts.width or math.max(win_title_width, strwidth(prompt .. placeholder) + 2)
+  local content_lines = {}
+  local separator_line = nil
+  if use_content_box then
+    width = math.max(width, strwidth(prompt) + 4, strwidth(window_title or '') + 4)
+  end
+  width = math.min(width, input_max_width(ctx))
+
+  if use_content_box then
+    content_lines = build_content_lines(ctx, width)
+    separator_line = build_separator_line(width)
+    for _, line in ipairs(content_lines) do
+      width = math.min(input_max_width(ctx), math.max(width, strwidth(line) + 2))
+    end
+  end
+  ctx.min_width = width
+  ctx.input_start = #content_lines + (separator_line and 2 or 1)
+
+  local input_row = opts.row or -3
+  prompt = prompt_prefix
+  ctx.prompt = prompt
+  ctx.placeholder = placeholder
+  ctx.dynamic_row = opts.row == nil and not use_content_box and true or false
   local wopts = {
     relative = opts.relative or 'cursor',
     width = width,
-    height = 1,
-    row = opts.row or -3,
+    height = math.max(1, #content_lines + 1),
+    row = input_row,
     col = opts.col or 0,
     style = 'minimal',
-    border = 'single',
+    border = 'rounded',
   }
-  if opts.title or ctx.title or #prompt > 2 then
-    local title = title_options(opts.title or ctx.title or prompt)
+  if window_title ~= nil and window_title ~= '' then
+    local title = title_options(window_title)
     if title then
       wopts.title = title
       wopts.title_pos = opts.title_pos or 'center'
     end
-    prompt = ' '
   end
 
-  ctx.prompt = prompt
-  ctx.placeholder = placeholder
-  ctx.dynamic_row = opts.row == nil and wopts.relative == 'cursor'
   vim.fn.prompt_setprompt(bufnr, prompt)
   local winnr = api.nvim_open_win(bufnr, true, wopts)
   ctx.buf = bufnr
@@ -204,11 +316,19 @@ local function input(opts, on_confirm)
   api.nvim_set_option_value('wrap', true, { win = winnr })
   api.nvim_set_option_value('linebreak', false, { win = winnr })
   ctx.hl_ns = utils.disable_win_strikethrough(winnr, ctx.hl_ns)
+  local buf_lines = { '' }
+  if use_content_box then
+    buf_lines = vim.tbl_extend('force', {}, content_lines)
+    table.insert(buf_lines, separator_line or '')
+    table.insert(buf_lines, '')
+  end
+  api.nvim_buf_set_lines(bufnr, 0, -1, false, buf_lines)
   api.nvim_create_autocmd('BufWipeout', {
     buffer = bufnr,
     once = true,
     callback = function()
       input_contexts[bufnr] = nil
+      close_input(ctx)
     end,
   })
 
@@ -227,6 +347,14 @@ local function input(opts, on_confirm)
   api.nvim_set_option_value('buftype', 'prompt', { buf = bufnr })
 
   api.nvim_set_option_value('filetype', 'guihua', { buf = bufnr })
+  local function close_all()
+    close_input(ctx)
+  end
+  api.nvim_create_autocmd('WinClosed', {
+    pattern = tostring(winnr),
+    once = true,
+    callback = close_all,
+  })
   vim.keymap.set({ 'n', 'i' }, '<CR>', function()
     log('confirm_callback')
     local new_text = current_text(ctx)
@@ -271,19 +399,20 @@ local function input(opts, on_confirm)
 end
 
 -- functional test, do not remove
--- input({ prompt = 'replace: ', placeholder = 'old', title = 'title' }, function(text)
--- print('replace old' .. 'with: ' .. text)
--- print('on change: ' .. text)
--- local f, err = io.open('/tmp/log.txt', 'w')
--- print('file open result: ' .. tostring(f) .. ', error: ' .. tostring(err))
--- if not f then
--- print('Error opening file: ' .. tostring(err))
--- return nil, err
--- end
--- f:write(text)
--- f:close()
--- end)
-
+if false then
+  input({ prompt = 'replace: abc with \n def', placeholder = 'old' }, function(text)
+    print('replace old' .. 'with: ' .. text)
+    print('on change: ' .. text)
+    local f, err = io.open('/tmp/log.txt', 'w')
+    print('file open result: ' .. tostring(f) .. ', error: ' .. tostring(err))
+    if not f then
+      print('Error opening file: ' .. tostring(err))
+      return nil, err
+    end
+    f:write(text)
+    f:close()
+  end)
+end
 return {
   setup = setup,
   input = input,

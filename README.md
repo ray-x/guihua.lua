@@ -132,6 +132,8 @@ Note: guihua disables the common strikethrough highlight groups for its floating
 
 - disable_strikethrough_in_views (default: true): when true, guihua disables common strikethrough highlight groups inside its floating views (no ~ or ~~ will show strike).
 - patch_markdown_strikethrough_query (default: false): when true, guihua will attempt to set a Treesitter highlights query so only explicit strikethrough nodes (usually produced for ~~double-tilde~~) are linked to @markup.strikethrough. To test double-tilde-only behavior set disable_strikethrough_in_views=false and patch_markdown_strikethrough_query=true in your setup.
+- Long or multiline input prompts are rendered inside the same input popup, with a vertical split glyph separating the prompt text area from the editable input line.
+- `vim.ui.input()` uses a window title: explicit `title` wins, otherwise the first prompt line is truncated to 20 characters.
 
 Example:
 

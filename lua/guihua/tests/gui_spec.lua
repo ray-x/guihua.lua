@@ -224,6 +224,52 @@ describe('should create view  ', function()
     vim.api.nvim_win_close(input_win, true)
   end)
 
+  it('should render long prompt and title in the same input box', function()
+    package.loaded['guihua'] = nil
+    package.loaded['guihua.gui'] = nil
+    package.loaded['guihua.input'] = nil
+    vim.cmd('packadd guihua.lua')
+
+    local prompt = 'Please enter a value for this very long, multiline prompt that should not be clipped:\n' .. string.rep('prompt ', 8)
+    local title = 'A very long input title that should move into the content pane instead of the border title'
+    local input_win = require('guihua.gui').input({
+      prompt = prompt,
+      placeholder = 'target',
+      title = title,
+      width = 24,
+    }, function(_) end)
+
+    local input_cfg = vim.api.nvim_win_get_config(input_win)
+    eq(title, title_text(input_cfg.title))
+    local buf = vim.api.nvim_win_get_buf(input_win)
+    local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+    local text = table.concat(lines, '\n')
+    assert.is_true(#lines > 1)
+    assert.is_truthy(text:find('Please enter a value', 1, true))
+    assert.is_truthy(text:find('─', 1, true))
+
+    vim.api.nvim_win_close(input_win, true)
+  end)
+
+  it('should derive the input window title from the first prompt line when title is absent', function()
+    package.loaded['guihua'] = nil
+    package.loaded['guihua.gui'] = nil
+    package.loaded['guihua.input'] = nil
+    vim.cmd('packadd guihua.lua')
+
+    local prompt = 'This prompt line should become the title for the popup and then be truncated.\nSecond line'
+    local input_win = require('guihua.gui').input({
+      prompt = prompt,
+      placeholder = 'target',
+      width = 24,
+    }, function(_) end)
+
+    local cfg = vim.api.nvim_win_get_config(input_win)
+    eq('This prompt line should become the tit', title_text(cfg.title))
+
+    vim.api.nvim_win_close(input_win, true)
+  end)
+
   it('should pass multiline input content to the callback', function()
     package.loaded['guihua'] = nil
     package.loaded['guihua.gui'] = nil
@@ -244,6 +290,27 @@ describe('should create view  ', function()
     vim.fn.maparg('<CR>', 'n', false, true).callback()
 
     eq('first line\nsecond line', captured)
+  end)
+
+  it('should place the cursor at the end of the placeholder text', function()
+    package.loaded['guihua'] = nil
+    package.loaded['guihua.gui'] = nil
+    package.loaded['guihua.input'] = nil
+    vim.cmd('packadd guihua.lua')
+
+    local input_win = require('guihua.gui').input({
+      prompt = 'Rename',
+      placeholder = 'target',
+      width = 24,
+    }, function(_) end)
+
+    local row, col = unpack(vim.api.nvim_win_get_cursor(input_win))
+    local line = vim.api.nvim_get_current_line()
+
+    eq(#line, col)
+    assert.is_true(row >= 1)
+
+    vim.api.nvim_win_close(input_win, true)
   end)
 
   it('should preselect the first item when prompt text is rendered in the popup', function()
@@ -493,3 +560,20 @@ describe('should create view  ', function()
     assert.is_true(TextView.ActiveTextView == nil or TextView.ActiveTextView.win == nil)
   end)
 end)
+  local function title_text(title)
+    if type(title) == 'string' then
+      return title
+    end
+    if type(title) ~= 'table' then
+      return ''
+    end
+    local parts = {}
+    for _, chunk in ipairs(title) do
+      if type(chunk) == 'table' then
+        table.insert(parts, chunk[1] or '')
+      else
+        table.insert(parts, tostring(chunk))
+      end
+    end
+    return table.concat(parts)
+  end
