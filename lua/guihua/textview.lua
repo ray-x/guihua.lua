@@ -90,15 +90,23 @@ local function apply_syntax(view, opts)
 end
 
 local function can_update_preview(view, opts)
-  return view ~= nil
-    and view.win ~= nil
-    and vim.api.nvim_win_is_valid(view.win)
-    and view.buf ~= nil
-    and vim.api.nvim_buf_is_valid(view.buf)
-    and view.rect ~= nil
-    and opts.rect ~= nil
-    and view.rect.height == opts.rect.height
+  if view == nil or opts == nil then
+    return false
+  end
+  if view.win == nil or not vim.api.nvim_win_is_valid(view.win) then
+    return false
+  end
+  if view.buf == nil or not vim.api.nvim_buf_is_valid(view.buf) then
+    return false
+  end
+  if view.rect == nil or opts.rect == nil then
+    return false
+  end
+
+  return view.rect.height == opts.rect.height
     and view.rect.width == opts.rect.width
+    and view.rect.pos_x == opts.rect.pos_x
+    and view.rect.pos_y == opts.rect.pos_y
 end
 
 local function resolve_preview_opts(opts)

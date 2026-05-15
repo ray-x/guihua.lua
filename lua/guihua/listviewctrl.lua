@@ -306,11 +306,22 @@ function ListViewCtrl:apply_state_result(result, opts)
   end
 
   self:sync_state()
-  if result.redraw then
+  local cursor_line = result.cursor_line or self.state:cursor_line()
+  local has_cursor_icon = false
+  for i, entry in ipairs(self.state.display_data or {}) do
+    if type(entry) == 'table' then
+      entry.current = i == cursor_line
+      if entry.icon ~= nil or entry.current_icon ~= nil then
+        has_cursor_icon = true
+      end
+    end
+  end
+
+  if result.redraw or has_cursor_icon then
     self.m_delegate:on_draw(self.state.display_data)
   end
 
-  self.m_delegate:set_pos(result.cursor_line or self.state:cursor_line())
+  self.m_delegate:set_pos(cursor_line)
   if opts == nil or opts.preview ~= false then
     local item = result.item
     if item ~= nil then

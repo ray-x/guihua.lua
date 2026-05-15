@@ -134,6 +134,16 @@ Note: guihua disables the common strikethrough highlight groups for its floating
 - patch_markdown_strikethrough_query (default: false): when true, guihua will attempt to set a Treesitter highlights query so only explicit strikethrough nodes (usually produced for ~~double-tilde~~) are linked to @markup.strikethrough. To test double-tilde-only behavior set disable_strikethrough_in_views=false and patch_markdown_strikethrough_query=true in your setup.
 - Long or multiline input prompts are rendered inside the same input popup, with a vertical split glyph separating the prompt text area from the editable input line.
 - `vim.ui.input()` uses a window title: explicit `title` wins, otherwise the first prompt line is truncated to 20 characters.
+- Diff previews are available via `require('guihua.gui').diffview({ title = ..., description = ..., diff = ..., syntax = ... })`.
+- Diff previews support `close_keymap` and `autoclose = 'InsertLeave'` (or `{ events = { 'WinLeave' }, timeout = 5000 }`).
+- `diffview()` opts:
+  - `title`: border title.
+  - `description`: rendered before the diff body.
+  - `diff`: unified diff text.
+  - `syntax`: optional syntax for the diff body.
+  - `close_keymap`: buffer-local close key, default `<C-c>`.
+  - `autoclose`: event name, event list, or `{ events = {...}, timeout = ms }`.
+  - `autoclose_focus_moved`: shorthand for `WinLeave`/`BufLeave`.
 
 Example:
 
@@ -141,6 +151,34 @@ require('guihua').setup({
   disable_strikethrough_in_views = false, -- allow strikethrough in guihua views
   patch_markdown_strikethrough_query = true, -- make Treesitter highlight only double-tilde as strikethrough
 })
+
+`guihua.gui.catalog()` adds a tabbed floating browser for TOC-style data. It keeps the
+`@markup.strikethrough` override local to guihua popups and opens the selected path on Enter by default.
+Use `<Left>` / `<Right>` to move between tabs.
+
+Catalog options:
+- `tabs`: keyed table (`{ agents = {...}, skills = {...} }`) or list form (`{ { key = 'agents', items = {...} } }`)
+- `tab_order`/`order`: explicit order for keyed tabs
+- `loc`: list placement (default `top_center`)
+- `rect` or `width`/`height`: list size (default height auto-fits item count)
+- `list_height_ratio`: max list height ratio (default `0.45`)
+- `preview_height_ratio`: preview height ratio (default `0.4`)
+- `on_confirm(item, active_tab)`: callback when confirming a selection
+
+```lua
+require('guihua.gui').catalog({
+  title = 'Browse',
+  tabs = {
+    agents = {
+      { name = 'grep', description = { 'this is a grep agent' }, path = '/path/to/agent.lua' },
+    },
+    skills = {
+      { name = 'lint', description = 'this is a lint skill', path = '/path/to/skill.lua' },
+    },
+  },
+  tab_order = { 'agents', 'skills' },
+})
+```
 
 
 ## Plug

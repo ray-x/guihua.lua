@@ -15,7 +15,10 @@ local TextView = require('guihua.textview')
 local util = require('guihua.util')
 local log = require('guihua.log').info
 
-local prepare_for_render = require('navigator.render').prepare_for_render
+local ok_render, navigator_render = pcall(require, 'navigator.render')
+local prepare_for_render = ok_render and navigator_render.prepare_for_render or function(items)
+  return items
+end
 local function test_plaintext()
   -- vim.cmd("packadd guihua.lua")
 
@@ -167,6 +170,114 @@ local on_move = function(item)
   return preview_uri(item.uri, item.lnum, 6)
   -- test(false)
 end
+
+local function test_catalog()
+  package.loaded['guihua'] = nil
+  package.loaded['guihua.gui'] = nil
+  package.loaded['guihua.catalog'] = nil
+  package.loaded['guihua.session_registry'] = nil
+  package.loaded['guihua.textview'] = nil
+  vim.cmd('packadd guihua.lua')
+
+  local target_dir = '/tmp/guihua-catalog-smoke'
+  vim.fn.mkdir(target_dir, 'p')
+  local function write_dummy_md(name, body)
+    local path = target_dir .. '/' .. name
+    vim.fn.writefile({
+      '# ' .. name,
+      '',
+      body,
+    }, path)
+    return path
+  end
+
+  local grep_md = write_dummy_md('grep.md', 'this is a fake preview file for grep')
+  local review_md = write_dummy_md('review.md', 'this is a fake preview file for review')
+  local lint_md = write_dummy_md('lint.md', 'this is a fake preview file for lint')
+  local server_md = write_dummy_md('server.md', 'this is a fake preview file for server')
+
+  local opened = nil
+  local state = require('guihua.catalog').open({
+    title = 'Catalog smoke test',
+    tabs = {
+      agents = {
+        { name = 'grep', description = 'grep agent', path = grep_md },
+        { name = 'review', description = 'review agent', path = review_md },
+      },
+      skills = {
+        { name = 'lint', description = 'lint skill', path = lint_md },
+      },
+      mcp = {
+        { name = 'server', description = 'mcp server', path = server_md },
+      },
+    },
+    tab_order = { 'agents', 'skills', 'mcp' },
+    on_confirm = function(item)
+      opened = item.path
+    end,
+  })
+
+  local function title_text(title)
+    if type(title) == 'string' then
+      return title
+    end
+    if type(title) ~= 'table' then
+      return ''
+    end
+    local parts = {}
+    for _, chunk in ipairs(title) do
+      if type(chunk) == 'table' then
+        parts[#parts + 1] = chunk[1] or ''
+      else
+        parts[#parts + 1] = tostring(chunk)
+      end
+    end
+    return table.concat(parts)
+  end
+
+  local title_cfg = vim.api.nvim_win_get_config(state.win).title
+  local title = title_text(title_cfg)
+  assert(title:find('Catalog smoke test', 1, true))
+  assert(title:find('agents', 1, true))
+  assert(title:find('skills', 1, true))
+  local has_hotkey_hl = false
+  if type(title_cfg) == 'table' then
+    for _, chunk in ipairs(title_cfg) do
+      if type(chunk) == 'table' and (chunk[2] == 'GuihuaCatalogTabHotkey' or chunk[2] == 'GuihuaCatalogTabHotkeyActive') then
+        has_hotkey_hl = true
+        break
+      end
+    end
+  end
+  assert(has_hotkey_hl)
+
+  local ctrl = state:get_ctrl()
+  ctrl:on_next()
+  vim.wait(20)
+  local item = ctrl.state:current_item()
+  local preview_spec = ctrl.on_move(item)
+  assert(TextView.is_preview_spec(preview_spec))
+  local list_cfg = vim.api.nvim_win_get_config(state.win)
+  assert(vim.uri_from_fname(review_md) == preview_spec.opts.uri)
+  assert(preview_spec.opts.rect.width == list_cfg.width)
+  assert(preview_spec.opts.rect.pos_x == list_cfg.col)
+  assert(preview_spec.opts.rect.pos_y == list_cfg.row + list_cfg.height + 2)
+
+  state:set_tab(2)
+  vim.wait(20)
+  assert(state:current_item().name == 'lint')
+  assert(table.concat(vim.api.nvim_buf_get_lines(state.buf, 0, -1, false), '\n'):find('lint', 1, true))
+
+  item = ctrl.state:current_item()
+  preview_spec = ctrl.on_move(item)
+  assert(TextView.is_preview_spec(preview_spec))
+  assert(vim.uri_from_fname(lint_md) == preview_spec.opts.uri)
+
+  state:confirm()
+  assert(opened == lint_md)
+end
+
+_G.guihua_test_catalog = test_catalog
 
 local function test_list()
   -- vim.g.debug_trace_output = true
@@ -545,7 +656,16 @@ end
 
 -- test_list_one_item_symbol()
 -- test_list_page_customer_filter()
-test_list_two_item_symbol()
+if vim.g.guihua_run_listview_test == 1 then
+  test_list_two_item_symbol()
+end
+
+if vim.g.guihua_run_catalog_test == 1 then
+  test_catalog()
+end
+
+-- test_list_two_item_symbol()
+test_catalog()
 
 -- test_plaintext()
 -- test_preview()

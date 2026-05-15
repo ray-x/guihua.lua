@@ -200,6 +200,78 @@ describe('should create view  ', function()
     vim.api.nvim_win_close(input_win, true)
   end)
 
+  it('should render a tabbed catalog with local strikethrough disabled', function()
+    if vim.api.nvim_win_get_hl_ns == nil or vim.api.nvim_get_hl == nil then
+      return
+    end
+    package.loaded['guihua'] = nil
+    package.loaded['guihua.gui'] = nil
+    package.loaded['guihua.catalog'] = nil
+    package.loaded['guihua.session_registry'] = nil
+    vim.cmd('packadd guihua.lua')
+
+    vim.api.nvim_set_hl(0, '@markup.strikethrough', { fg = 0x654321, strikethrough = true })
+
+    local gui = require('guihua.gui')
+    local SessionRegistry = require('guihua.session_registry')
+    local opened = nil
+    local state = gui.catalog({
+      title = 'Browse',
+      tabs = {
+        agents = {
+          { name = 'grep', description = { 'this is a grep agent' }, path = '/tmp/grep.md' },
+          { name = 'review', description = { 'this is a review agent' }, path = '/tmp/review.md' },
+        },
+        skills = {
+          { name = 'lint', description = 'this is a lint skill', path = '/tmp/lint.md' },
+        },
+        mcp = {
+          { name = 'server', description = 'mcp server', path = '/tmp/server.md' },
+        },
+      },
+      tab_order = { 'agents', 'skills', 'mcp' },
+      on_confirm = function(item)
+        opened = item.path
+      end,
+    })
+
+    local ns = vim.api.nvim_win_get_hl_ns(state.win)
+    local hl = vim.api.nvim_get_hl(ns, { name = '@markup.strikethrough', link = false })
+    eq(0x654321, hl.fg)
+    assert.is_not_true(hl.strikethrough)
+    assert.is_true(vim.api.nvim_get_hl(0, { name = 'GuihuaCatalogTitle', link = false }).bold)
+    assert.is_true(vim.api.nvim_get_hl(0, { name = 'GuihuaCatalogTab', link = false }).bold)
+    assert.is_true(vim.api.nvim_get_hl(0, { name = 'GuihuaCatalogTabActive', link = false }).bold)
+
+    local lines = vim.api.nvim_buf_get_lines(state.buf, 0, -1, false)
+    assert.is_truthy(lines[1]:find('%[a%]gents', 1, false))
+    assert.is_truthy(lines[2]:find('─', 1, false))
+    assert.is_truthy(lines[3]:find('Search:', 1, true))
+
+    local preview = SessionRegistry.get(state.session.id).preview_view
+    assert.is_truthy(preview ~= nil)
+    local preview_text = table.concat(vim.api.nvim_buf_get_lines(preview.buf, 0, -1, false), '\n')
+    assert.is_truthy(preview_text:find('/tmp/grep.md', 1, true))
+
+    state:next_tab()
+    vim.wait(20)
+    eq('lint', state:current_item().name)
+    state:prev_tab()
+    vim.wait(20)
+    eq('grep', state:current_item().name)
+
+    state:move(1)
+    vim.wait(20)
+    preview = SessionRegistry.get(state.session.id).preview_view
+    preview_text = table.concat(vim.api.nvim_buf_get_lines(preview.buf, 0, -1, false), '\n')
+    assert.is_truthy(preview_text:find('/tmp/review.md', 1, true))
+
+    state:set_filter('gr')
+    eq('grep', state:current_item().name)
+    state:confirm()
+    eq('/tmp/grep.md', opened)
+  end)
+
   it('should expand input popups for long text instead of clipping the tail', function()
     package.loaded['guihua'] = nil
     package.loaded['guihua.gui'] = nil

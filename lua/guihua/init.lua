@@ -4,6 +4,7 @@ local setup_complete = false
 local lazy_exports = {
   view = 'guihua.view',
   listview = 'guihua.listview',
+  catalog = 'guihua.catalog',
 }
 
 local function apply_setup()

@@ -13,6 +13,10 @@ local function get_textview()
   return require('guihua.textview')
 end
 
+local function get_diffview()
+  return require('guihua.diffview')
+end
+
 local function get_util()
   return require('guihua.util')
 end
@@ -860,6 +864,49 @@ end
 M.input_callback = function(...)
   return require('guihua.input').input_callback(...)
 end
+
+-- Open a tabbed catalog browser popup.
+--
+-- opts:
+--   title                (string)  Popup title.
+--   tabs                 (table)   Catalog tabs and items.
+--   tab_order / order    (table)   Explicit tab order for keyed tabs.
+--   loc                  (string|function) List location. Default: "top_center".
+--   rect                 (table)   Explicit list rect { width, height }.
+--   width / height       (number)  List size shortcut when rect is omitted.
+--                                  Default height auto-fits item count.
+--   list_height_ratio    (number)  Max list height ratio. Default: 0.45.
+--   width_ratio          (number)  Max list width ratio. Default: 0.9.
+--   root                 (string)  Project root used for relative display paths.
+--   item_icon            (string)  Icon prefix for non-current items. Default: "".
+--   current_item_icon    (string)  Icon prefix for current item. Default: "".
+--   close_hint           (string)  Optional custom close hint text in the title.
+--   border               (string)  Border style. Default: "rounded".
+--   ft                   (string)  List buffer filetype. Default: "guihua".
+--   preview_height_ratio (number)  Preview size ratio. Default: 0.4.
+--   session              (table)   Optional session to reuse.
+--   on_confirm           (function) Callback(item, active_tab) on Enter.
+--
+-- Keymaps:
+--   <Left>/<Right> cycle tabs, tab hotkeys jump directly, Enter confirms.
+M.catalog = function(...)
+  return require('guihua.catalog').open(...)
+end
+
+function M.diffview(opts)
+  -- opts:
+  --   title            (string)  Border title.
+  --   description      (string)  Rendered at the top of the diff popup.
+  --   diff             (string)  Unified diff text (git diff / diff -u).
+  --   syntax           (string)  Optional syntax for the diff body.
+  --   close_keymap     (string|false) Buffer-local close mapping, default <C-c>.
+  --   autoclose        (string|table|boolean) Neovim event name(s): string, list,
+  --                               or { events = {...}, timeout = ms }.
+  --                               Use { focus_moved = true } for WinLeave/BufLeave.
+  return get_diffview().open(opts)
+end
+
+M.diff = M.diffview
 
 -- test, do not remove
 -- M.select({ '[1] aaa', '* bbb', '1. ccc', '*ddd*', '~eee~', '~~fff~~' }, {}, print)

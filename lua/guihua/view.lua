@@ -270,24 +270,29 @@ local function draw_table_item(buf, item, pos)
     return
   end
 
-  item.text = item.text:gsub('\n', '->')
+  local text = item.text:gsub('\n', '->')
   local head = ''
-  if item.selected then
-    head = ''
+  if item.current or item.selected then
+    head = item.current_icon or ''
+  elseif item.icon ~= nil and item.icon ~= '' then
+    head = item.icon
   end
-  api.nvim_buf_set_lines(buf, pos, pos, true, { head .. item.text })
+  if head ~= '' then
+    head = head .. ' '
+  end
+  api.nvim_buf_set_lines(buf, pos, pos, true, { head .. text })
   -- if item.symbol_name is not nil highlight it
   if item.symbol_name and #item.symbol_name > 0 then
     -- lets find all
-    local s, e = word_find(item.text, item.symbol_name)
+    local s, e = word_find(text, item.symbol_name)
     -- log('hl', pos, s, e, item.text, item.Symbol_name)
     while s ~= nil do
       api.nvim_buf_set_extmark(buf, _GH_SEARCH_NS, pos, s - 1, { end_row = pos, end_col = e, hl_group = 'Warnings' })
       local next_start = e + 1
-      if next_start > #item.text then
+      if next_start > #text then
         break
       end
-      s, e = word_find(item.text:sub(next_start), item.symbol_name)
+      s, e = word_find(text:sub(next_start), item.symbol_name)
       if s then
         s = s + next_start - 1
         e = e + next_start - 1
