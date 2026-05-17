@@ -217,6 +217,243 @@ function M.preview_uri(opts) -- uri, width, line, col, offset_x, offset_y
   return M._preview_location(opts)
 end
 
+local function preview_border_rows(border)
+  if border == nil or border == 'none' then
+    return 0
+  end
+  if border == 'shadow' then
+    return 1
+  end
+  return 2
+end
+
+local function preview_list_geometry(listview, opts)
+  opts = opts or {}
+  if listview ~= nil and listview.win ~= nil and api.nvim_win_is_valid(listview.win) then
+    local cfg = api.nvim_win_get_config(listview.win) or {}
+    local width = math.max(1, math.floor(tonumber(cfg.width) or opts.width or (listview.rect and listview.rect.width) or 1))
+    local height = math.max(1, math.floor(tonumber(cfg.height) or opts.height or (listview.rect and listview.rect.height) or 1))
+    local row = math.floor(tonumber(cfg.row) or (listview.rect and listview.rect.pos_y) or 0)
+    local col = math.floor(tonumber(cfg.col) or (listview.rect and listview.rect.pos_x) or 0)
+    return row, col, width, height
+  end
+  return math.floor(tonumber(opts.row) or 0), math.floor(tonumber(opts.col) or 0), math.max(1, math.floor(tonumber(opts.width) or 1)), math.max(1, math.floor(tonumber(opts.height) or 1))
+end
+
+local function preview_content_lines(content)
+  if type(content) == 'string' then
+    return vim.split(content, '\n', { plain = true })
+  end
+  if type(content) ~= 'table' then
+    return nil
+  end
+  local lines = {}
+  for _, line in ipairs(content) do
+    if type(line) == 'string' then
+      vim.list_extend(lines, vim.split(line, '\n', { plain = true }))
+    else
+      table.insert(lines, tostring(line))
+    end
+  end
+  return lines
+end
+
+local function preview_item_source(item)
+  if type(item) == 'table' and item.raw ~= nil then
+    return item.raw
+  end
+  return item
+end
+
+local function preview_item_content(item, resolver)
+  local source = preview_item_source(item)
+  if type(resolver) == 'function' then
+    return resolver(source, type(item) == 'table' and item.idx or nil)
+  end
+  if resolver ~= nil then
+    return resolver
+  end
+  if type(source) == 'table' then
+    return source.preview or source.preview_data
+  end
+  return nil
+end
+
+function M.preview_item_wrapper(resolver, opts)
+  opts = opts or {}
+  return function(item)
+    local preview = preview_item_content(item, resolver)
+    if preview == nil then
+      return nil
+    end
+
+    local TextView = get_textview()
+    if TextView.is_preview_spec(preview) then
+      return preview
+    end
+
+    local preview_opts = nil
+    if type(preview) == 'table' and not vim.tbl_islist(preview) then
+      preview_opts = vim.deepcopy(preview)
+    else
+      preview_opts = { data = preview_content_lines(preview) }
+    end
+
+    if preview_opts == nil then
+      return nil
+    end
+    if type(preview_opts.data) == 'string' or vim.tbl_islist(preview_opts.data) then
+      preview_opts.data = preview_content_lines(preview_opts.data)
+    end
+    if preview_opts.data == nil and preview_opts.uri == nil then
+      return nil
+    end
+
+    local listview_ref = type(opts.listview) == 'function' and opts.listview() or opts.listview
+    local list_row, list_col, list_width, list_height = preview_list_geometry(listview_ref, opts)
+    local border = preview_opts.border or opts.border or (listview_ref and listview_ref.border) or 'single'
+    local lines = api.nvim_get_option_value('lines', {})
+    local below_height = preview_opts.preview_height or preview_opts.height
+    if below_height == nil then
+      below_height = math.min(lines - list_height - 3, math.floor(lines * (opts.preview_height_ratio or 0.4)))
+      if below_height < 3 then
+        below_height = 3
+      end
+    end
+
+    local source = preview_item_source(item)
+    local preview_ft = preview_opts.ft or preview_opts.syntax
+    if preview_ft == nil and type(source) == 'table' then
+      preview_ft = source.preview_ft or source.ft
+    end
+    preview_ft = preview_ft or opts.preview_ft or opts.ft or 'markdown'
+
+    preview_opts.loc = preview_opts.loc or 'none'
+    preview_opts.relative = preview_opts.relative or 'editor'
+    preview_opts.offset_x = preview_opts.offset_x or list_col
+    preview_opts.offset_y = preview_opts.offset_y or (list_row + list_height + preview_border_rows(border))
+    preview_opts.width = preview_opts.width or list_width
+    preview_opts.height = preview_opts.height or below_height
+    preview_opts.preview_height = preview_opts.preview_height or preview_opts.height
+    preview_opts.border = border
+    preview_opts.ft = preview_opts.ft or preview_ft
+    preview_opts.syntax = preview_opts.syntax or preview_ft
+
+    return TextView.preview_spec(preview_opts)
+  end
+end
+
+local function select_item_label(item, opts)
+  if type(item) == 'table' then
+    return item.text or item.label or item.name or item.title or item.value or ''
+  end
+  return opts.format_item(item)
+end
+
+local function select_item_prefix(item)
+  local icon = item.current and item.current_icon or item.icon
+  if icon == nil or icon == '' then
+    return ''
+  end
+  return icon .. ' '
+end
+
+local function normalize_select_item(item, idx, opts)
+  local row = type(item) == 'table' and vim.deepcopy(item) or {}
+  row.idx = idx
+  row.raw = item
+
+  if type(item) ~= 'table' then
+    row.value = item
+  elseif row.value == nil and row.editable ~= true then
+    row.value = item.value or item.text or item.label or item.name or item.title or item
+  end
+
+  if row.editable == true then
+    local prefix = row.edit_prefix or row.label or row.title or row.text or row.name or 'Custom option:'
+    prefix = vim.trim(prefix or '')
+    if prefix == '' then
+      prefix = 'Custom option:'
+    end
+    if not prefix:match('%s$') then
+      prefix = prefix .. ' '
+    end
+    row.editable = true
+    row.edit_prefix = prefix
+    row.icon = row.icon or opts.item_icon or ''
+    row.current_icon = row.current_icon or opts.current_item_icon or ''
+    row.value = row.value or row.default or ''
+    row.edit_display_prefix = (' [%d] %s'):format(idx, prefix)
+    row.text = row.edit_display_prefix .. row.value
+    row.custom = true
+    return row
+  end
+
+  local label = select_item_label(item, opts)
+  row.text = (' [%d] %s'):format(idx, tostring(label))
+  return row
+end
+
+local function strip_inline_item_prefix(line, item)
+  if type(line) ~= 'string' or type(item) ~= 'table' then
+    return line
+  end
+  local with_icon = select_item_prefix(item)
+  if with_icon ~= '' and vim.startswith(line, with_icon) then
+    return line:sub(#with_icon + 1)
+  end
+  return line
+end
+
+local function sync_inline_choice(listview)
+  if listview == nil or listview.buf == nil or not api.nvim_buf_is_valid(listview.buf) then
+    return nil
+  end
+  local ctrl = listview:get_ctrl()
+  local state = ctrl and ctrl.state or nil
+  local item = state and state:current_item() or nil
+  if type(item) ~= 'table' or item.editable ~= true then
+    return nil
+  end
+
+  local line_no = state:cursor_line()
+  local line = api.nvim_buf_get_lines(listview.buf, math.max(0, line_no - 1), line_no, false)[1] or ''
+  line = strip_inline_item_prefix(line, item)
+
+  local prefix = item.edit_display_prefix or (' [%d] %s'):format(item.idx or line_no, item.edit_prefix or 'Custom option: ')
+  if vim.startswith(line, prefix) then
+    line = line:sub(#prefix + 1)
+  elseif item.edit_prefix ~= nil and vim.startswith(line, item.edit_prefix) then
+    line = line:sub(#item.edit_prefix + 1)
+  end
+
+  item.value = line
+  item.text = prefix .. line
+  return line
+end
+
+local function begin_inline_edit(listview)
+  local ctrl = listview and listview:get_ctrl() or nil
+  local state = ctrl and ctrl.state or nil
+  local item = state and state:current_item() or nil
+  if type(item) ~= 'table' or item.editable ~= true then
+    return false
+  end
+
+  sync_inline_choice(listview)
+  listview._inline_editing = true
+  api.nvim_set_option_value('modifiable', true, { buf = listview.buf })
+  api.nvim_set_option_value('readonly', false, { buf = listview.buf })
+
+  local line_no = state:cursor_line()
+  local line = api.nvim_buf_get_lines(listview.buf, math.max(0, line_no - 1), line_no, false)[1] or ''
+  if line ~= '' and listview.win ~= nil and api.nvim_win_is_valid(listview.win) then
+    api.nvim_win_set_cursor(listview.win, { line_no, #line })
+  end
+  vim.cmd('startinsert!')
+  return true
+end
+
 function M.new_list_view(opts)
   local items = opts.items
   local data = opts.data or opts.items or {}
@@ -344,6 +581,11 @@ function M.new_list_view(opts)
   })
 end
 
+-- Select from a popup list.
+--
+-- Use `{ text = 'Custom option:', value = '', editable = true }` for an inline
+-- editable row. When that row is active, <CR> toggles editing in place and then
+-- confirms the updated value without opening a second input popup.
 M.select = function(items, opts, on_choice)
   vim.validate('items', items, 'table')
   vim.validate('opts', opts, 'table')
@@ -354,6 +596,16 @@ M.select = function(items, opts, on_choice)
   -- of the title bar (which Neovim truncates to the window width).
   local PROMPT_TITLE_MAX = 60
   local prompt_in_content = #prompt > PROMPT_TITLE_MAX or prompt:find('\n') ~= nil
+  local has_inline_edit = false
+  for _, item in ipairs(items) do
+    if type(item) == 'table' and item.editable == true then
+      has_inline_edit = true
+      break
+    end
+  end
+  if has_inline_edit then
+    hint = '<CR> Edit custom  <C-o> Apply  <C-e> Exit'
+  end
   local win_title = prompt_in_content and hint or (prompt .. '  ' .. hint)
 
   local data = {}
@@ -361,15 +613,14 @@ M.select = function(items, opts, on_choice)
   local width = #win_title + 8
   local max_width = math.floor(api.nvim_get_option_value('columns', {}) * (opts.width or 0.9))
   opts.format_item = opts.format_item or function(item)
+    if type(item) == 'table' then
+      return item.text or item.label or item.name or item.title or item.value or ''
+    end
     return item
   end
   for i, item in ipairs(items) do
     trace(i, item)
-    table.insert(data, {
-      text = ' [' .. tostring(i) .. '] ' .. opts.format_item(item),
-      value = item,
-      idx = i,
-    })
+    local row = normalize_select_item(item, i, opts)
     if item and item[2] and item[2].edit then
       local edit = item[2].edit
       local title = ''
@@ -408,13 +659,14 @@ M.select = function(items, opts, on_choice)
         end
       end
       if #title > 1 then
-        data[#data].text = data[#data].text .. ' ' .. title
+        row.text = row.text .. ' ' .. title
       end
     end
 
-    if #data[#data].text + 6 > width then
-      width = #data[#data].text + 6
+    if #row.text + 6 > width then
+      width = #row.text + 6
     end
+    table.insert(data, row)
   end
 
   -- Prepend wrapped prompt lines when the prompt is too long for the title bar.
@@ -461,38 +713,106 @@ M.select = function(items, opts, on_choice)
   -- If opts.enter is explicitly provided, respect it; otherwise default to true.
   local enter_mode = (opts.enter ~= nil) and opts.enter or true
 
-  local listview = M.new_list_view({
-    items = data,
-    title = win_title,
-    border = 'single',
-    width = width,
-    loc = 'top_center',
-    relative = 'cursor',
-    rawdata = true,
-    data = data,
-    prompt = should_prompt,
-    enter = enter_mode,
-    persist = true,
-    ft = opts.ft or 'markdown',
-    disable_strikethrough = true,
-    on_confirm = function(item, idx)
-      if item.header then
-        return -- non-selectable prompt header lines
+  local function create_listview()
+    local listview = nil
+    local preview_on_move = opts.on_move
+    if preview_on_move == nil then
+      local has_preview_items = opts.preview_item ~= nil
+      if not has_preview_items then
+        for _, item in ipairs(items) do
+          if type(item) == 'table' and (item.preview ~= nil or item.preview_data ~= nil) then
+            has_preview_items = true
+            break
+          end
+        end
       end
-      return on_choice(item.value, item.idx or idx)
-    end,
-    on_move = function(pos)
-      trace(pos)
-      return pos
-    end,
-  })
+      if has_preview_items then
+        preview_on_move = M.preview_item_wrapper(opts.preview_item, {
+          listview = function()
+            return listview
+          end,
+          border = 'single',
+          preview_height_ratio = opts.preview_height_ratio or 0.4,
+          ft = opts.preview_ft or 'markdown',
+        })
+      end
+    end
 
-  if listview == nil then
-    return
+    listview = M.new_list_view({
+      items = data,
+      title = win_title,
+      border = 'single',
+      width = width,
+      loc = 'top_center',
+      relative = 'cursor',
+      rawdata = true,
+      data = data,
+      prompt = should_prompt,
+      enter = enter_mode,
+      persist = true,
+      ft = opts.ft or 'markdown',
+      disable_strikethrough = true,
+      on_confirm = function(item, idx)
+        if item.header then
+          return -- non-selectable prompt header lines
+        end
+        return on_choice(item.value, item.idx or idx)
+      end,
+      on_move = preview_on_move
+        or function(pos)
+          trace(pos)
+          return pos
+        end,
+    })
+
+    if listview == nil then
+      return nil
+    end
+    if has_inline_edit then
+      api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, {
+        buffer = listview.buf,
+        callback = function()
+          sync_inline_choice(listview)
+        end,
+      })
+      local function confirm_or_edit()
+        local ctrl = listview:get_ctrl()
+        if ctrl == nil then
+          return
+        end
+        local current = ctrl.state and ctrl.state:current_item() or nil
+        if type(current) == 'table' and current.editable == true then
+          if listview._inline_editing ~= true then
+            begin_inline_edit(listview)
+            return
+          end
+          sync_inline_choice(listview)
+          listview._inline_editing = false
+          ctrl:on_confirm()
+          return
+        end
+        ctrl:on_confirm()
+      end
+      vim.keymap.set({ 'n', 'i' }, '<CR>', confirm_or_edit, { buffer = listview.buf, noremap = true, silent = true })
+    end
+    preselect_first_item(listview)
+    return listview
   end
-  preselect_first_item(listview)
 
-  return listview
+  local ok, listview_or_err = pcall(create_listview)
+  if ok then
+    return listview_or_err
+  end
+
+  local err = tostring(listview_or_err)
+  if err:find('E565', 1, true) or err:find('Not allowed to change text or change window', 1, true) then
+    vim.schedule(function()
+      pcall(create_listview)
+    end)
+    return nil
+  end
+
+  error(listview_or_err)
 end
 
 -- format_markdown preserves code/diff fences verbatim and word-wraps prose.

@@ -71,6 +71,10 @@ Plugin has implementation of fzy with both ffi and native lua. If you like to tr
 The lazy.nvim example above keeps guihua unloaded until the first `vim.ui.select()` or
 `vim.ui.input()` call, which avoids paying the UI startup cost during Neovim startup.
 
+`vim.ui.select()` callers can attach preview content directly by adding `preview` to each
+item or by passing `preview_item = function(item) return ... end`. Guihua will turn that
+content into a preview window automatically.
+
 ## Setup
 
 ```lua

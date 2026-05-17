@@ -15,6 +15,7 @@ local input_defaults = {
   on_cancel = function(_) end,
 }
 local input_contexts = {}
+local input_highlight_ns = api.nvim_create_namespace('guihua_input_user_highlight')
 
 local function strwidth(text)
   return vim.fn.strdisplaywidth(text or '')
@@ -26,6 +27,13 @@ end
 
 local function split_lines(text)
   return vim.split(text or '', '\n', { plain = true })
+end
+
+local function normalize_input_text(text)
+  text = text or ''
+  text = text:gsub('\r\n', '\n')
+  text = text:gsub('\r', '\n')
+  return text
 end
 
 local function wrap_text(text, width)
@@ -195,7 +203,172 @@ local function current_text(ctx)
   if prompt ~= '' and vim.startswith(sliced[1], prompt) then
     sliced[1] = sliced[1]:sub(#prompt + 1, -1)
   end
-  return vim.trim(table.concat(sliced, '\n'))
+  return normalize_input_text(table.concat(sliced, '\n'))
+end
+
+local function input_line_bounds(ctx, line_idx, lines)
+  local start_line = ctx.input_start or 1
+  local prompt = ctx.prompt or ''
+  local input_lines = lines or buffer_lines(ctx)
+  if line_idx < 1 or line_idx > #input_lines then
+    return nil
+  end
+  local row = start_line + line_idx - 2
+  local start_col = (line_idx == 1 and prompt ~= '') and #prompt or 0
+  local end_col = #input_lines[line_idx]
+  return row, start_col, end_col
+end
+
+local function offset_to_line_col(lines, offset)
+  local remaining = math.max(0, offset or 0)
+  for i, line in ipairs(lines) do
+    local line_len = #line
+    if remaining <= line_len then
+      return i, remaining
+    end
+    remaining = remaining - line_len
+    if i < #lines then
+      if remaining == 0 then
+        return i + 1, 0
+      end
+      remaining = remaining - 1
+    end
+  end
+  return #lines, #(lines[#lines] or '')
+end
+
+local function apply_highlight_range(ctx, lines, spec)
+  if type(spec) ~= 'table' then
+    return
+  end
+
+  local hl_group = spec.hl_group or spec.group or spec[3]
+  if hl_group == nil then
+    return
+  end
+
+  local has_named_lines = spec.line ~= nil or spec.lnum ~= nil or spec.row ~= nil
+  local has_named_range = spec.start ~= nil or spec['end'] ~= nil
+  local has_tuple_offsets = spec[1] ~= nil and spec[2] ~= nil and spec[3] ~= nil and not has_named_lines and not has_named_range
+
+  local start_line = spec.line or spec.lnum or spec.row
+  local start_col = spec.col_start or spec.start_col or spec.col or spec.from
+  local end_line = spec.end_line or spec.end_lnum or spec.end_row
+  local end_col = spec.col_end or spec.end_col or spec.to or spec.finish
+
+  if has_named_range or has_tuple_offsets then
+    local s = math.max(0, tonumber(has_tuple_offsets and spec[1] or spec.start) or 0)
+    local e = math.max(s, tonumber(has_tuple_offsets and spec[2] or spec['end']) or s)
+    start_line, start_col = offset_to_line_col(lines, s)
+    end_line, end_col = offset_to_line_col(lines, e)
+  else
+    start_line = tonumber(start_line) or 1
+    start_col = tonumber(start_col) or 0
+    end_line = tonumber(end_line) or start_line
+    end_col = tonumber(end_col) or start_col
+  end
+
+  local start_buf_row, start_buf_col = input_line_bounds(ctx, start_line, lines)
+  local end_buf_row, end_buf_base_col = input_line_bounds(ctx, end_line, lines)
+  if start_buf_row == nil or end_buf_row == nil then
+    return
+  end
+
+  api.nvim_buf_set_extmark(ctx.buf, input_highlight_ns, start_buf_row, start_buf_col + start_col, {
+    end_row = end_buf_row,
+    end_col = end_buf_base_col + end_col,
+    hl_group = hl_group,
+  })
+end
+
+local function refresh_input_highlight(ctx)
+  if ctx == nil or ctx.buf == nil or not api.nvim_buf_is_valid(ctx.buf) then
+    return
+  end
+  api.nvim_buf_clear_namespace(ctx.buf, input_highlight_ns, 0, -1)
+  if type(ctx.opts.highlight) ~= 'function' then
+    return
+  end
+
+  local text = current_text(ctx)
+  local ok, ranges = pcall(ctx.opts.highlight, text, ctx.prompt_text or '', {
+    buf = ctx.buf,
+    win = ctx.win,
+  })
+  if not ok or type(ranges) ~= 'table' then
+    return
+  end
+
+  local lines = split_lines(text)
+  if vim.tbl_isempty(lines) then
+    lines = { '' }
+  end
+  if ranges.hl_group ~= nil or ranges.group ~= nil or ranges.start ~= nil or ranges.line ~= nil or ranges[3] ~= nil then
+    ranges = { ranges }
+  end
+  for _, spec in ipairs(ranges) do
+    apply_highlight_range(ctx, lines, spec)
+  end
+end
+
+local function initial_input_lines(ctx)
+  local initial = normalize_input_text(ctx.initial_text or '')
+  local lines = split_lines(initial)
+  if vim.tbl_isempty(lines) then
+    lines = { '' }
+  end
+  local rendered = vim.deepcopy(lines)
+  rendered[1] = (ctx.prompt or '') .. (rendered[1] or '')
+  return rendered, lines
+end
+
+local function trigger_completion(ctx, direction)
+  if ctx == nil or ctx.buf == nil or not api.nvim_buf_is_valid(ctx.buf) then
+    return
+  end
+  if vim.fn.pumvisible() == 1 then
+    local key = direction < 0 and '<C-p>' or '<C-n>'
+    api.nvim_feedkeys(api.nvim_replace_termcodes(key, true, false, true), 'n', false)
+    return
+  end
+  if ctx.completion == nil or ctx.win == nil or not api.nvim_win_is_valid(ctx.win) then
+    return
+  end
+
+  local cursor = api.nvim_win_get_cursor(ctx.win)
+  local line_no = cursor[1]
+  local col = cursor[2]
+  if line_no < (ctx.input_start or 1) then
+    return
+  end
+  local line = api.nvim_buf_get_lines(ctx.buf, line_no - 1, line_no, false)[1] or ''
+  local prefix_start = 1
+  if line_no == (ctx.input_start or 1) then
+    prefix_start = #(ctx.prompt or '') + 1
+  end
+  local current = line:sub(prefix_start, col)
+  local matches = vim.fn.getcompletion(current, ctx.completion)
+  if vim.tbl_isempty(matches) then
+    return
+  end
+  vim.fn.complete(prefix_start, matches)
+  if #matches > 0 then
+    api.nvim_feedkeys(api.nvim_replace_termcodes(direction < 0 and '<C-p>' or '<C-n>', true, false, true), 'n', false)
+  end
+end
+
+local function finish_input(ctx, text, aborted)
+  if ctx == nil or ctx.finished == true then
+    return
+  end
+  ctx.finished = true
+  if aborted and type(ctx.on_cancel) == 'function' then
+    pcall(ctx.on_cancel, text)
+  end
+  if type(ctx.on_confirm) == 'function' then
+    pcall(ctx.on_confirm, aborted and nil or text)
+  end
+  close_input(ctx)
 end
 
 local function close_input(ctx)
@@ -229,6 +402,7 @@ end
 
 local function input(opts, on_confirm)
   log(opts)
+  opts = opts or {}
   local bufnr = api.nvim_create_buf(false, true)
   local ctx = vim.tbl_deep_extend('force', {}, input_defaults, { opts = opts })
 
@@ -242,6 +416,8 @@ local function input(opts, on_confirm)
   ctx.prompt_text = prompt
   ctx.explicit_title = explicit_title
   ctx.window_title = window_title
+  ctx.initial_text = opts.default ~= nil and opts.default or placeholder
+  ctx.completion = opts.completion
 
   local setup_confirm = type(ctx.on_confirm) == 'function' and ctx.on_confirm or nil
   ctx.on_confirm = function(new_name)
@@ -320,8 +496,9 @@ local function input(opts, on_confirm)
   if use_content_box then
     buf_lines = vim.tbl_extend('force', {}, content_lines)
     table.insert(buf_lines, separator_line or '')
-    table.insert(buf_lines, '')
   end
+  local initial_lines = initial_input_lines(ctx)
+  vim.list_extend(buf_lines, initial_lines)
   api.nvim_buf_set_lines(bufnr, 0, -1, false, buf_lines)
   api.nvim_create_autocmd('BufWipeout', {
     buffer = bufnr,
@@ -341,6 +518,7 @@ local function input(opts, on_confirm)
       if type(ctx.on_change) == 'function' then
         ctx.on_change(new_text)
       end
+      refresh_input_highlight(ctx)
     end,
   })
   api.nvim_set_option_value('modifiable', true, { buf = bufnr })
@@ -357,43 +535,46 @@ local function input(opts, on_confirm)
   })
   vim.keymap.set({ 'n', 'i' }, '<CR>', function()
     log('confirm_callback')
-    local new_text = current_text(ctx)
     vim.cmd([[stopinsert]])
-    if #new_text == 0 or new_text == ctx.opts.default then
-      log('no change')
-      if type(ctx.on_cancel) == 'function' then
-        log('on cancel called')
-        pcall(ctx.on_cancel, new_text)
-      end
-      log('closing input')
-      close_input(ctx)
-      return
-    end
+    local new_text = current_text(ctx)
     log('on_confirm: new text: ' .. new_text)
-    if type(ctx.on_confirm) == 'function' then
-      pcall(ctx.on_confirm, new_text)
-    end
-    close_input(ctx)
+    finish_input(ctx, new_text, false)
   end, { silent = true, buffer = bufnr })
 
-  vim.keymap.set('n', '<ESC><ESC>', function()
-    local new_text = current_text(ctx)
-    if type(ctx.on_cancel) == 'function' then
-      pcall(ctx.on_cancel, new_text)
-    end
-    close_input(ctx)
-  end, { silent = true, buffer = bufnr })
+  local function abort_input()
+    vim.cmd([[stopinsert]])
+    finish_input(ctx, current_text(ctx), true)
+  end
+  vim.keymap.set({ 'n', 'i' }, '<Esc>', abort_input, { silent = true, buffer = bufnr })
+  vim.keymap.set({ 'n', 'i' }, '<C-c>', abort_input, { silent = true, buffer = bufnr })
+  vim.keymap.set('n', '<ESC><ESC>', abort_input, { silent = true, buffer = bufnr })
   vim.keymap.set({ 'n', 'i' }, '<BS>', [[<ESC>"_cl]], { silent = true, buffer = bufnr })
-  vim.cmd(string.format('normal i%s', placeholder))
+  if ctx.completion ~= nil and ctx.completion ~= '' then
+    vim.keymap.set('i', '<Tab>', function()
+      trigger_completion(ctx, 1)
+    end, { silent = true, buffer = bufnr })
+    vim.keymap.set('i', '<S-Tab>', function()
+      trigger_completion(ctx, -1)
+    end, { silent = true, buffer = bufnr })
+  end
   -- Enter insert mode and place cursor at end of default value by default.
   local start_insert = true
   if opts.startinsert ~= nil then
     start_insert = opts.startinsert
   end
+  local input_lines = split_lines(normalize_input_text(ctx.initial_text or ''))
+  if vim.tbl_isempty(input_lines) then
+    input_lines = { '' }
+  end
+  api.nvim_win_set_cursor(winnr, {
+    (ctx.input_start or 1) + #input_lines - 1,
+    (#input_lines == 1 and #(ctx.prompt or '') or 0) + #(input_lines[#input_lines] or ''),
+  })
   if start_insert then
     vim.cmd('startinsert!')
   end
   resize_input(ctx)
+  refresh_input_highlight(ctx)
   -- vim.fn.feedkeys('A', 'n')
   return winnr
 end

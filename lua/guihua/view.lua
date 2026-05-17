@@ -51,6 +51,7 @@ function View:initialize(...)
   self.prompt_mode = opts.prompt_mode or 'insert'
   self.ft = opts.ft or 'guihua'
   self.syntax = opts.syntax or 'guihua'
+  self.allow_edit = opts.allow_edit == true
   self.display_height = self.display_height or self.rect.height
 
   local floatbuf = require('guihua.floating').floating_buf
@@ -90,6 +91,10 @@ function View:initialize(...)
   trace('height: ', self.display_height, 'rect', self.rect, float_opts)
   -- listview should not have ft enabled
   self.buf, self.win, self.closer = floatbuf(float_opts)
+  if opts.allow_edit then
+    api.nvim_set_option_value('modifiable', true, { buf = self.buf })
+    api.nvim_set_option_value('readonly', false, { buf = self.buf })
+  end
   if opts.transparency and not opts.external then
     if vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'bg#') ~= '' then
       self.mask_buf, self.mask_win, self.mask_closer = floatbuf_mask(opts.transparency)
@@ -387,7 +392,7 @@ function View:on_draw(data)
     end_at = end_at - 1
   end
   draw_lines(self.buf, start, end_at, content)
-  if self.prompt ~= true then
+  if self.prompt ~= true and not self.allow_edit then
     api.nvim_set_option_value('readonly', true, { buf = self.buf })
   end
   -- vim.fn.setpos(".", {0, 1, 1, 0})
