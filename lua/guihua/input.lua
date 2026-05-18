@@ -357,6 +357,8 @@ local function trigger_completion(ctx, direction)
   end
 end
 
+local close_input
+
 local function finish_input(ctx, text, aborted)
   if ctx == nil or ctx.finished == true then
     return
@@ -366,12 +368,16 @@ local function finish_input(ctx, text, aborted)
     pcall(ctx.on_cancel, text)
   end
   if type(ctx.on_confirm) == 'function' then
-    pcall(ctx.on_confirm, aborted and nil or text)
+    if aborted then
+      pcall(ctx.on_confirm, nil)
+    else
+      pcall(ctx.on_confirm, text)
+    end
   end
   close_input(ctx)
 end
 
-local function close_input(ctx)
+close_input = function(ctx)
   if ctx == nil then
     return
   end
@@ -437,7 +443,7 @@ local function input(opts, on_confirm)
 
   ctx.on_change = opts.on_change or ctx.on_change
   ctx.on_cancel = opts.on_cancel or ctx.on_cancel
-  api.nvim_set_option_value('buftype', 'prompt', { buf = bufnr })
+  api.nvim_set_option_value('buftype', 'nofile', { buf = bufnr })
   api.nvim_set_option_value('bufhidden', 'wipe', { buf = bufnr })
   local title_options = utils.title_options
   local use_content_box = should_use_content_box(ctx)
@@ -483,7 +489,6 @@ local function input(opts, on_confirm)
     end
   end
 
-  vim.fn.prompt_setprompt(bufnr, prompt)
   local winnr = api.nvim_open_win(bufnr, true, wopts)
   ctx.buf = bufnr
   ctx.win = winnr
@@ -492,7 +497,7 @@ local function input(opts, on_confirm)
   api.nvim_set_option_value('wrap', true, { win = winnr })
   api.nvim_set_option_value('linebreak', false, { win = winnr })
   ctx.hl_ns = utils.disable_win_strikethrough(winnr, ctx.hl_ns)
-  local buf_lines = { '' }
+  local buf_lines = {}
   if use_content_box then
     buf_lines = vim.tbl_extend('force', {}, content_lines)
     table.insert(buf_lines, separator_line or '')
@@ -522,7 +527,6 @@ local function input(opts, on_confirm)
     end,
   })
   api.nvim_set_option_value('modifiable', true, { buf = bufnr })
-  api.nvim_set_option_value('buftype', 'prompt', { buf = bufnr })
 
   api.nvim_set_option_value('filetype', 'guihua', { buf = bufnr })
   local function close_all()
@@ -590,10 +594,65 @@ if false then
       print('Error opening file: ' .. tostring(err))
       return nil, err
     end
-    f:write(text)
+    -- f:write(text)
     f:close()
   end)
 end
+if true then
+  local format_name = 'markdown'
+  local function default_export_path(fmt)
+    local ext = fmt == 'html' and 'html' or 'md'
+    return string.format('%s/copilot-session-%s.%s', vim.fn.getcwd(), os.date('%Y%m%d-%H%M%S'), ext)
+  end
+
+  input({
+    prompt = 'Export path: ',
+    default = default_export_path(format_name),
+    completion = 'file',
+  }, function(path)
+    path = vim.trim(path or '')
+    if path ~= '' then
+      print(format_name, ' and path: ', path)
+    end
+  end)
+end
+
+if false then
+    working_directory = function() return vim.fn.getcwd() end
+    local function default_export_path(format_name)
+      local ext = format_name == 'html' and 'html' or 'md'
+      return string.format('%s/copilot-session-%s.%s', working_directory(), os.date('%Y%m%d-%H%M%S'), ext)
+    end
+  local function prompt_path(format_name)
+    vim.ui.input({
+      prompt = 'Export path: ',
+      default = default_export_path(format_name),
+      completion = 'file',
+    }, function(path)
+      path = vim.trim(path or '')
+      if path ~= '' then
+        print(format_name, path)
+      end
+    end)
+  end
+  vim.ui.select({
+    { id = 'markdown', label = 'Markdown (.md)' },
+    { id = 'html', label = 'HTML (.html)' },
+  }, {
+    prompt = 'Share session as',
+    format_item = function(item)
+      return item.label
+    end,
+  }, function(choice)
+    if choice then
+      vim.schedule(function()
+        prompt_path(choice.id)
+      end)
+    end
+  end)
+  return true
+end
+
 return {
   setup = setup,
   input = input,
