@@ -598,7 +598,7 @@ if false then
     f:close()
   end)
 end
-if true then
+if false then
   local format_name = 'markdown'
   local function default_export_path(fmt)
     local ext = fmt == 'html' and 'html' or 'md'
@@ -618,11 +618,13 @@ if true then
 end
 
 if false then
-    working_directory = function() return vim.fn.getcwd() end
-    local function default_export_path(format_name)
-      local ext = format_name == 'html' and 'html' or 'md'
-      return string.format('%s/copilot-session-%s.%s', working_directory(), os.date('%Y%m%d-%H%M%S'), ext)
-    end
+  working_directory = function()
+    return vim.fn.getcwd()
+  end
+  local function default_export_path(format_name)
+    local ext = format_name == 'html' and 'html' or 'md'
+    return string.format('%s/copilot-session-%s.%s', working_directory(), os.date('%Y%m%d-%H%M%S'), ext)
+  end
   local function prompt_path(format_name)
     vim.ui.input({
       prompt = 'Export path: ',
