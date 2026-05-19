@@ -343,9 +343,44 @@ function M.preview_item_wrapper(resolver, opts)
   end
 end
 
+local function select_item_action(item)
+  if type(item) ~= 'table' then
+    return nil
+  end
+
+  if item.action ~= nil then
+    return item.action
+  end
+
+  return nil
+end
+
+local function select_item_action_label(item)
+  if type(item) ~= 'table' then
+    return nil
+  end
+
+  local action = select_item_action(item)
+  if type(action) ~= 'table' then
+    return nil
+  end
+
+  if type(action.command) == 'table' then
+    return action.command.title or action.command.command or action.command.name
+  end
+
+  return action.title or action.label or action.name
+end
+
 local function select_item_label(item, opts)
+  if type(opts.format_item) == 'function' then
+    local formatted = opts.format_item(item)
+    if formatted ~= nil and formatted ~= '' then
+      return formatted
+    end
+  end
   if type(item) == 'table' then
-    return item.text or item.label or item.name or item.title or item.value or ''
+    return item.text or item.label or item.name or item.title or select_item_action_label(item) or item.value or item[1] or ''
   end
   return opts.format_item(item)
 end
@@ -365,8 +400,14 @@ local function normalize_select_item(item, idx, opts)
 
   if type(item) ~= 'table' then
     row.value = item
+  elseif item.value ~= nil then
+    row.value = item.value
+  elseif select_item_action(item) ~= nil then
+    row.value = select_item_action(item)
+  elseif item[2] ~= nil then
+    row.value = item[2]
   elseif row.value == nil and row.editable ~= true then
-    row.value = item.value or item.text or item.label or item.name or item.title or item
+    row.value = item.text or item.label or item.name or item.title or select_item_action_label(item) or item[1] or item
   end
 
   if row.editable == true then
@@ -390,6 +431,15 @@ local function normalize_select_item(item, idx, opts)
   end
 
   local label = select_item_label(item, opts)
+  if label == '' and type(item) == 'table' and item[1] ~= nil then
+    label = tostring(item[1])
+  end
+  if label == '' then
+    local action_label = select_item_action_label(item)
+    if action_label ~= nil then
+      label = action_label
+    end
+  end
   row.text = (' [%d] %s'):format(idx, tostring(label))
   return row
 end
@@ -612,12 +662,13 @@ M.select = function(items, opts, on_choice)
 
   local width = #win_title + 8
   local max_width = math.floor(api.nvim_get_option_value('columns', {}) * (opts.width or 0.9))
-  opts.format_item = opts.format_item or function(item)
-    if type(item) == 'table' then
-      return item.text or item.label or item.name or item.title or item.value or ''
+  opts.format_item = opts.format_item
+    or function(item)
+      if type(item) == 'table' then
+        return item.text or item.label or item.name or item.title or item.value or ''
+      end
+      return item
     end
-    return item
-  end
   for i, item in ipairs(items) do
     trace(i, item)
     local row = normalize_select_item(item, i, opts)
@@ -704,9 +755,7 @@ M.select = function(items, opts, on_choice)
   width = math.min(width + 4, max_width)
   -- Determine whether this select should behave as a prompt (insert/fuzzy)
   local should_prompt = false
-  if opts.prompt == true then
-    should_prompt = true
-  elseif opts.prompt == nil and #items > 10 then
+  if opts.prompt == true or (items and #items > 10) then
     should_prompt = true
   end
   -- By default, focus (enter) the popup so the cursor is in the popup buffer.
@@ -758,11 +807,10 @@ M.select = function(items, opts, on_choice)
         end
         return on_choice(item.value, item.idx or idx)
       end,
-      on_move = preview_on_move
-        or function(pos)
-          trace(pos)
-          return pos
-        end,
+      on_move = preview_on_move or function(pos)
+        trace(pos)
+        return pos
+      end,
     })
 
     if listview == nil then

@@ -513,6 +513,107 @@ describe('should create view  ', function()
     eq('one', choice)
   end)
 
+  it('should render tuple-style select labels and return their payloads', function()
+    package.loaded['guihua'] = nil
+    package.loaded['guihua.gui'] = nil
+    package.loaded['guihua.listviewctrl'] = nil
+    package.loaded['guihua.listview'] = nil
+    package.loaded['guihua.view'] = nil
+    vim.cmd('packadd guihua.lua')
+
+    local choice = nil
+    local gui = require('guihua.gui')
+    local payload = { kind = 'codeAction' }
+    local listview = gui.select({
+      { 'apply fix', payload },
+      { 'apply patch', { kind = 'other' } },
+    }, {
+      prompt = 'Select code action',
+      ft = 'guihua',
+    }, function(item)
+      choice = item
+    end)
+
+    local lines = vim.api.nvim_buf_get_lines(listview.buf, 0, -1, false)
+    local text = table.concat(lines, '\n')
+    assert.is_truthy(text:find('apply fix', 1, true))
+    assert.is_truthy(text:find('apply patch', 1, true))
+
+    vim.api.nvim_set_current_win(listview.win)
+    vim.fn.maparg('<CR>', 'n', false, true).callback()
+
+    eq(payload, choice)
+  end)
+
+  it('should render nested codeaction titles from action.command.title', function()
+    package.loaded['guihua'] = nil
+    package.loaded['guihua.gui'] = nil
+    package.loaded['guihua.listviewctrl'] = nil
+    package.loaded['guihua.listview'] = nil
+    package.loaded['guihua.view'] = nil
+    vim.cmd('packadd guihua.lua')
+
+    local choice = nil
+    local gui = require('guihua.gui')
+    local action = {
+      command = {
+        title = 'Copilot: Fix code',
+        command = 'copilot.fix',
+      },
+    }
+    local listview = gui.select({
+      { action = action, ctx = { id = 1 } },
+      { action = { command = { title = 'Copilot: Apply patch' } }, ctx = { id = 2 } },
+    }, {
+      prompt = 'Select code action',
+      ft = 'guihua',
+    }, function(item)
+      choice = item
+    end)
+
+    local lines = vim.api.nvim_buf_get_lines(listview.buf, 0, -1, false)
+    local text = table.concat(lines, '\n')
+    assert.is_truthy(text:find('Copilot: Fix code', 1, true))
+    assert.is_truthy(text:find('Copilot: Apply patch', 1, true))
+
+    vim.api.nvim_set_current_win(listview.win)
+    vim.fn.maparg('<CR>', 'n', false, true).callback()
+
+    eq(action, choice)
+  end)
+
+  it('should honor a custom format_item for code actions', function()
+    package.loaded['guihua'] = nil
+    package.loaded['guihua.gui'] = nil
+    package.loaded['guihua.listviewctrl'] = nil
+    package.loaded['guihua.listview'] = nil
+    package.loaded['guihua.view'] = nil
+    vim.cmd('packadd guihua.lua')
+
+    local gui = require('guihua.gui')
+    local listview = gui.select({
+      {
+        action = {
+          kind = 'quickfix',
+          command = { title = 'Copilot: Fix code' },
+        },
+      },
+    }, {
+      prompt = 'Select code action',
+      ft = 'guihua',
+      format_item = function(item)
+        local action = item.action or item
+        local kind = action.kind and ('[' .. action.kind .. '] ') or ''
+        local title = action.command and action.command.title or ''
+        return kind .. title
+      end,
+    }, function(_) end)
+
+    local lines = vim.api.nvim_buf_get_lines(listview.buf, 0, -1, false)
+    local text = table.concat(lines, '\n')
+    assert.is_truthy(text:find('[quickfix] Copilot: Fix code', 1, true))
+  end)
+
   it('should edit a custom select option inline', function()
     package.loaded['guihua'] = nil
     package.loaded['guihua.gui'] = nil
