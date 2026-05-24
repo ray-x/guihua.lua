@@ -120,10 +120,13 @@ local function build_separator_line(width)
   return string.rep('─', math.max(1, width - 2))
 end
 
-local function derive_window_title(ctx)
+local function derive_window_title(ctx, use_content_box)
   local explicit = ctx.explicit_title or ''
   if explicit ~= '' then
     return explicit
+  end
+  if use_content_box then
+    return nil
   end
   local prompt = ctx.prompt_text or ''
   local first_line = split_lines(prompt)[1] or ''
@@ -415,13 +418,8 @@ local function input(opts, on_confirm)
   local prompt = opts.prompt or ''
   local placeholder = opts.placeholder or opts.default or ''
   local explicit_title = opts.title or ctx.title or ''
-  local window_title = derive_window_title({
-    explicit_title = explicit_title,
-    prompt_text = prompt,
-  })
   ctx.prompt_text = prompt
   ctx.explicit_title = explicit_title
-  ctx.window_title = window_title
   ctx.initial_text = opts.default ~= nil and opts.default or placeholder
   ctx.completion = opts.completion
 
@@ -447,6 +445,11 @@ local function input(opts, on_confirm)
   api.nvim_set_option_value('bufhidden', 'wipe', { buf = bufnr })
   local title_options = utils.title_options
   local use_content_box = should_use_content_box(ctx)
+  local window_title = derive_window_title({
+    explicit_title = explicit_title,
+    prompt_text = prompt,
+  }, use_content_box)
+  ctx.window_title = window_title
   local prompt_icon = ' '
   local prompt_prefix = use_content_box and '│  ' or prompt_icon
   local width = opts.width or math.max(win_title_width, strwidth(prompt .. placeholder) + 2)

@@ -323,7 +323,7 @@ describe('should create view  ', function()
     vim.api.nvim_win_close(input_win, true)
   end)
 
-  it('should derive the input window title from the first prompt line when title is absent', function()
+  it('should render long prompts in the popup body instead of the window title', function()
     package.loaded['guihua'] = nil
     package.loaded['guihua.gui'] = nil
     package.loaded['guihua.input'] = nil
@@ -337,7 +337,11 @@ describe('should create view  ', function()
     }, function(_) end)
 
     local cfg = vim.api.nvim_win_get_config(input_win)
-    eq('This prompt line should become the tit', title_text(cfg.title))
+    eq('', title_text(cfg.title))
+    local buf = vim.api.nvim_win_get_buf(input_win)
+    local text = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), '\n')
+    assert.is_truthy(text:find('This prompt line should become the title', 1, true))
+    assert.is_truthy(text:find('Second line', 1, true))
 
     vim.api.nvim_win_close(input_win, true)
   end)
