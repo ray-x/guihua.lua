@@ -43,6 +43,7 @@ local function _createIndexWrapper(aClass, f)
     end
   else -- if  type(f) == "table" then
     return function(self, name)
+      _ = self
       local value = aClass.__instanceDict[name]
 
       if value ~= nil then
@@ -147,17 +148,15 @@ local DefaultMixin = {
     return 'instance of ' .. tostring(self.class)
   end,
 
-  initialize = function(self, ...) end,
+  initialize = function(self, ...)
+    _ = self
+    _ = ...
+  end,
 
   isInstanceOf = function(self, aClass)
     return type(aClass) == 'table'
       and type(self) == 'table'
-      and (
-        self.class == aClass
-        or type(self.class) == 'table'
-          and type(self.class.isSubclassOf) == 'function'
-          and self.class:isSubclassOf(aClass)
-      )
+      and (self.class == aClass or type(self.class) == 'table' and type(self.class.isSubclassOf) == 'function' and self.class:isSubclassOf(aClass))
   end,
 
   static = {
@@ -194,12 +193,13 @@ local DefaultMixin = {
       return subclass
     end,
 
-    subclassed = function(self, other) end,
+    subclassed = function(self, other)
+      _ = self
+      _ = other
+    end,
 
     isSubclassOf = function(self, other)
-      return type(other) == 'table'
-        and type(self.super) == 'table'
-        and (self.super == other or self.super:isSubclassOf(other))
+      return type(other) == 'table' and type(self.super) == 'table' and (self.super == other or self.super:isSubclassOf(other))
     end,
 
     include = function(self, ...)

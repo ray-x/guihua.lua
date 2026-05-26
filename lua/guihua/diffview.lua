@@ -259,9 +259,7 @@ local function parse_diff_lines(lines)
   for _, line in ipairs(lines) do
     local kind = 'context'
     local text = line
-    if is_diff_header(line) then
-      kind = 'header'
-    elseif line:match('^-%-%-%s') or line:match('^%+%+%+%s') then
+    if is_diff_header(line) or line:match('^-%-%-%s') or line:match('^%+%+%+%s') then
       kind = 'header'
     elseif line:sub(1, 1) == '-' and not line:match('^%-{3}%s') then
       kind = 'delete'

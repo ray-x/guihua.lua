@@ -1,6 +1,8 @@
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
+_ = trace
 local function view_test()
+  _ = view_test
   View = require('guihua.view')
   package.loaded['guihua'] = nil
   package.loaded['guihua.view'] = nil
@@ -15,12 +17,14 @@ local function view_test()
     enter = true,
     data = data,
   })
+  _ = win
   log('draw data', data)
   -- win:on_draw(data)
   -- vim.cmd("startinsert!")
 end
 
 local function view_mask_test()
+  _ = view_mask_test
   View = require('guihua.view')
   package.loaded['guihua'] = nil
   package.loaded['guihua.view'] = nil
@@ -36,6 +40,7 @@ local function view_mask_test()
     data = data,
     mask = 60,
   })
+  _ = win
   log('draw data', data)
   -- win:on_draw(data)
   -- vim.cmd("startinsert!")

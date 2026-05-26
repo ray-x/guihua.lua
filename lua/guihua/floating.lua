@@ -326,6 +326,7 @@ end
 -- term({ cmd = 'git diff --', border = 'single', external = false })
 
 local function test(prompt)
+  _ = test
   local b, w, c = floating_buf({
     win_width = 30,
     win_height = 6,
@@ -334,6 +335,8 @@ local function test(prompt)
     prompt = prompt,
     focus = true,
   })
+  _ = w
+  _ = c
   local data = { 'floating buf', 'line1', 'line2', 'line3', 'line4', 'line5' }
   for i = 1, 10, 1 do
     vim.api.nvim_buf_set_lines(b, i, -1, false, { data[i] })
@@ -346,6 +349,7 @@ local function test(prompt)
 end
 
 local function test2(prompt)
+  _ = test2
   local b, w, c = floating_buf({
     win_width = 30,
     win_height = 8,
@@ -355,6 +359,8 @@ local function test2(prompt)
     title = 'title',
     enter = true,
   })
+  _ = w
+  _ = c
   local data = { 'floating buf', 'linea', 'lineb', 'linec', 'lined', 'linee' }
   for i = 1, 10, 1 do
     vim.api.nvim_buf_set_lines(b, i, -1, false, { data[i] })
@@ -365,7 +371,11 @@ local function test2(prompt)
 end
 
 local function test_mask(t)
+  _ = test_mask
   local b, w, c = floating_buf_mask(t)
+  _ = b
+  _ = w
+  _ = c
 end
 -- test2(true)
 

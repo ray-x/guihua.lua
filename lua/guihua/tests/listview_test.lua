@@ -7,6 +7,7 @@ package.loaded['guihua.util'] = nil
 -- vim.cmd("packadd guihua.lua")
 
 local home = vim.env.HOME
+_ = home
 local github = vim.env.HOME .. '/github/'
 local gopath = vim.env.GOPATH or vim.env.HOME .. '/go'
 
@@ -20,6 +21,7 @@ local prepare_for_render = ok_render and navigator_render.prepare_for_render or 
   return items
 end
 local function test_plaintext()
+  _ = test_plaintext
   -- vim.cmd("packadd guihua.lua")
 
   -- package.loaded.packer_plugins['guihua.lua'].loaded = false
@@ -54,6 +56,7 @@ local function test_plaintext()
       'list line4 tast',
     },
   })
+  _ = win
 
   vim.cmd('normal! zb')
   vim.cmd('startinsert!')
@@ -277,9 +280,8 @@ local function test_catalog()
   assert(opened == lint_md)
 end
 
-_G.guihua_test_catalog = test_catalog
-
 local function test_list()
+  _ = test_list
   -- vim.g.debug_trace_output = true
   package.loaded['guihua'] = nil
   package.loaded['guihua.view'] = nil
@@ -300,6 +302,7 @@ local function test_list()
     on_confirm = on_confirm,
     on_move = on_move,
   })
+  _ = win
   -- log("test", win)
   -- vim.cmd("startinsert!")
   -- vim.cmd("normal! zvzb")
@@ -308,6 +311,7 @@ local function test_list()
 end
 
 local function test_list_mask()
+  _ = test_list_mask
   -- vim.g.debug_trace_output = true
   package.loaded['guihua'] = nil
   package.loaded['guihua.view'] = nil
@@ -328,6 +332,7 @@ local function test_list_mask()
     on_confirm = on_confirm,
     on_move = on_move,
   })
+  _ = win
   -- log("test", win)
   -- vim.cmd("startinsert!")
   -- vim.cmd("normal! zvzb")
@@ -336,6 +341,7 @@ local function test_list_mask()
 end
 
 local function test_preview()
+  _ = test_preview
   -- vim.g.debug_trace_output = true
   package.loaded['guihua'] = nil
   package.loaded['guihua.view'] = nil
@@ -360,6 +366,7 @@ local function test_preview()
 end
 
 local function test_render_list()
+  _ = test_render_list
   local items = {
     {
       col = 9,
@@ -410,6 +417,7 @@ local function test_render_list()
     on_confirm = on_confirm,
     on_move = on_move,
   })
+  _ = win
   -- log("test", win)
   -- vim.cmd("startinsert!")
   -- vim.cmd("normal! zvzb")
@@ -418,6 +426,7 @@ local function test_render_list()
 end
 
 local function test_list_one_item()
+  _ = test_list_one_item
   gopath = vim.env.GOPATH or ''
   data = {
     {
@@ -462,6 +471,7 @@ end
 -- test_list_one_item()
 
 local function test_list_one_item_symbol()
+  _ = test_list_one_item_symbol
   data = {
     {
       detail = 'func',
@@ -501,6 +511,7 @@ local function test_list_one_item_symbol()
   vim.cmd('packadd guihua.lua')
 
   local win = ListView:new(opt)
+  _ = win
   -- log("test", win)
   -- vim.cmd("startinsert!")
   -- vim.cmd("normal! zvzb")
@@ -547,6 +558,7 @@ local function test_list_two_item_symbol()
 end
 
 local function test_list_page()
+  _ = test_list_page
   local opt = {
     api = ' ',
     bg = 'GuihuaListDark',
@@ -580,10 +592,12 @@ local function test_list_page()
 end
 
 local function test_list_page_customer_filter()
+  _ = test_list_page_customer_filter
   local height = 15
   local bufnr = vim.api.nvim_get_current_buf()
   data = { { text = '' } }
   for i = 1, height do
+    _ = i
     table.insert(data, { text = '' })
   end
   local opt = {

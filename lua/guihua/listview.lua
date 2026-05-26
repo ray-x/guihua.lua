@@ -75,7 +75,7 @@ function ListView:initialize(...)
   -- Apply to common groups used by markdown / treesitter: @markup.strikethrough,
   -- @text.strike, markdownStrike, markdownDeleted. Use util helper to set
   -- window-local namespace overrides.
-  local ft = opts.ft or self.ft or ''
+  ft = ft or self.ft or ''
   if ft == 'markdown' or opts.disable_strikethrough then
     util.disable_win_strikethrough(self.win, self.ns, '@markup.strikethrough')
     util.disable_win_strikethrough(self.win, self.ns, '@text.strike')

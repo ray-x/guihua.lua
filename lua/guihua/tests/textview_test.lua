@@ -93,10 +93,12 @@ s not guarantee which.\n\nDate panics if loc is nil.\n]],
 }
 
 local function test_signature()
+  _ = test_signature
   local lines = { signature.signatures[1].label }
   local i = 1
   local doc = ''
   local util = require('vim.lsp.util')
+  _ = util
   for s in signature.signatures[1].documentation:gmatch('[^\r\n]+') do
     s = vim.trim(s:gsub('[\t]', '  '))
     doc = doc .. s
@@ -117,6 +119,7 @@ local function test_signature()
 end
 
 local function test_filepreview()
+  _ = test_filepreview
   local fname = vim.fn.expand('%:p:h') .. '/listview_spec.lua'
   local uri = vim.uri_from_fname(fname)
   local range = {

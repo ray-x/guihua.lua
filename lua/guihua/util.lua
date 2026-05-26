@@ -4,19 +4,13 @@ local log = require('guihua.log').info
 local trace = require('guihua.log').trace
 local uv = vim.loop
 local os_name = uv.os_uname().sysname
-local is_windows = os_name == 'Windows' or os_name == 'Windows_NT'
+M.is_windows = os_name == 'Windows' or os_name == 'Windows_NT'
 -- Check whether current buffer contains main function
 
 local HAS_NVIM_0_9 = vim.fn.has('nvim-0.9') == 1
 
 function M.close_view_autocmd(events, winnr)
-  vim.cmd(
-    'autocmd '
-      .. table.concat(events, ',')
-      .. ' <buffer> ++once lua pcall(vim.api.nvim_win_close, '
-      .. winnr
-      .. ', true)'
-  )
+  vim.cmd('autocmd ' .. table.concat(events, ',') .. ' <buffer> ++once lua pcall(vim.api.nvim_win_close, ' .. winnr .. ', true)')
 end
 
 local function lshift(x, by)
@@ -26,6 +20,7 @@ end
 local function rshift(x, by)
   return math.floor(x / 2 ^ by)
 end
+_, _ = lshift, rshift -- for bit operations without bit library
 -- function M.buf_close_view_event(mode, key, bufnr, winnr)
 --   local closer = " <Cmd> lua pcall(vim.api.nvim_win_close, " .. winnr .. ", true) <CR>"
 --   vim.api.nvim_buf_set_keymap(bufnr, "n", key, closer, {})
@@ -83,16 +78,11 @@ function M.selcolor(Hl)
   local fg = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('NormalFloat')), 'fg#'), 2), 16)
     or tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('Normal')), 'fg#'), 2), 16)
 
-  if
-    vim.fn.hlexists('GuihuaListSelHl') == 1
-    and vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GuihuaListSelHl')), 'bg#') ~= ''
-  then
+  if vim.fn.hlexists('GuihuaListSelHl') == 1 and vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GuihuaListSelHl')), 'bg#') ~= '' then
     -- already defined
     return
   end
-  local bgcolor = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GuihuaListDark')), 'bg#'), 2), 16)
-    or bg
-    or 0x303030
+  local bgcolor = tonumber(string.sub(vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID('GuihuaListDark')), 'bg#'), 2), 16) or bg or 0x303030
 
   vim.validate({ bgcolor = { bgcolor, 'number' } })
   --   local sel = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("PmenuSel")), "bg#") default
@@ -101,14 +91,14 @@ function M.selcolor(Hl)
   local sel_gstr = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID(Hl)), 'fg#') or '#EFEFEF'
 
   log('sel, ', sel, sel_gstr)
-  sel = tonumber(string.sub(sel, 2), 16)
+  local sel_num = tonumber(string.sub(sel, 2), 16)
   local selfg = tonumber(string.sub(sel_gstr, 2), 16)
-  log(sel, selfg)
+  log(sel, sel_num, selfg)
   bg = bg or 0x303030
-  if sel == nil then
-    sel = 0x506b8f
+  if sel_num == nil then
+    sel_num = 0x506b8f
     if bg > 0xa00000 then
-      sel = bg or 0xafafbf
+      sel_num = bg or 0xafafbf
     end
   end
 
@@ -123,10 +113,10 @@ function M.selcolor(Hl)
     bgcolor = 0x40495f
   end
 
-  local diff, t = diff_color(bgcolor, sel)
+  local diff, t = diff_color(bgcolor, sel_num)
   if diff > 24 * 3 then
-    local lbg = string.format('#%06x', sel)
-    log(diff, sel, bgcolor, Hl)
+    local lbg = string.format('#%06x', sel_num)
+    log(diff, sel_num, bgcolor, Hl)
 
     if vim.o.background == 'light' and sel_gstr and vim.fn.empty(sel_gstr) ~= 1 then
       vim.api.nvim_set_hl(0, 'GuihuaListSelHl', { bg = lbg, fg = sel_gstr, bold = true, default = true })
@@ -134,15 +124,15 @@ function M.selcolor(Hl)
       vim.api.nvim_set_hl(0, 'GuihuaListSelHl', { bg = lbg, bold = true, default = true })
     end
   else
-    log(diff, t, sel, bgcolor, Hl)
+    log(diff, t, sel_num, bgcolor, Hl)
     if t > 360 then -- not sure how this plugin works for light schema
-      sel = bgcolor - 0x161810
+      sel_num = bgcolor - 0x161810
     elseif t > 216 then
-      sel = 0x120103
+      sel_num = 0x120103
     else
-      sel = bgcolor + 0x23202a
+      sel_num = bgcolor + 0x23202a
     end
-    local lbg = string.format('#%6x', sel)
+    local lbg = string.format('#%6x', sel_num)
     vim.cmd('hi default GuihuaListSelHl cterm=Bold gui=Bold guibg=' .. lbg)
   end
 
@@ -307,6 +297,7 @@ M.highlighter = function(bufnr, ft, lines)
   if has_ts then
     local _, ts_highlight = pcall(require, 'guihua.ts_obsolete.highlight')
     local _, ts_parsers = pcall(require, 'guihua.ts_obsolete.parsers')
+    _ = ts_parsers
     -- local lang = ts_parsers.ft_to_lang(ft)
     local lang = vim.treesitter.language.get_lang(ft)
     -- if ts_parsers.has_parser(lang) then

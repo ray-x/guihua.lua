@@ -1,7 +1,10 @@
 local eq = assert.are.same
+_ = eq
 
 local busted = require('plenary/busted')
+_ = busted
 local cur_dir = vim.fn.expand('%:p:h')
+_ = cur_dir
 
 describe('should create view  ', function()
   package.loaded['guihua.lua'] = nil
@@ -24,6 +27,7 @@ describe('should create view  ', function()
       enter = true,
       data = data,
     })
+    _ = win
     log('draw data', data)
   end)
 end)

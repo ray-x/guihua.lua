@@ -65,6 +65,7 @@ local function wrap_text(text, width)
 end
 
 local function line_text(ctx)
+  _ = line_text
   if ctx == nil or ctx.buf == nil or not api.nvim_buf_is_valid(ctx.buf) then
     return (ctx and ctx.prompt) or ''
   end
@@ -621,7 +622,7 @@ if false then
 end
 
 if false then
-  working_directory = function()
+  local working_directory = function()
     return vim.fn.getcwd()
   end
   local function default_export_path(format_name)

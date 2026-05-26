@@ -170,6 +170,7 @@ function Panel:animate_create(animate, fast)
     return set_text_fn()
   end
   for i, target_w in pairs(widths) do
+    _ = i
     local step_dir = -1
     if target_w > prev_w then
       step_dir = 1
@@ -743,6 +744,7 @@ function Panel:open(should_toggle, redraw, buf)
 
   -- redraw the panel
   local wnr, bnr = self:draw()
+  _ = wnr
 
   local ft = vim.api.nvim_get_option_value('filetype', { buf = buf })
   if ft ~= '' and ft ~= 'guihua' and ft ~= 'nofile' then

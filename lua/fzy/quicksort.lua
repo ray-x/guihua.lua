@@ -34,6 +34,7 @@ end
 local function table_with_size(size, default_value)
   local t = {}
   for i = 1, size do
+    _ = i
     table.insert(t, default_value)
   end
   return t

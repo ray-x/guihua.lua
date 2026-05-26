@@ -9,6 +9,7 @@
 local export = require('fzy')
 
 local function print_table(tbl)
+  _ = print_table
   if type(tbl) ~= 'table' then
     print(tbl)
     return

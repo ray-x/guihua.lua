@@ -1,7 +1,9 @@
 local eq = assert.are.same
 
 local busted = require('plenary/busted')
+_ = busted
 local cur_dir = vim.fn.expand('%:p:h')
+_ = cur_dir
 
 describe('should create view  ', function()
   package.loaded['guihua'] = nil

@@ -1,7 +1,9 @@
 local eq = assert.are.same
 
 local busted = require('plenary/busted')
+_ = busted
 local cur_dir = vim.fn.expand('%:p:h')
+_ = cur_dir
 
 local function title_text(title)
   if type(title) == 'string' then
@@ -232,6 +234,7 @@ describe('should create view  ', function()
 
     local gui = require('guihua.gui')
     local SessionRegistry = require('guihua.session_registry')
+    _ = SessionRegistry
     local opened = nil
     local state = gui.catalog({
       title = 'Browse',
@@ -727,6 +730,7 @@ describe('should create view  ', function()
 
     local gui = require('guihua.gui')
     local SessionRegistry = require('guihua.session_registry')
+    _ = SessionRegistry
     local choice1 = nil
     local choice2 = nil
     local listview1 = gui.select({ 'one', 'two', 'three' }, {
@@ -764,6 +768,7 @@ describe('should create view  ', function()
 
     local gui = require('guihua.gui')
     local SessionRegistry = require('guihua.session_registry')
+    _ = SessionRegistry
     local listview1 = gui.select({ 'one', 'two', 'three' }, {
       prompt = 'First select',
       ft = 'guihua',
@@ -798,6 +803,7 @@ describe('should create view  ', function()
     local ListView = require('guihua.listview')
     local TextView = require('guihua.textview')
     local SessionRegistry = require('guihua.session_registry')
+    _ = SessionRegistry
     local original_win = vim.api.nvim_get_current_win()
     local listview = ListView:new({
       loc = 'top_center',

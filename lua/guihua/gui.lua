@@ -4,6 +4,7 @@ local trace = require('guihua.log').trace
 local api = vim.api
 
 local ns_id = vim.api.nvim_create_namespace('guihua_gui')
+_ = ns_id
 
 local function get_listview()
   return require('guihua.listview')

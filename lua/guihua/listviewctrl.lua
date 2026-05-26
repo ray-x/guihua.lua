@@ -2,6 +2,7 @@ local class = require('middleclass')
 local ViewController = require('guihua.viewctrl')
 local error = require('guihua.log').error
 local util = require('guihua.util')
+_ = util
 
 local log = require('guihua.log').info
 local trace = require('guihua.log').trace
@@ -67,6 +68,7 @@ local function on_preview(listobj)
 end
 
 local function on_popup_window()
+  _ = on_popup_window
   local current_win = api.nvim_get_current_win()
   if current_win == nil or current_win == 0 or not api.nvim_win_is_valid(current_win) then
     return false

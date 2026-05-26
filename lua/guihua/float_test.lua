@@ -26,6 +26,7 @@ function float()
     height = height,
     style = 'minimal',
   }
+  _ = opts
 
   local top = '╭' .. string.rep('─', width + 2) .. '╮'
   local mid = '│' .. string.rep(' ', width + 2) .. '│'

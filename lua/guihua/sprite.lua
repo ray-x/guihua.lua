@@ -11,13 +11,16 @@ end
 
 local uv = vim.uv or vim.loop
 local dots = { '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏' }
+_ = dots
 local dots2 = { '⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷' }
+_ = dots2
 local moon = { '🌑 ', '🌒 ', '🌓 ', '🌔 ', '🌕 ', '🌖 ', '🌗 ', '🌘 ' }
 local ns_id = vim.api.nvim_create_namespace('guihua_sprite')
 
 local function get_window_position(opts)
   local offset = opts.offset or 0
   local width, height, baseheight
+  _ = baseheight
   if opts.relative == 'editor' then
     local statusline_height = 0
     local laststatus = vim.opt.laststatus:get()

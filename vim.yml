@@ -1,7 +1,9 @@
 ---
-base: lua52
+base: lua51
 name: vim
 globals:
+  _GH_SETUP:
+    any: true
   ListView:
     any: true
   ListViewCtrl:

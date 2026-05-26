@@ -264,6 +264,7 @@ function View:bind_ctrl(opts)
 end
 
 function View:get_ctrl(...)
+  _ = ...
   return self.ctrl
 end
 
@@ -399,12 +400,14 @@ function View:on_draw(data)
 end
 
 function View:unbind_ctrl(...)
+  _ = ...
   if self and self.ctrl then
     self.ctrl = nil
   end
 end
 
 function View:close(...)
+  _ = ...
   log('close View ', self.class.name)
   trace(debug.traceback())
   if self == nil then

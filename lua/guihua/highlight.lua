@@ -2,6 +2,7 @@ return {
   setup = function(opts)
     opts = opts or {}
     local sel, listbg, textbg, border = 'Visual', 'NormalFloat', 'NormalFloat', 'FloatBorder'
+    _ = border
     if vim.fn.hlID('TelescopePromptBorder') > 0 then
       border = 'TelescopePromptBorder'
       listbg = 'TelescopeNormal'

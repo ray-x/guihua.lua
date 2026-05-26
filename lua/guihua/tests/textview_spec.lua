@@ -1,7 +1,10 @@
 local eq = assert.are.same
+_ = eq
 
 local busted = require('plenary/busted')
+_ = busted
 local cur_dir = vim.fn.expand('%:p:h')
+_ = cur_dir
 
 describe('should create view  ', function()
   package.loaded['guihua'] = nil
@@ -13,6 +16,7 @@ describe('should create view  ', function()
   it('should construct a text win ', function()
     local log = require('guihua.log').info
     local sorter = require('fzy')
+    _ = sorter
 
     local TextView = require('guihua.textview')
     local data = {
