@@ -294,7 +294,7 @@ function M.preview_item_wrapper(resolver, opts)
     end
 
     local preview_opts = nil
-    if type(preview) == 'table' and not vim.tbl_islist(preview) then
+    if type(preview) == 'table' and not vim.islist(preview) then
       preview_opts = vim.deepcopy(preview)
     else
       preview_opts = { data = preview_content_lines(preview) }
@@ -303,7 +303,7 @@ function M.preview_item_wrapper(resolver, opts)
     if preview_opts == nil then
       return nil
     end
-    if type(preview_opts.data) == 'string' or vim.tbl_islist(preview_opts.data) then
+    if type(preview_opts.data) == 'string' or vim.islist(preview_opts.data) then
       preview_opts.data = preview_content_lines(preview_opts.data)
     end
     if preview_opts.data == nil and preview_opts.uri == nil then
