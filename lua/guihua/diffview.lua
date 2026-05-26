@@ -518,7 +518,7 @@ function DiffView.open_preview(current_preview, preview)
 end
 
 -- Sample API call:
-if true then
+if false then
   DiffView.open({
     title = 'demo.lua diff',
     description = 'Review changes to demo.lua',
