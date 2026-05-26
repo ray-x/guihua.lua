@@ -19,3 +19,4 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --config selene.toml --color always ./lua
+          version: 0.31.0

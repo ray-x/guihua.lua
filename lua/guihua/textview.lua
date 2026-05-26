@@ -105,8 +105,8 @@ local function can_update_preview(view, opts)
 
   return view.rect.height == opts.rect.height
     and view.rect.width == opts.rect.width
-    and view.rect.pos_x == opts.rect.pos_x
-    and view.rect.pos_y == opts.rect.pos_y
+    and (opts.rect.pos_x == nil or view.rect.pos_x == opts.rect.pos_x)
+    and (opts.rect.pos_y == nil or view.rect.pos_y == opts.rect.pos_y)
 end
 
 local function resolve_preview_opts(opts)

@@ -3,6 +3,24 @@ local eq = assert.are.same
 local busted = require('plenary/busted')
 local cur_dir = vim.fn.expand('%:p:h')
 
+local function title_text(title)
+  if type(title) == 'string' then
+    return title
+  end
+  if type(title) ~= 'table' then
+    return ''
+  end
+  local parts = {}
+  for _, chunk in ipairs(title) do
+    if type(chunk) == 'table' then
+      table.insert(parts, chunk[1] or '')
+    else
+      table.insert(parts, tostring(chunk))
+    end
+  end
+  return table.concat(parts)
+end
+
 describe('should create view  ', function()
   package.loaded['guihua.lua'] = nil
 
@@ -918,20 +936,3 @@ describe('should create view  ', function()
     listview:close()
   end)
 end)
-  local function title_text(title)
-    if type(title) == 'string' then
-      return title
-    end
-    if type(title) ~= 'table' then
-      return ''
-    end
-    local parts = {}
-    for _, chunk in ipairs(title) do
-      if type(chunk) == 'table' then
-        table.insert(parts, chunk[1] or '')
-      else
-        table.insert(parts, tostring(chunk))
-      end
-    end
-    return table.concat(parts)
-  end
