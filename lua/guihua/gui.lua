@@ -802,11 +802,11 @@ M.select = function(items, opts, on_choice)
       persist = true,
       ft = opts.ft or 'markdown',
       disable_strikethrough = true,
-      on_confirm = function(item, idx)
+      on_confirm = function(item)
         if item.header then
           return -- non-selectable prompt header lines
         end
-        return on_choice(item.value, item.idx or idx)
+        return on_choice(item)
       end,
       on_move = preview_on_move or function(pos)
         trace(pos)
