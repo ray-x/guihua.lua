@@ -521,13 +521,14 @@ describe('should create view  ', function()
     package.loaded['guihua.view'] = nil
     vim.cmd('packadd guihua.lua')
 
-    local choice = nil
+    local choice, choice_idx = nil, nil
     local gui = require('guihua.gui')
     local listview = gui.select({ 'one', 'two', 'three' }, {
       prompt = 'Select the first item from this popup even when the prompt is long enough to wrap into the popup body.',
       ft = 'guihua',
-    }, function(item)
+    }, function(item, idx)
       choice = item
+      choice_idx = idx
     end)
 
     vim.wait(20)
@@ -535,7 +536,8 @@ describe('should create view  ', function()
     vim.api.nvim_set_current_win(listview.win)
     vim.fn.maparg('<CR>', 'n', false, true).callback()
 
-    eq('one', choice)
+    eq('one', choice.value)
+    eq(1, choice_idx)
   end)
 
   it('should render tuple-style select labels and return their payloads', function()
@@ -546,7 +548,7 @@ describe('should create view  ', function()
     package.loaded['guihua.view'] = nil
     vim.cmd('packadd guihua.lua')
 
-    local choice = nil
+    local choice, choice_idx = nil, nil
     local gui = require('guihua.gui')
     local payload = { kind = 'codeAction' }
     local listview = gui.select({
@@ -555,8 +557,9 @@ describe('should create view  ', function()
     }, {
       prompt = 'Select code action',
       ft = 'guihua',
-    }, function(item)
+    }, function(item, idx)
       choice = item
+      choice_idx = idx
     end)
 
     local lines = vim.api.nvim_buf_get_lines(listview.buf, 0, -1, false)
@@ -567,7 +570,8 @@ describe('should create view  ', function()
     vim.api.nvim_set_current_win(listview.win)
     vim.fn.maparg('<CR>', 'n', false, true).callback()
 
-    eq(payload, choice)
+    eq(payload, choice.value)
+    eq(1, choice_idx)
   end)
 
   it('should render nested codeaction titles from action.command.title', function()
@@ -578,7 +582,7 @@ describe('should create view  ', function()
     package.loaded['guihua.view'] = nil
     vim.cmd('packadd guihua.lua')
 
-    local choice = nil
+    local choice, choice_idx = nil, nil
     local gui = require('guihua.gui')
     local action = {
       command = {
@@ -592,8 +596,9 @@ describe('should create view  ', function()
     }, {
       prompt = 'Select code action',
       ft = 'guihua',
-    }, function(item)
+    }, function(item, idx)
       choice = item
+      choice_idx = idx
     end)
 
     local lines = vim.api.nvim_buf_get_lines(listview.buf, 0, -1, false)
@@ -604,7 +609,12 @@ describe('should create view  ', function()
     vim.api.nvim_set_current_win(listview.win)
     vim.fn.maparg('<CR>', 'n', false, true).callback()
 
-    eq(action, choice)
+    -- on_choice receives the full row: .value is the action, and sibling fields
+    -- like .ctx must survive so LSP code-action callbacks can index them
+    -- (regression guard for https://github.com/ray-x/go.nvim/issues/621).
+    eq(action, choice.value)
+    eq({ id = 1 }, choice.ctx)
+    eq(1, choice_idx)
   end)
 
   it('should honor a custom format_item for code actions', function()
@@ -647,7 +657,7 @@ describe('should create view  ', function()
     package.loaded['guihua.view'] = nil
     vim.cmd('packadd guihua.lua')
 
-    local choice = nil
+    local choice, choice_idx = nil, nil
     local gui = require('guihua.gui')
     local listview = gui.select({
       'update fileA',
@@ -656,8 +666,9 @@ describe('should create view  ', function()
     }, {
       prompt = 'Choose action',
       ft = 'guihua',
-    }, function(item)
+    }, function(item, idx)
       choice = item
+      choice_idx = idx
     end)
 
     local ctrl = listview:get_ctrl()
@@ -675,7 +686,8 @@ describe('should create view  ', function()
 
     enter()
 
-    eq('write fileA to fileB', choice)
+    eq('write fileA to fileB', choice.value)
+    eq(3, choice_idx)
     listview:close()
   end)
 
@@ -731,13 +743,14 @@ describe('should create view  ', function()
     local gui = require('guihua.gui')
     local SessionRegistry = require('guihua.session_registry')
     _ = SessionRegistry
-    local choice1 = nil
+    local choice1, choice1_idx = nil, nil
     local choice2 = nil
     local listview1 = gui.select({ 'one', 'two', 'three' }, {
       prompt = 'First select',
       ft = 'guihua',
-    }, function(choice)
+    }, function(choice, idx)
       choice1 = choice
+      choice1_idx = idx
     end)
     local listview2 = gui.select({ 'alpha', 'beta', 'gamma' }, {
       prompt = 'Second select',
@@ -749,7 +762,8 @@ describe('should create view  ', function()
     vim.api.nvim_set_current_win(listview1.win)
     vim.fn.maparg('<CR>', 'n', false, true).callback()
 
-    eq('one', choice1)
+    eq('one', choice1.value)
+    eq(1, choice1_idx)
     eq(nil, choice2)
     assert.is_true(listview1.win == nil or not vim.api.nvim_win_is_valid(listview1.win))
     assert.is_true(vim.api.nvim_win_is_valid(listview2.win))

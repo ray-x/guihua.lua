@@ -806,7 +806,10 @@ M.select = function(items, opts, on_choice)
         if item.header then
           return -- non-selectable prompt header lines
         end
-        return on_choice(item)
+        -- vim.ui.select() contract: on_choice(item, idx). Pass the full row
+        -- (it carries .value plus sibling fields like .action/.ctx that LSP
+        -- code-action callbacks index) along with the 1-based index.
+        return on_choice(item, item.idx)
       end,
       on_move = preview_on_move or function(pos)
         trace(pos)
